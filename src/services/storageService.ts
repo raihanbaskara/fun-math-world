@@ -1,4 +1,5 @@
 import { DatabaseState, User } from '@/types';
+import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 
 const STORAGE_KEY = "FUN_MATH_WORLD_SMP7_DB_V2";
 
@@ -222,9 +223,11 @@ type Listener = (state: DatabaseState) => void;
 class StorageService {
   private state: DatabaseState;
   private listeners: Set<Listener> = new Set();
+  private syncTimeout: number | null = null;
 
   constructor() {
     this.state = this.load();
+    this.initSupabaseSync();
   }
 
   public getState(): DatabaseState {
@@ -238,6 +241,47 @@ class StorageService {
 
   private notify() {
     this.listeners.forEach(l => l(this.state));
+  }
+
+  private async initSupabaseSync() {
+    if (!isSupabaseConfigured || !supabase) return;
+
+    try {
+      // 1. Fetch current cloud state
+      const { data, error } = await supabase
+        .from('app_state')
+        .select('data')
+        .eq('id', 'main')
+        .single();
+
+      if (data && data.data) {
+        this.state = data.data;
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(this.state));
+        this.notify();
+      } else if (error && error.code === 'PGRST116') {
+        // Row doesn't exist yet, insert initial state
+        await supabase.from('app_state').insert({ id: 'main', data: this.state });
+      }
+
+      // 2. Real-time subscription for live sync between Teacher & Student devices!
+      supabase
+        .channel('public:app_state')
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'app_state', filter: 'id=eq.main' },
+          (payload) => {
+            if (payload.new && (payload.new as { data?: DatabaseState }).data) {
+              const remoteState = (payload.new as { data: DatabaseState }).data;
+              this.state = remoteState;
+              localStorage.setItem(STORAGE_KEY, JSON.stringify(this.state));
+              this.notify();
+            }
+          }
+        )
+        .subscribe();
+    } catch (err) {
+      console.warn('Supabase sync initialization warning:', err);
+    }
   }
 
   public load(): DatabaseState {
@@ -261,6 +305,20 @@ class StorageService {
   public save(): void {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(this.state));
     this.notify();
+
+    // Async save to Supabase cloud
+    if (isSupabaseConfigured && supabase) {
+      if (this.syncTimeout) window.clearTimeout(this.syncTimeout);
+      this.syncTimeout = window.setTimeout(async () => {
+        try {
+          await supabase!
+            .from('app_state')
+            .upsert({ id: 'main', data: this.state, updated_at: new Date().toISOString() });
+        } catch (err) {
+          console.error('Failed to sync state to Supabase:', err);
+        }
+      }, 300);
+    }
   }
 
   public update(updater: (draft: DatabaseState) => void): void {
