@@ -25,7 +25,11 @@ export const SiswaLKPD: React.FC<{
   }, []);
 
   const lkpdList = db.lkpdList;
-  const submission = db.lkpdSubmissions.find(s => s.studentId === currentUser.id);
+  const [selectedLkpdId, setSelectedLkpdId] = useState<string>(lkpdList[0]?.id || "lkpd_1");
+
+  const submission = db.lkpdSubmissions.find(
+    s => s.studentId === currentUser.id && s.lkpdId === selectedLkpdId
+  );
 
   const [previewLKPD, setPreviewLKPD] = useState<LKPDItem | null>(null);
   const [selectedPhoto, setSelectedPhoto] = useState<string | null>(submission?.photoUrl || null);
@@ -33,6 +37,14 @@ export const SiswaLKPD: React.FC<{
   const [aiResult, setAiResult] = useState<{ score: number; feedback: string } | null>(
     submission ? { score: submission.aiScore, feedback: submission.aiFeedback } : null
   );
+
+  useEffect(() => {
+    const current = db.lkpdSubmissions.find(
+      s => s.studentId === currentUser.id && s.lkpdId === selectedLkpdId
+    );
+    setSelectedPhoto(current?.photoUrl || null);
+    setAiResult(current ? { score: current.aiScore, feedback: current.aiFeedback } : null);
+  }, [selectedLkpdId, db.lkpdSubmissions, currentUser.id]);
 
   const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -79,13 +91,15 @@ export const SiswaLKPD: React.FC<{
       return;
     }
 
-    const currentSub = db.lkpdSubmissions.find(s => s.studentId === currentUser.id);
+    const currentSub = db.lkpdSubmissions.find(
+      s => s.studentId === currentUser.id && s.lkpdId === selectedLkpdId
+    );
     const subData: LKPDSubmission = {
       id: currentSub ? currentSub.id : "sub_" + Date.now(),
       studentId: currentUser.id,
       studentName: currentUser.name,
       studentClass: currentUser.class || "Kelas 7-A",
-      lkpdId: "lkpd_1",
+      lkpdId: selectedLkpdId,
       photoUrl: selectedPhoto,
       date: new Date().toLocaleDateString(),
       aiScore: aiResult ? aiResult.score : 90,
@@ -96,7 +110,9 @@ export const SiswaLKPD: React.FC<{
     };
 
     storageService.update(draft => {
-      const idx = draft.lkpdSubmissions.findIndex(s => s.studentId === currentUser.id);
+      const idx = draft.lkpdSubmissions.findIndex(
+        s => s.studentId === currentUser.id && s.lkpdId === selectedLkpdId
+      );
       if (idx >= 0) draft.lkpdSubmissions[idx] = subData;
       else draft.lkpdSubmissions.push(subData);
 
@@ -231,6 +247,26 @@ export const SiswaLKPD: React.FC<{
         </div>
 
         <div className="space-y-4">
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">
+              Pilih Judul Tugas LKPD:
+            </label>
+            <select
+              value={selectedLkpdId}
+              onChange={(e) => {
+                soundService.click();
+                setSelectedLkpdId(e.target.value);
+              }}
+              className="w-full text-xs font-bold p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500 outline-none text-slate-800"
+            >
+              {lkpdList.map(item => (
+                <option key={item.id} value={item.id}>
+                  {item.title}
+                </option>
+              ))}
+            </select>
+          </div>
+
           <div>
             <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">
               Pilih Berkas Foto Hasil Kerja:
