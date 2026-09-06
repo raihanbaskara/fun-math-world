@@ -32,12 +32,34 @@ export const GuruLKPD: React.FC<{
   // Upload LKPD Modal State
   const [isAddLKPDOpen, setIsAddLKPDOpen] = useState<boolean>(false);
   const [previewLKPD, setPreviewLKPD] = useState<LKPDItem | null>(null);
+  const [viewPhotoUrl, setViewPhotoUrl] = useState<{ url: string; studentName: string } | null>(null);
   const [newTitle, setNewTitle] = useState<string>('');
   const [newDesc, setNewDesc] = useState<string>('');
   const [newObjectives, setNewObjectives] = useState<string>('');
   const [newImageUrl, setNewImageUrl] = useState<string>('');
   const [newPdfFilename, setNewPdfFilename] = useState<string>('');
   const [newPdfUrl, setNewPdfUrl] = useState<string>('');
+
+  const getPhotoDisplayUrl = (url?: string): string => {
+    if (!url) return '';
+    if (url.startsWith('data:image')) {
+      try {
+        const parts = url.split(',');
+        const mime = parts[0].match(/:(.*?);/)?.[1] || 'image/jpeg';
+        const byteCharacters = atob(parts[1]);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray], { type: mime });
+        return URL.createObjectURL(blob);
+      } catch {
+        return url;
+      }
+    }
+    return url;
+  };
 
   const handleOpenGrade = (sub: LKPDSubmission) => {
     soundService.click();
@@ -232,16 +254,18 @@ export const GuruLKPD: React.FC<{
                         </span>
                       </td>
                       <td className="p-4">
-                        <a
-                          href={s.photoUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-brand-700 font-bold hover:bg-brand-50 hover:border-brand-300 transition-all text-xs"
+                        <button
+                          type="button"
+                          onClick={() => {
+                            soundService.click();
+                            const displayUrl = getPhotoDisplayUrl(s.photoUrl);
+                            setViewPhotoUrl({ url: displayUrl, studentName: s.studentName });
+                          }}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-brand-700 font-bold hover:bg-brand-50 hover:border-brand-300 transition-all text-xs cursor-pointer"
                         >
                           <ImageIcon size={14} className="text-brand-600" />
                           <span>Lihat Foto</span>
-                          <ExternalLink size={12} className="text-slate-400" />
-                        </a>
+                        </button>
                       </td>
                       <td className="p-4 font-mono font-black text-indigo-700">
                         <span className="px-2 py-0.5 rounded-md bg-indigo-50 border border-indigo-200/60">
@@ -597,6 +621,43 @@ export const GuruLKPD: React.FC<{
               </Button>
             </div>
           </form>
+        </Modal>
+      )}
+
+      {/* Student Photo Preview Modal */}
+      {viewPhotoUrl && (
+        <Modal
+          isOpen={!!viewPhotoUrl}
+          onClose={() => setViewPhotoUrl(null)}
+          title={`Foto Lembar Kerja — ${viewPhotoUrl.studentName}`}
+          maxWidth="max-w-3xl"
+        >
+          <div className="space-y-4">
+            <div className="rounded-2xl overflow-hidden border border-slate-200 shadow-inner max-h-[70vh] overflow-y-auto bg-slate-900 flex items-center justify-center p-3">
+              <img
+                src={viewPhotoUrl.url}
+                alt="Foto Hasil Kerja Siswa"
+                className="max-h-[65vh] w-auto object-contain rounded-xl shadow-lg"
+              />
+            </div>
+            <div className="flex justify-between items-center bg-slate-50 p-3 rounded-2xl border border-slate-200">
+              <span className="text-xs font-bold text-slate-600">Dokumen Foto Lembar Kerja Terverifikasi</span>
+              <div className="flex items-center gap-2">
+                <a
+                  href={viewPhotoUrl.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5"
+                >
+                  <ExternalLink size={14} />
+                  <span>Buka Tab Baru</span>
+                </a>
+                <Button variant="primary" size="sm" onClick={() => setViewPhotoUrl(null)}>
+                  Tutup
+                </Button>
+              </div>
+            </div>
+          </div>
         </Modal>
       )}
     </div>
