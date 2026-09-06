@@ -8,6 +8,7 @@ import { Fraction, renderFormattedMathText } from '@/components/ui/fraction';
 import { storageService } from '@/services/storageService';
 import { soundService } from '@/services/soundService';
 import { User, AntiCheatReport, EvaluationSubmission } from '@/types';
+import { compressImage } from '@/lib/utils';
 import {
   PenTool,
   ShieldAlert,
@@ -88,8 +89,10 @@ export const SiswaEvaluasi: React.FC<{
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = (event) => {
-      setPhotoProof(event.target?.result as string);
+    reader.onload = async (event) => {
+      const dataUrl = event.target?.result as string;
+      const compressed = await compressImage(dataUrl);
+      setPhotoProof(compressed);
       showToast("Foto lembar coretan berhasil dimuat.", "info");
     };
     reader.readAsDataURL(file);

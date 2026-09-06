@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { storageService } from '@/services/storageService';
 import { soundService } from '@/services/soundService';
 import { User, LKPDItem, LKPDSubmission } from '@/types';
+import { compressImage } from '@/lib/utils';
 import { FileText, ExternalLink, Download, Image as ImageIcon, Sparkles, CheckCircle2, Bot, Upload } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
@@ -37,9 +38,10 @@ export const SiswaLKPD: React.FC<{
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = (event) => {
+    reader.onload = async (event) => {
       const dataUrl = event.target?.result as string;
-      setSelectedPhoto(dataUrl);
+      const compressed = await compressImage(dataUrl);
+      setSelectedPhoto(compressed);
       showToast("Foto lembar kerja berhasil dimuat.", "info");
     };
     reader.readAsDataURL(file);
