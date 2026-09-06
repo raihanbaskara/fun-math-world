@@ -134,6 +134,27 @@ export const GuruLKPD: React.FC<{
     }
   };
 
+  // Helper to convert Base64 PDF data URLs to browser Blob URLs for seamless iframe/object rendering on Vercel
+  const getPdfDisplayUrl = (url?: string): string => {
+    if (!url) return '';
+    if (url.startsWith('data:application/pdf;base64,')) {
+      try {
+        const base64Data = url.split(',')[1];
+        const byteCharacters = atob(base64Data);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray], { type: 'application/pdf' });
+        return URL.createObjectURL(blob);
+      } catch {
+        return url;
+      }
+    }
+    return url;
+  };
+
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -337,17 +358,44 @@ export const GuruLKPD: React.FC<{
             {previewLKPD.pdfUrl && (
               <div className="flex items-center justify-between p-2 bg-emerald-50 rounded-2xl border border-emerald-200 text-xs font-mono text-emerald-900 font-bold">
                 <span>📄 Dokumen PDF Terverifikasi: {previewLKPD.pdfFilename}</span>
-                <span className="text-emerald-600 font-black">✓ Siap Tampil di Siswa</span>
+                <a
+                  href={getPdfDisplayUrl(previewLKPD.pdfUrl)}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold transition flex items-center gap-1"
+                >
+                  <ExternalLink size={13} />
+                  <span>Buka Tab Baru</span>
+                </a>
               </div>
             )}
 
             {previewLKPD.pdfUrl ? (
-              <div className="w-full h-[450px] rounded-2xl overflow-hidden border-2 border-slate-300 shadow-md bg-slate-900">
-                <iframe
-                  src={previewLKPD.pdfUrl}
-                  title={previewLKPD.title}
-                  className="w-full h-full border-0"
-                />
+              <div className="w-full h-[480px] rounded-2xl overflow-hidden border-2 border-slate-300 shadow-md bg-slate-900 relative">
+                <object
+                  data={getPdfDisplayUrl(previewLKPD.pdfUrl)}
+                  type="application/pdf"
+                  className="w-full h-full"
+                >
+                  <iframe
+                    src={getPdfDisplayUrl(previewLKPD.pdfUrl)}
+                    title={previewLKPD.title}
+                    className="w-full h-full border-0"
+                  >
+                    <div className="flex flex-col items-center justify-center h-full p-6 text-white text-center space-y-3 bg-slate-900">
+                      <FileText size={44} className="text-emerald-400" />
+                      <p className="text-sm font-bold">Dokumen PDF Terverifikasi</p>
+                      <a
+                        href={getPdfDisplayUrl(previewLKPD.pdfUrl)}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black rounded-xl text-xs transition"
+                      >
+                        Buka & Baca Dokumen PDF (Tab Baru)
+                      </a>
+                    </div>
+                  </iframe>
+                </object>
               </div>
             ) : (
               <div className="rounded-2xl overflow-hidden border border-slate-200 shadow-inner max-h-80 overflow-y-auto">

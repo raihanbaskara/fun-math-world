@@ -108,6 +108,27 @@ export const SiswaLKPD: React.FC<{
     showToast("Hasil kerjaan LKPD berhasil dikirimkan ke Guru!", "success");
   };
 
+  // Helper to convert Base64 PDF data URLs to browser Blob URLs for seamless iframe/object rendering on Vercel
+  const getPdfDisplayUrl = (url?: string): string => {
+    if (!url) return '';
+    if (url.startsWith('data:application/pdf;base64,')) {
+      try {
+        const base64Data = url.split(',')[1];
+        const byteCharacters = atob(base64Data);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray], { type: 'application/pdf' });
+        return URL.createObjectURL(blob);
+      } catch {
+        return url;
+      }
+    }
+    return url;
+  };
+
   const downloadPDF = (item: LKPDItem) => {
     soundService.click();
     let url = item.pdfUrl;
@@ -293,25 +314,55 @@ export const SiswaLKPD: React.FC<{
         >
           <div className="space-y-4">
             {/* View Mode Switcher Header */}
-            {previewLKPD.pdfUrl && (
-              <div className="flex items-center gap-2 p-1 bg-slate-100 rounded-2xl border border-slate-200">
-                <span className="text-[11px] font-black uppercase tracking-wider text-slate-500 px-3 font-mono">
+            <div className="flex items-center justify-between p-2 bg-slate-100 rounded-2xl border border-slate-200 text-xs">
+              <div className="flex items-center gap-2 font-mono">
+                <span className="font-black uppercase tracking-wider text-slate-500 px-1">
                   Mode Tampilan:
                 </span>
-                <span className="px-3 py-1 bg-emerald-500 text-white rounded-xl text-xs font-bold font-mono">
+                <span className="px-3 py-1 bg-emerald-500 text-white rounded-xl font-bold">
                   📄 Dokumen PDF Live
                 </span>
               </div>
-            )}
+              {previewLKPD.pdfUrl && (
+                <a
+                  href={getPdfDisplayUrl(previewLKPD.pdfUrl)}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="px-3 py-1 bg-white hover:bg-slate-200 text-slate-900 font-bold border border-slate-300 rounded-xl transition flex items-center gap-1.5"
+                >
+                  <ExternalLink size={13} />
+                  <span>Buka Tab Baru</span>
+                </a>
+              )}
+            </div>
 
             {/* Main Interactive Media Viewer Container */}
             {previewLKPD.pdfUrl ? (
-              <div className="w-full h-[450px] rounded-2xl overflow-hidden border-2 border-slate-300 shadow-md bg-slate-900">
-                <iframe
-                  src={previewLKPD.pdfUrl}
-                  title={previewLKPD.title}
-                  className="w-full h-full border-0"
-                />
+              <div className="w-full h-[480px] rounded-2xl overflow-hidden border-2 border-slate-300 shadow-md bg-slate-900 relative">
+                <object
+                  data={getPdfDisplayUrl(previewLKPD.pdfUrl)}
+                  type="application/pdf"
+                  className="w-full h-full"
+                >
+                  <iframe
+                    src={getPdfDisplayUrl(previewLKPD.pdfUrl)}
+                    title={previewLKPD.title}
+                    className="w-full h-full border-0"
+                  >
+                    <div className="flex flex-col items-center justify-center h-full p-6 text-white text-center space-y-3 bg-slate-900">
+                      <FileText size={44} className="text-emerald-400" />
+                      <p className="text-sm font-bold">Dokumen PDF Terverifikasi</p>
+                      <a
+                        href={getPdfDisplayUrl(previewLKPD.pdfUrl)}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black rounded-xl text-xs transition"
+                      >
+                        Buka & Baca Dokumen PDF (Tab Baru)
+                      </a>
+                    </div>
+                  </iframe>
+                </object>
               </div>
             ) : (
               <div className="rounded-2xl overflow-hidden border border-slate-200 shadow-inner max-h-80 overflow-y-auto">
@@ -333,7 +384,7 @@ export const SiswaLKPD: React.FC<{
             <div className="flex flex-col sm:flex-row gap-3 pt-2">
               {previewLKPD.pdfUrl && (
                 <a
-                  href={previewLKPD.pdfUrl}
+                  href={getPdfDisplayUrl(previewLKPD.pdfUrl)}
                   target="_blank"
                   rel="noreferrer"
                   className="flex-1"
