@@ -1,8 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 
-// Pastikan file .env.local berisi VITE_SUPABASE_URL dan VITE_SUPABASE_ANON_KEY
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://xhnfkiyjirfgnqrodbnn.supabase.co';
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'sb_publishable_vbQs7-vgIpbDV-1s02ApwA_FAwXPVH0';
 
 export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey);
 
