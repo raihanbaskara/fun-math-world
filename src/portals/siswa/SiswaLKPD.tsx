@@ -32,7 +32,9 @@ export const SiswaLKPD: React.FC<{
   );
 
   const [previewLKPD, setPreviewLKPD] = useState<LKPDItem | null>(null);
-  const [selectedPhoto, setSelectedPhoto] = useState<string | null>(submission?.photoUrl || null);
+  const [selectedPhotos, setSelectedPhotos] = useState<string[]>(
+    submission?.photoUrls || (submission?.photoUrl ? [submission.photoUrl] : [])
+  );
   const [isAiLoading, setIsAiLoading] = useState<boolean>(false);
   const [aiResult, setAiResult] = useState<{ score: number; feedback: string } | null>(
     submission ? { score: submission.aiScore, feedback: submission.aiFeedback } : null
@@ -42,28 +44,36 @@ export const SiswaLKPD: React.FC<{
     const current = db.lkpdSubmissions.find(
       s => s.studentId === currentUser.id && s.lkpdId === selectedLkpdId
     );
-    setSelectedPhoto(current?.photoUrl || null);
+    setSelectedPhotos(current?.photoUrls || (current?.photoUrl ? [current.photoUrl] : []));
     setAiResult(current ? { score: current.aiScore, feedback: current.aiFeedback } : null);
   }, [selectedLkpdId, db.lkpdSubmissions, currentUser.id]);
 
-  const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = async (event) => {
-      const dataUrl = event.target?.result as string;
+  const handlePhotoSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+
+    showToast(`Memproses ${files.length} foto...`, "info");
+    const compressedList: string[] = [];
+
+    for (const file of files) {
+      const dataUrl = await new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.onload = (evt) => resolve(evt.target?.result as string);
+        reader.readAsDataURL(file);
+      });
       const compressed = await compressImage(dataUrl);
-      setSelectedPhoto(compressed);
-      showToast("Foto lembar kerja berhasil dimuat.", "info");
-    };
-    reader.readAsDataURL(file);
+      compressedList.push(compressed);
+    }
+
+    setSelectedPhotos(prev => [...prev, ...compressedList]);
+    showToast(`${files.length} foto lembar kerja berhasil dimuat.`, "success");
   };
 
   const handleRunAiCorrection = () => {
     soundService.click();
-    if (!selectedPhoto) {
+    if (selectedPhotos.length === 0) {
       soundService.alert();
-      showToast("Pilih file foto hasil kerjaan LKPD terlebih dahulu!", "error");
+      showToast("Pilih minimal 1 file foto hasil kerjaan LKPD terlebih dahulu!", "error");
       return;
     }
 
@@ -85,7 +95,7 @@ export const SiswaLKPD: React.FC<{
 
   const handleSubmitLKPD = () => {
     soundService.click();
-    if (!selectedPhoto) {
+    if (selectedPhotos.length === 0) {
       soundService.alert();
       showToast("Unggah foto tugas sebelum mengirimkan ke guru!", "error");
       return;
@@ -100,7 +110,8 @@ export const SiswaLKPD: React.FC<{
       studentName: currentUser.name,
       studentClass: currentUser.class || "Kelas 7-A",
       lkpdId: selectedLkpdId,
-      photoUrl: selectedPhoto,
+      photoUrl: selectedPhotos[0],
+      photoUrls: selectedPhotos,
       date: new Date().toLocaleDateString(),
       aiScore: aiResult ? aiResult.score : 90,
       aiFeedback: aiResult ? aiResult.feedback : "Pekerjaan terdeteksi rapi dan tepat.",
@@ -269,31 +280,56 @@ export const SiswaLKPD: React.FC<{
 
           <div>
             <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">
-              Pilih Berkas Foto Hasil Kerja:
+              Pilih Berkas Foto Hasil Kerja (Bisa Pilih Lebih Dari 1 Foto):
             </label>
             <input
               type="file"
               accept="image/*"
+              multiple
               onChange={handlePhotoSelect}
               className="w-full text-xs text-slate-600 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100 cursor-pointer"
             />
           </div>
 
-          {/* Photo Preview */}
-          {selectedPhoto && (
-            <div className="p-3 bg-slate-50 rounded-2xl border border-dashed border-slate-300 text-center space-y-2">
-              <span className="text-xs font-bold text-slate-500">Preview Foto Lembar Kerja:</span>
-              <img
-                src={selectedPhoto}
-                alt="Selected LKPD"
-                className="max-h-56 mx-auto rounded-xl shadow object-contain"
-              />
+          {/* Multi Photo Preview Grid */}
+          {selectedPhotos.length > 0 && (
+            <div className="space-y-2 p-3 bg-slate-50 rounded-2xl border border-dashed border-slate-300">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-600">
+                  Preview Foto Terunggah ({selectedPhotos.length} Halaman):
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setSelectedPhotos([])}
+                  className="text-xs font-bold text-red-500 hover:underline cursor-pointer"
+                >
+                  Hapus Semua
+                </button>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 pt-1">
+                {selectedPhotos.map((imgUrl, idx) => (
+                  <div key={idx} className="relative group rounded-xl overflow-hidden border border-slate-300 shadow-2xs aspect-4/3 bg-slate-900">
+                    <img src={imgUrl} alt={`Halaman ${idx + 1}`} className="w-full h-full object-cover" />
+                    <div className="absolute top-1.5 left-1.5 px-2 py-0.5 bg-slate-900/80 text-white font-mono font-bold text-[10px] rounded-md backdrop-blur-xs">
+                      Hal {idx + 1}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedPhotos(prev => prev.filter((_, i) => i !== idx))}
+                      className="absolute top-1.5 right-1.5 w-6 h-6 bg-red-600 text-white rounded-full flex items-center justify-center font-bold text-xs shadow-md hover:bg-red-700 cursor-pointer"
+                    >
+                      &times;
+                    </button>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
 
           <div className="flex flex-col sm:flex-row gap-3">
             <InteractiveHoverButton
-              disabled={isAiLoading || !selectedPhoto}
+              disabled={isAiLoading || selectedPhotos.length === 0}
               onClick={handleRunAiCorrection}
               className="flex-1"
               text={isAiLoading ? "AI Menganalisis..." : "Koreksi Otomatis dengan AI"}
@@ -304,7 +340,7 @@ export const SiswaLKPD: React.FC<{
               variant="primary"
               size="md"
               className="flex-1 bg-emerald-600 hover:bg-emerald-700 font-bold"
-              disabled={!selectedPhoto}
+              disabled={selectedPhotos.length === 0}
               onClick={handleSubmitLKPD}
             >
               <CheckCircle2 size={18} />

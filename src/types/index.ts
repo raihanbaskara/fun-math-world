@@ -55,6 +55,7 @@ export interface LKPDSubmission {
   studentClass: string;
   lkpdId: string;
   photoUrl: string;
+  photoUrls?: string[];
   date: string;
   aiScore: number;
   aiFeedback: string;
@@ -93,6 +94,7 @@ export interface EvaluationSubmission {
   score: number;
   textAnswers: Record<string, string>;
   photoProof: string;
+  photoUrls?: string[];
   antiCheat: AntiCheatReport;
   status: string;
 }

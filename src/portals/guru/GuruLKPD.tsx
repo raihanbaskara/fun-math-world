@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { storageService } from '@/services/storageService';
 import { soundService } from '@/services/soundService';
 import { LKPDSubmission, LKPDItem } from '@/types';
-import { FileText, Image as ImageIcon, CheckCircle2, Bot, MessageSquare, ExternalLink, Plus, Trash2, Upload, Layers } from 'lucide-react';
+import { FileText, Image as ImageIcon, CheckCircle2, Bot, MessageSquare, ExternalLink, Plus, Trash2, Upload, Layers, Pencil, ChevronLeft, ChevronRight } from 'lucide-react';
 
 export const GuruLKPD: React.FC<{
   showToast: (msg: string, type?: 'info' | 'success' | 'error') => void;
@@ -32,13 +32,22 @@ export const GuruLKPD: React.FC<{
   // Upload LKPD Modal State
   const [isAddLKPDOpen, setIsAddLKPDOpen] = useState<boolean>(false);
   const [previewLKPD, setPreviewLKPD] = useState<LKPDItem | null>(null);
-  const [viewPhotoUrl, setViewPhotoUrl] = useState<{ url: string; studentName: string } | null>(null);
+  const [viewPhotoUrl, setViewPhotoUrl] = useState<{ urls: string[]; activeIdx: number; studentName: string } | null>(null);
   const [newTitle, setNewTitle] = useState<string>('');
   const [newDesc, setNewDesc] = useState<string>('');
   const [newObjectives, setNewObjectives] = useState<string>('');
   const [newImageUrl, setNewImageUrl] = useState<string>('');
   const [newPdfFilename, setNewPdfFilename] = useState<string>('');
   const [newPdfUrl, setNewPdfUrl] = useState<string>('');
+
+  // Edit LKPD Modal State
+  const [editingLKPD, setEditingLKPD] = useState<LKPDItem | null>(null);
+  const [editTitle, setEditTitle] = useState<string>('');
+  const [editDesc, setEditDesc] = useState<string>('');
+  const [editObjectives, setEditObjectives] = useState<string>('');
+  const [editImageUrl, setEditImageUrl] = useState<string>('');
+  const [editPdfFilename, setEditPdfFilename] = useState<string>('');
+  const [editPdfUrl, setEditPdfUrl] = useState<string>('');
 
   const getPhotoDisplayUrl = (url?: string): string => {
     if (!url) return '';
@@ -156,6 +165,62 @@ export const GuruLKPD: React.FC<{
     }
   };
 
+  const handleOpenEditLKPD = (item: LKPDItem) => {
+    soundService.click();
+    setEditingLKPD(item);
+    setEditTitle(item.title);
+    setEditDesc(item.description);
+    setEditObjectives(item.objectives || '');
+    setEditImageUrl(item.imageUrl || '');
+    setEditPdfFilename(item.pdfFilename || '');
+    setEditPdfUrl(item.pdfUrl || '');
+  };
+
+  const handleEditImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      setEditImageUrl(event.target?.result as string);
+      showToast('Gambar LKPD baru berhasil dimuat!', 'info');
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleEditPdfChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setEditPdfFilename(file.name);
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      setEditPdfUrl(event.target?.result as string);
+      showToast(`Berkas PDF baru "${file.name}" berhasil dimuat!`, 'success');
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleSaveEditLKPD = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingLKPD) return;
+    soundService.click();
+
+    storageService.update(draft => {
+      const item = draft.lkpdList.find(l => l.id === editingLKPD.id);
+      if (item) {
+        item.title = editTitle.trim();
+        item.description = editDesc.trim();
+        item.objectives = editObjectives.trim();
+        if (editImageUrl.trim()) item.imageUrl = editImageUrl.trim();
+        if (editPdfFilename.trim()) item.pdfFilename = editPdfFilename.trim();
+        if (editPdfUrl.trim()) item.pdfUrl = editPdfUrl.trim();
+      }
+    });
+
+    setEditingLKPD(null);
+    soundService.success();
+    showToast('Tugas LKPD Digital berhasil diperbarui & disinkronkan!', 'success');
+  };
+
   // Helper to convert Base64 PDF data URLs to browser Blob URLs for seamless iframe/object rendering on Vercel
   const getPdfDisplayUrl = (url?: string): string => {
     if (!url) return '';
@@ -258,13 +323,14 @@ export const GuruLKPD: React.FC<{
                           type="button"
                           onClick={() => {
                             soundService.click();
-                            const displayUrl = getPhotoDisplayUrl(s.photoUrl);
-                            setViewPhotoUrl({ url: displayUrl, studentName: s.studentName });
+                            const photos = s.photoUrls && s.photoUrls.length > 0 ? s.photoUrls : [s.photoUrl];
+                            const displayUrls = photos.map(p => getPhotoDisplayUrl(p));
+                            setViewPhotoUrl({ urls: displayUrls, activeIdx: 0, studentName: s.studentName });
                           }}
                           className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-brand-700 font-bold hover:bg-brand-50 hover:border-brand-300 transition-all text-xs cursor-pointer"
                         >
                           <ImageIcon size={14} className="text-brand-600" />
-                          <span>Lihat Foto</span>
+                          <span>Lihat Foto ({s.photoUrls?.length || 1})</span>
                         </button>
                       </td>
                       <td className="p-4 font-mono font-black text-indigo-700">
@@ -337,13 +403,23 @@ export const GuruLKPD: React.FC<{
                       </span>
                       <h3 className="font-black text-slate-900 text-base mt-2">{item.title}</h3>
                     </div>
-                    <button
-                      onClick={() => handleDeleteLKPD(item.id)}
-                      className="text-red-500 hover:text-red-700 font-bold p-1.5 rounded-lg hover:bg-red-50 transition-colors cursor-pointer"
-                      title="Hapus LKPD"
-                    >
-                      <Trash2 size={16} />
-                    </button>
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => handleOpenEditLKPD(item)}
+                        className="text-indigo-600 hover:text-indigo-800 font-bold p-1.5 rounded-lg hover:bg-indigo-50 transition-colors cursor-pointer flex items-center gap-1 text-xs"
+                        title="Edit LKPD"
+                      >
+                        <Pencil size={15} />
+                        <span>Edit</span>
+                      </button>
+                      <button
+                        onClick={() => handleDeleteLKPD(item.id)}
+                        className="text-red-500 hover:text-red-700 font-bold p-1.5 rounded-lg hover:bg-red-50 transition-colors cursor-pointer"
+                        title="Hapus LKPD"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
                   </div>
 
                   <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed font-medium">
@@ -624,27 +700,161 @@ export const GuruLKPD: React.FC<{
         </Modal>
       )}
 
-      {/* Student Photo Preview Modal */}
+      {/* Edit LKPD Modal */}
+      {editingLKPD && (
+        <Modal
+          isOpen={!!editingLKPD}
+          onClose={() => setEditingLKPD(null)}
+          title={`Edit Tugas LKPD — ${editingLKPD.title}`}
+          maxWidth="max-w-xl"
+        >
+          <form onSubmit={handleSaveEditLKPD} className="space-y-4">
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">
+                Judul Tugas LKPD:
+              </label>
+              <input
+                type="text"
+                value={editTitle}
+                onChange={e => setEditTitle(e.target.value)}
+                required
+                className="w-full p-3 rounded-xl border border-slate-300 bg-white text-slate-900 text-xs font-bold outline-none focus:border-emerald-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">
+                Deskripsi Singkat:
+              </label>
+              <textarea
+                value={editDesc}
+                onChange={e => setEditDesc(e.target.value)}
+                rows={2}
+                required
+                className="w-full p-3 rounded-xl border border-slate-300 bg-white text-slate-900 text-xs font-medium outline-none focus:border-emerald-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">
+                Tujuan Pembelajaran & Petunjuk:
+              </label>
+              <textarea
+                value={editObjectives}
+                onChange={e => setEditObjectives(e.target.value)}
+                rows={3}
+                className="w-full p-3 rounded-xl border border-slate-300 bg-white text-slate-900 text-xs font-medium outline-none focus:border-emerald-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">
+                Ganti Berkas PDF (Opsional):
+              </label>
+              <input
+                type="file"
+                accept="application/pdf"
+                onChange={handleEditPdfChange}
+                className="w-full text-xs text-slate-600 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 cursor-pointer mb-1"
+              />
+              <span className="text-[11px] text-slate-400 font-mono">File saat ini: {editPdfFilename}</span>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">
+                Ganti Gambar Lembar Kerja (Opsional):
+              </label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleEditImageChange}
+                className="w-full text-xs text-slate-600 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 cursor-pointer"
+              />
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                className="rounded-xl font-bold"
+                onClick={() => setEditingLKPD(null)}
+              >
+                Batal
+              </Button>
+              <Button type="submit" variant="primary" size="sm" className="rounded-xl font-black bg-indigo-600 hover:bg-indigo-700 text-white">
+                Simpan Perubahan LKPD
+              </Button>
+            </div>
+          </form>
+        </Modal>
+      )}
+
+      {/* Student Photo Preview Modal (Supports Multi-Page Gallery) */}
       {viewPhotoUrl && (
         <Modal
           isOpen={!!viewPhotoUrl}
           onClose={() => setViewPhotoUrl(null)}
-          title={`Foto Lembar Kerja — ${viewPhotoUrl.studentName}`}
+          title={`Foto Lembar Kerja — ${viewPhotoUrl.studentName} (${viewPhotoUrl.urls.length} Halaman)`}
           maxWidth="max-w-3xl"
         >
           <div className="space-y-4">
-            <div className="rounded-2xl overflow-hidden border border-slate-200 shadow-inner max-h-[70vh] overflow-y-auto bg-slate-900 flex items-center justify-center p-3">
+            <div className="relative rounded-2xl overflow-hidden border border-slate-200 shadow-inner max-h-[70vh] overflow-y-auto bg-slate-900 flex items-center justify-center p-3">
               <img
-                src={viewPhotoUrl.url}
-                alt="Foto Hasil Kerja Siswa"
+                src={viewPhotoUrl.urls[viewPhotoUrl.activeIdx]}
+                alt={`Halaman ${viewPhotoUrl.activeIdx + 1}`}
                 className="max-h-[65vh] w-auto object-contain rounded-xl shadow-lg"
               />
+
+              {viewPhotoUrl.urls.length > 1 && (
+                <>
+                  <button
+                    type="button"
+                    disabled={viewPhotoUrl.activeIdx === 0}
+                    onClick={() => setViewPhotoUrl(prev => prev ? { ...prev, activeIdx: prev.activeIdx - 1 } : null)}
+                    className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-slate-900/80 text-white rounded-full flex items-center justify-center font-bold shadow-lg disabled:opacity-30 hover:bg-slate-900 cursor-pointer"
+                  >
+                    <ChevronLeft size={20} />
+                  </button>
+                  <button
+                    type="button"
+                    disabled={viewPhotoUrl.activeIdx === viewPhotoUrl.urls.length - 1}
+                    onClick={() => setViewPhotoUrl(prev => prev ? { ...prev, activeIdx: prev.activeIdx + 1 } : null)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-slate-900/80 text-white rounded-full flex items-center justify-center font-bold shadow-lg disabled:opacity-30 hover:bg-slate-900 cursor-pointer"
+                  >
+                    <ChevronRight size={20} />
+                  </button>
+                </>
+              )}
             </div>
+
+            {viewPhotoUrl.urls.length > 1 && (
+              <div className="flex items-center justify-center gap-2 pt-1 overflow-x-auto">
+                {viewPhotoUrl.urls.map((imgUrl, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => setViewPhotoUrl(prev => prev ? { ...prev, activeIdx: i } : null)}
+                    className={`relative w-14 h-14 rounded-xl overflow-hidden border-2 transition-all cursor-pointer ${
+                      viewPhotoUrl.activeIdx === i ? 'border-brand-500 scale-105 shadow-md' : 'border-slate-300 opacity-60 hover:opacity-100'
+                    }`}
+                  >
+                    <img src={imgUrl} alt={`Page ${i+1}`} className="w-full h-full object-cover" />
+                    <span className="absolute bottom-0 right-0 px-1 bg-slate-900/80 text-white font-mono text-[9px] font-bold">
+                      {i + 1}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+
             <div className="flex justify-between items-center bg-slate-50 p-3 rounded-2xl border border-slate-200">
-              <span className="text-xs font-bold text-slate-600">Dokumen Foto Lembar Kerja Terverifikasi</span>
+              <span className="text-xs font-bold text-slate-600">
+                Halaman {viewPhotoUrl.activeIdx + 1} dari {viewPhotoUrl.urls.length} Halaman Terverifikasi
+              </span>
               <div className="flex items-center gap-2">
                 <a
-                  href={viewPhotoUrl.url}
+                  href={viewPhotoUrl.urls[viewPhotoUrl.activeIdx]}
                   target="_blank"
                   rel="noreferrer"
                   className="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5"
