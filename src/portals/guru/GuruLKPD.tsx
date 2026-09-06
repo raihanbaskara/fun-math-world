@@ -209,6 +209,7 @@ export const GuruLKPD: React.FC<{
                 <tr>
                   <th className="p-4">Nama Siswa</th>
                   <th className="p-4">Kelas</th>
+                  <th className="p-4">Tugas LKPD</th>
                   <th className="p-4">Foto Tugas</th>
                   <th className="p-4 font-mono">Skor AI</th>
                   <th className="p-4 font-mono">Nilai Guru</th>
@@ -216,51 +217,59 @@ export const GuruLKPD: React.FC<{
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 bg-white">
-                {submissions.map(s => (
-                  <tr key={s.id} className="hover:bg-slate-50/80 transition-colors">
-                    <td className="p-4">
-                      <div className="font-bold text-slate-900">{s.studentName}</div>
-                      <div className="text-[10px] font-mono text-slate-400">ID: {s.id}</div>
-                    </td>
-                    <td className="p-4 font-medium text-slate-600">{s.studentClass}</td>
-                    <td className="p-4">
-                      <a
-                        href={s.photoUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-brand-700 font-bold hover:bg-brand-50 hover:border-brand-300 transition-all text-xs"
-                      >
-                        <ImageIcon size={14} className="text-brand-600" />
-                        <span>Lihat Foto</span>
-                        <ExternalLink size={12} className="text-slate-400" />
-                      </a>
-                    </td>
-                    <td className="p-4 font-mono font-black text-indigo-700">
-                      <span className="px-2 py-0.5 rounded-md bg-indigo-50 border border-indigo-200/60">
-                        {s.aiScore}/100
-                      </span>
-                    </td>
-                    <td className="p-4 font-mono font-black text-emerald-700">
-                      {s.teacherScore ? (
-                        <span className="px-2 py-0.5 rounded-md bg-emerald-50 border border-emerald-200/60">
-                          {s.teacherScore}/100
+                {submissions.map(s => {
+                  const targetLkpd = lkpdList.find(item => item.id === s.lkpdId);
+                  return (
+                    <tr key={s.id} className="hover:bg-slate-50/80 transition-colors">
+                      <td className="p-4">
+                        <div className="font-bold text-slate-900">{s.studentName}</div>
+                        <div className="text-[10px] font-mono text-slate-400">ID: {s.id}</div>
+                      </td>
+                      <td className="p-4 font-medium text-slate-600">{s.studentClass}</td>
+                      <td className="p-4 font-bold text-slate-800 text-xs">
+                        <span className="px-2.5 py-1 bg-indigo-50 text-indigo-700 rounded-lg border border-indigo-200/80 inline-block max-w-[200px] truncate">
+                          {targetLkpd ? targetLkpd.title : 'LKPD 1'}
                         </span>
-                      ) : (
-                        <span className="text-xs font-bold text-slate-400">Belum Dinilai</span>
-                      )}
-                    </td>
-                    <td className="p-4">
-                      <ArrowFillButton
-                        variant="primary"
-                        size="sm"
-                        className="h-8.5 font-bold text-xs bg-emerald-600 hover:bg-emerald-700 text-white"
-                        onClick={() => handleOpenGrade(s)}
-                      >
-                        <span>Beri Nilai</span>
-                      </ArrowFillButton>
-                    </td>
-                  </tr>
-                ))}
+                      </td>
+                      <td className="p-4">
+                        <a
+                          href={s.photoUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-brand-700 font-bold hover:bg-brand-50 hover:border-brand-300 transition-all text-xs"
+                        >
+                          <ImageIcon size={14} className="text-brand-600" />
+                          <span>Lihat Foto</span>
+                          <ExternalLink size={12} className="text-slate-400" />
+                        </a>
+                      </td>
+                      <td className="p-4 font-mono font-black text-indigo-700">
+                        <span className="px-2 py-0.5 rounded-md bg-indigo-50 border border-indigo-200/60">
+                          {s.aiScore}/100
+                        </span>
+                      </td>
+                      <td className="p-4 font-mono font-black text-emerald-700">
+                        {s.teacherScore ? (
+                          <span className="px-2 py-0.5 rounded-md bg-emerald-50 border border-emerald-200/60">
+                            {s.teacherScore}/100
+                          </span>
+                        ) : (
+                          <span className="text-xs font-bold text-slate-400">Belum Dinilai</span>
+                        )}
+                      </td>
+                      <td className="p-4">
+                        <ArrowFillButton
+                          variant="primary"
+                          size="sm"
+                          className="h-8.5 font-bold text-xs bg-emerald-600 hover:bg-emerald-700 text-white"
+                          onClick={() => handleOpenGrade(s)}
+                        >
+                          <span>Beri Nilai</span>
+                        </ArrowFillButton>
+                      </td>
+                    </tr>
+                  );
+                })}
                 {submissions.length === 0 && (
                   <tr>
                     <td colSpan={6} className="p-8 text-center text-slate-400 font-medium">
