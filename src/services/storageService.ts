@@ -252,15 +252,18 @@ class StorageService {
         .from('app_state')
         .select('data')
         .eq('id', 'main')
-        .single();
+        .maybeSingle();
 
       if (data && data.data) {
         this.state = data.data;
         localStorage.setItem(STORAGE_KEY, JSON.stringify(this.state));
         this.notify();
-      } else if (error && error.code === 'PGRST116') {
-        // Row doesn't exist yet, insert initial state
-        await supabase.from('app_state').insert({ id: 'main', data: this.state });
+      } else {
+        // Row doesn't exist yet, insert current local state to cloud
+        const res = await supabase.from('app_state').upsert({ id: 'main', data: this.state, updated_at: new Date().toISOString() });
+        if (res.error) {
+          console.error('[Supabase RLS Error]', res.error.message);
+        }
       }
 
       // 2. Real-time subscription for live sync between Teacher & Student devices!
