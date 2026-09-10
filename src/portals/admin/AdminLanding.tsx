@@ -39,9 +39,52 @@ export const AdminLanding: React.FC<AdminLandingProps> = ({ onNavigate }) => {
         </div>
       </header>
 
-      {/* 2. MAIN HERO SECTION */}
-      <main className="max-w-5xl mx-auto px-4 sm:px-8 py-16 sm:py-24 flex-1 flex flex-col items-center justify-center text-center space-y-8 w-full">
+      {/* 2. MAIN HERO SECTION WITH FLOATING ACCENTS */}
+      <main className="relative max-w-5xl mx-auto px-4 sm:px-8 py-16 sm:py-24 flex-1 flex flex-col items-center justify-center text-center space-y-8 w-full">
         
+        {/* Floating Math Decorative Elements (Gambar 4 & 5) */}
+        {/* 1. SIGMA [∑] (Top Left Floating) */}
+        <div 
+          style={{ '--rot': '-10deg' } as React.CSSProperties}
+          className="absolute -top-2 left-2 sm:left-6 hidden md:block animate-float-slow select-none pointer-events-none z-10"
+        >
+          <div className="flex items-center gap-1.5 px-3 py-1.5 bg-[#c084fc] text-slate-950 font-mono font-black text-sm rounded-2xl border-3 border-slate-950 shadow-[3.5px_3.5px_0px_0px_#0f172a]">
+            <span>∑</span>
+            <span className="text-xs">DATA</span>
+          </div>
+        </div>
+
+        {/* 2. PI [π] (Top Right Floating) */}
+        <div 
+          style={{ '--rot': '12deg' } as React.CSSProperties}
+          className="absolute -top-3 right-2 sm:right-6 hidden md:block animate-float-reverse select-none pointer-events-none z-10"
+        >
+          <div className="flex items-center gap-1.5 px-3.5 py-1.5 bg-[#a3e635] text-slate-950 font-mono font-black text-sm rounded-2xl border-3 border-slate-950 shadow-[3.5px_3.5px_0px_0px_#0f172a]">
+            <span>π</span>
+            <span className="text-xs">RAD</span>
+          </div>
+        </div>
+
+        {/* 3. SQUARE ROOT [√] (Bottom Left Floating) */}
+        <div 
+          style={{ '--rot': '6deg' } as React.CSSProperties}
+          className="absolute bottom-6 left-4 sm:left-10 hidden lg:block animate-float-reverse select-none pointer-events-none z-10"
+        >
+          <div className="flex items-center gap-1 px-3 py-1 bg-[#38bdf8] text-slate-950 font-mono font-black text-xs rounded-xl border-2 border-slate-950 shadow-[3px_3px_0px_0px_#0f172a]">
+            <span>√x &gt; 0</span>
+          </div>
+        </div>
+
+        {/* 4. FRACTION / RATIO BADGE (Bottom Right Floating) */}
+        <div 
+          style={{ '--rot': '-7deg' } as React.CSSProperties}
+          className="absolute bottom-6 right-4 sm:right-10 hidden lg:block animate-float-slow select-none pointer-events-none z-10"
+        >
+          <div className="flex items-center gap-1.5 px-3 py-1 bg-[#ffe600] text-slate-950 font-mono font-black text-xs rounded-xl border-2 border-slate-950 shadow-[3px_3px_0px_0px_#0f172a]">
+            <span>1/1 Sesi Lock</span>
+          </div>
+        </div>
+
         {/* Dual Neobrutal Eyebrow Badges */}
         <div className="flex flex-wrap items-center justify-center gap-2.5 sm:gap-3">
           <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#c084fc] text-slate-950 border-2 border-slate-950 shadow-[2.5px_2.5px_0px_0px_#0f172a] font-mono font-black text-xs uppercase tracking-wider transform -rotate-1">
@@ -86,9 +129,10 @@ export const AdminLanding: React.FC<AdminLandingProps> = ({ onNavigate }) => {
 
       </main>
 
-      {/* Footer minimal info */}
-      <footer className="py-6 border-t-2 border-slate-950 text-center text-xs font-mono font-bold text-slate-600">
-        Fun Math World • Portal Administrator Sistem SMP Fase D
+      {/* 3. FOOTER (Gambar 3 Neobrutal Standard) */}
+      <footer className="w-full bg-white border-t-2 border-slate-950 py-3.5 px-6 sm:px-12 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs font-mono font-bold text-slate-600">
+        <div>© 2026 Fun Math World — Kurikulum Merdeka Kelas 7 SMP</div>
+        <div className="text-slate-500 font-medium">v2.0 Neobrutal Edition</div>
       </footer>
 
     </div>
