@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowLeft, ShieldAlert, KeyRound, User as UserIcon, Eye, EyeOff } from 'lucide-react';
+import { ArrowLeft, ShieldAlert, User as UserIcon, Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { storageService } from '@/services/storageService';
 import { soundService } from '@/services/soundService';
@@ -54,28 +54,6 @@ export const AdminAuth: React.FC<AdminAuthProps> = ({
     onLoginSuccess(updatedUser);
   };
 
-  const handleQuickDemoAdmin = () => {
-    setUsername('admin');
-    setPassword('admin123');
-    const db = storageService.getState();
-    const user = db.users.find(u => u.username === 'admin' && u.role === 'admin');
-    if (user) {
-      const newSessionToken = "sess_admin_" + Date.now();
-      storageService.update(draft => {
-        const target = draft.users.find(u => u.id === user.id);
-        if (target) target.sessionToken = newSessionToken;
-      });
-      const updatedUser: User = {
-        ...user,
-        sessionToken: newSessionToken,
-      };
-      storageService.setCurrentSessionUser(updatedUser, newSessionToken);
-      soundService.success();
-      showToast(`Login demo admin berhasil sebagai ${updatedUser.name}!`, 'success');
-      onLoginSuccess(updatedUser);
-    }
-  };
-
   return (
     <div className="min-h-screen w-full bg-[#fffdf5] bg-graph-grid flex flex-col items-center justify-center p-4 relative font-sans text-slate-950 select-none">
       
@@ -107,22 +85,6 @@ export const AdminAuth: React.FC<AdminAuthProps> = ({
               Terminal Admin
             </h2>
           </div>
-        </div>
-
-        {/* Demo Sticker */}
-        <div className="p-3 bg-amber-100/80 rounded-2xl border-2 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a] space-y-1.5">
-          <div className="flex items-center justify-between text-xs font-mono font-black text-slate-950">
-            <span>⚡ DEMO AKUN ADMIN:</span>
-            <span className="text-[10px] text-slate-700">1 Klik Autologin</span>
-          </div>
-          <button
-            type="button"
-            onClick={handleQuickDemoAdmin}
-            className="w-full py-2 bg-white text-slate-950 font-mono font-black text-xs rounded-xl border-2 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a] hover:bg-[#ffe600] transition cursor-pointer active:translate-x-0.5 active:translate-y-0.5 active:shadow-none flex items-center justify-center gap-2"
-          >
-            <KeyRound size={14} />
-            <span>Admin: admin (PW: admin123)</span>
-          </button>
         </div>
 
         {/* Login Form */}

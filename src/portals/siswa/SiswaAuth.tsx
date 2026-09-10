@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { ArrowLeft, User as UserIcon, Lock, GraduationCap, ShieldCheck, Eye, EyeOff, Sparkles, BookOpen, KeyRound } from "lucide-react";
+import { ArrowLeft, User as UserIcon, Lock, GraduationCap, ShieldCheck, Eye, EyeOff, Sparkles, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { storageService } from "@/services/storageService";
 import { soundService } from "@/services/soundService";
@@ -116,42 +116,6 @@ export default function SiswaAuthSwitch({
     onLoginSuccess(newUser);
   };
 
-  const handleQuickDemoSiswa = () => {
-    setSignInUsername("Baskara99");
-    setSignInPassword("12345678");
-    handleSignInDirect("Baskara99", "12345678");
-  };
-
-  const handleSignInDirect = (uname: string, pass: string) => {
-    const db = storageService.getState();
-    const user = db.users.find(
-      (u) => u.username === uname && u.password === pass && u.role === "siswa"
-    );
-    if (user) {
-      const newSessionToken = "sess_" + Math.random().toString(36).substring(2) + "_" + Date.now();
-      const deviceId = "dev_" + (navigator.userAgent.replace(/\D/g, "").slice(0, 8) || "web");
-
-      storageService.update((draft) => {
-        const target = draft.users.find((u) => u.id === user.id);
-        if (target) {
-          target.sessionToken = newSessionToken;
-          target.deviceId = deviceId;
-        }
-      });
-
-      const updatedUser: User = {
-        ...user,
-        sessionToken: newSessionToken,
-        deviceId: deviceId,
-      };
-
-      storageService.setCurrentSessionUser(updatedUser, newSessionToken);
-      soundService.success();
-      showToast(`Login demo siswa berhasil (${updatedUser.name})!`, "success");
-      onLoginSuccess(updatedUser);
-    }
-  };
-
   return (
     <div className="min-h-screen w-full bg-[#fffdf5] bg-graph-grid flex flex-col items-center justify-center p-4 relative font-sans text-slate-950 select-none">
       
@@ -167,14 +131,14 @@ export default function SiswaAuthSwitch({
         <span>Kembali ke Beranda</span>
       </button>
 
-      {/* Main Neobrutal Login Card */}
+      {/* Main Neobrutal Card */}
       <div className="w-full max-w-md bg-white border-4 border-slate-950 rounded-3xl p-6 sm:p-8 shadow-[8px_8px_0px_0px_#0f172a] space-y-6 relative my-12">
         
-        {/* Card Header Tag */}
+        {/* Header */}
         <div className="flex items-center justify-between pb-4 border-b-3 border-slate-950">
-          <div className="flex items-center gap-2.5">
-            <div className="w-10 h-10 rounded-2xl bg-[#ffe600] border-2 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a] flex items-center justify-center font-black">
-              <GraduationCap size={22} />
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 rounded-2xl bg-[#ffe600] border-2 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a] flex items-center justify-center font-black">
+              <GraduationCap size={24} />
             </div>
             <div>
               <span className="px-2.5 py-0.5 bg-[#ffe600] text-slate-950 font-mono font-black text-[10px] rounded border border-slate-950 shadow-[1px_1px_0px_0px_#0f172a]">
@@ -208,24 +172,6 @@ export default function SiswaAuthSwitch({
             Daftar Baru
           </button>
         </div>
-
-        {/* Quick Demo Login Sticker Button */}
-        {!isSignUp && (
-          <div className="p-3 bg-amber-100/80 rounded-2xl border-2 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a] space-y-1.5">
-            <div className="flex items-center justify-between text-xs font-mono font-black text-slate-950">
-              <span>⚡ DEMO AKUN SISWA:</span>
-              <span className="text-[10px] text-slate-700">1 Klik Autologin</span>
-            </div>
-            <button
-              type="button"
-              onClick={handleQuickDemoSiswa}
-              className="w-full py-2 bg-white text-slate-950 font-mono font-black text-xs rounded-xl border-2 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a] hover:bg-[#ffe600] transition cursor-pointer active:translate-x-0.5 active:translate-y-0.5 active:shadow-none flex items-center justify-center gap-2"
-            >
-              <KeyRound size={14} />
-              <span>Baskara99 (PW: 12345678)</span>
-            </button>
-          </div>
-        )}
 
         {/* Forms Container */}
         {!isSignUp ? (
