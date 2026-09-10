@@ -151,7 +151,7 @@ export const AdminUsers: React.FC<{
     <div className="space-y-8 max-w-6xl mx-auto font-sans pb-12">
       
       {/* 1. Header Banner Pure Neobrutalism V3 */}
-      <div className="relative rounded-3xl bg-[#c084fc] text-slate-950 border-4 border-slate-950 p-6 sm:p-8 shadow-[8px_8px_0px_0px_#0f172a] overflow-hidden">
+      <div className="relative rounded-3xl bg-[#c084fc] text-slate-950 border-4 border-slate-950 dark:border-slate-700 p-6 sm:p-8 shadow-[8px_8px_0px_0px_#0f172a] dark:shadow-[8px_8px_0px_0px_#000000] overflow-hidden">
         <div className="absolute right-4 bottom-0 text-slate-950/10 font-mono text-8xl font-black pointer-events-none select-none tracking-tight">
           ACCOUNTS
         </div>
@@ -180,19 +180,19 @@ export const AdminUsers: React.FC<{
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex flex-wrap items-center gap-2.5">
           {/* Search Box */}
-          <div className="flex items-center gap-2 bg-white px-3 py-2 rounded-2xl border-3 border-slate-950 shadow-[3px_3px_0px_0px_#0f172a]">
-            <Search size={16} className="text-slate-950" />
+          <div className="flex items-center gap-2 bg-white dark:bg-slate-800 px-3 py-2 rounded-2xl border-3 border-slate-950 dark:border-slate-700 shadow-[3px_3px_0px_0px_#0f172a] dark:shadow-[3px_3px_0px_0px_#000000]">
+            <Search size={16} className="text-slate-950 dark:text-slate-200" />
             <input
               type="text"
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               placeholder="Cari nama / username..."
-              className="text-xs font-bold text-slate-950 outline-none w-36 sm:w-48 bg-transparent"
+              className="text-xs font-bold text-slate-950 dark:text-slate-100 outline-none w-36 sm:w-48 bg-transparent"
             />
           </div>
 
           {/* Role Filter Tabs */}
-          <div className="flex items-center gap-1.5 p-1 bg-white rounded-2xl border-3 border-slate-950 shadow-[3px_3px_0px_0px_#0f172a]">
+          <div className="flex items-center gap-1.5 p-1 bg-white dark:bg-[#111827] rounded-2xl border-3 border-slate-950 dark:border-slate-700 shadow-[3px_3px_0px_0px_#0f172a] dark:shadow-[3px_3px_0px_0px_#000000]">
             {(['all', 'siswa', 'guru', 'admin'] as const).map(r => (
               <button
                 key={r}
@@ -204,7 +204,7 @@ export const AdminUsers: React.FC<{
                 className={`px-3 py-1.5 rounded-xl text-xs font-mono font-black uppercase transition-all cursor-pointer ${
                   filterRole === r
                     ? 'bg-[#ffe600] text-slate-950 border-2 border-slate-950 shadow-[1.5px_1.5px_0px_0px_#0f172a]'
-                    : 'text-slate-600 hover:text-slate-950'
+                    : 'text-slate-600 dark:text-slate-300 hover:text-slate-950 dark:hover:text-white'
                 }`}
               >
                 {r === 'all' ? 'Semua' : r}
@@ -227,13 +227,13 @@ export const AdminUsers: React.FC<{
       </div>
 
       {/* 3. Users Table Pure Neo-Brutalism */}
-      <div className="rounded-3xl bg-white border-4 border-slate-950 p-6 shadow-[7px_7px_0px_0px_#0f172a] space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b-2 border-slate-950">
-          <h2 className="text-lg font-black text-slate-950 font-mono flex items-center gap-2">
-            <Users size={20} className="text-purple-700" />
+      <div className="rounded-3xl bg-white dark:bg-[#111827] border-4 border-slate-950 dark:border-slate-700 p-6 shadow-[7px_7px_0px_0px_#0f172a] dark:shadow-[7px_7px_0px_0px_#000000] space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b-2 border-slate-950 dark:border-slate-700">
+          <h2 className="text-lg font-black text-slate-950 dark:text-slate-100 font-mono flex items-center gap-2">
+            <Users size={20} className="text-purple-700 dark:text-purple-400" />
             <span>Daftar Kredensial Pengguna Sistem</span>
           </h2>
-          <span className="text-xs font-mono font-bold text-slate-500">
+          <span className="text-xs font-mono font-bold text-slate-500 dark:text-slate-400">
             Menampilkan {filteredUsers.length} dari {users.length} Akun
           </span>
         </div>
@@ -263,19 +263,19 @@ export const AdminUsers: React.FC<{
                 <th className="p-3.5 text-center">Tindakan</th>
               </tr>
             </thead>
-            <tbody className="divide-y-2 divide-slate-200 bg-white">
+            <tbody className="divide-y-2 divide-slate-200 dark:divide-slate-800 bg-white dark:bg-[#111827]">
               {filteredUsers.map(u => (
-                <tr key={u.id} className="hover:bg-amber-50/50 transition-colors">
+                <tr key={u.id} className="hover:bg-amber-50/50 dark:hover:bg-slate-800/60 transition-colors">
                   <td className="p-3.5">
                     <div className="flex items-center gap-3">
                       <img
                         src={u.avatar}
                         alt={u.name}
-                        className="w-9 h-9 rounded-xl border-2 border-slate-950 bg-slate-50 object-cover shrink-0 shadow-[1.5px_1.5px_0px_0px_#0f172a]"
+                        className="w-9 h-9 rounded-xl border-2 border-slate-950 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 object-cover shrink-0 shadow-[1.5px_1.5px_0px_0px_#0f172a]"
                       />
                       <div>
-                        <div className="font-black text-slate-950 text-sm">{u.name}</div>
-                        <div className="text-[10px] font-mono font-bold text-slate-500">ID: {u.id}</div>
+                        <div className="font-black text-slate-950 dark:text-slate-100 text-sm">{u.name}</div>
+                        <div className="text-[10px] font-mono font-bold text-slate-500 dark:text-slate-400">ID: {u.id}</div>
                       </div>
                     </div>
                   </td>
@@ -291,19 +291,19 @@ export const AdminUsers: React.FC<{
                     </span>
                   </td>
                   <td className="p-3.5 font-mono">
-                    <span className="inline-block whitespace-nowrap font-black text-slate-950 bg-slate-100 border-2 border-slate-950 px-2.5 py-1 rounded-xl text-xs shadow-[1.5px_1.5px_0px_0px_#0f172a]">
+                    <span className="inline-block whitespace-nowrap font-black text-slate-950 dark:text-slate-100 bg-slate-100 dark:bg-slate-800 border-2 border-slate-950 dark:border-slate-700 px-2.5 py-1 rounded-xl text-xs shadow-[1.5px_1.5px_0px_0px_#0f172a]">
                       {u.username}
                     </span>
                   </td>
                   <td className="p-3.5 font-mono">
                     <div className="flex items-center gap-1.5">
-                      <span className="font-mono font-black text-purple-950 bg-purple-100 border-2 border-slate-950 px-2.5 py-1 rounded-xl text-xs min-w-[90px] text-center inline-block shadow-[1.5px_1.5px_0px_0px_#0f172a]">
+                      <span className="font-mono font-black text-purple-950 dark:text-purple-200 bg-purple-100 dark:bg-purple-950/70 border-2 border-slate-950 dark:border-purple-800 px-2.5 py-1 rounded-xl text-xs min-w-[90px] text-center inline-block shadow-[1.5px_1.5px_0px_0px_#0f172a]">
                         {passwordVisibilityMap[u.id] ? u.password : '••••••••'}
                       </span>
                       <button
                         type="button"
                         onClick={() => togglePasswordVisibility(u.id)}
-                        className="p-1.5 rounded-lg bg-white hover:bg-purple-100 border-2 border-slate-950 text-slate-950 transition-colors cursor-pointer shadow-[1px_1px_0px_0px_#0f172a]"
+                        className="p-1.5 rounded-lg bg-white dark:bg-slate-800 hover:bg-purple-100 dark:hover:bg-slate-700 border-2 border-slate-950 dark:border-slate-700 text-slate-950 dark:text-slate-100 transition-colors cursor-pointer shadow-[1px_1px_0px_0px_#0f172a]"
                         title={passwordVisibilityMap[u.id] ? "Sembunyikan Password" : "Lihat Password"}
                       >
                         {passwordVisibilityMap[u.id] ? <EyeOff size={14} /> : <Eye size={14} />}
@@ -311,14 +311,14 @@ export const AdminUsers: React.FC<{
                       <button
                         type="button"
                         onClick={() => handleCopyCredentials(u)}
-                        className="p-1.5 rounded-lg bg-white hover:bg-amber-100 border-2 border-slate-950 text-slate-950 transition-colors cursor-pointer shadow-[1px_1px_0px_0px_#0f172a]"
+                        className="p-1.5 rounded-lg bg-white dark:bg-slate-800 hover:bg-amber-100 dark:hover:bg-slate-700 border-2 border-slate-950 dark:border-slate-700 text-slate-950 dark:text-slate-100 transition-colors cursor-pointer shadow-[1px_1px_0px_0px_#0f172a]"
                         title="Salin Username & Password"
                       >
-                        {copiedId === u.id ? <Check size={14} className="text-emerald-700 font-bold" /> : <Copy size={14} />}
+                        {copiedId === u.id ? <Check size={14} className="text-emerald-700 dark:text-emerald-400 font-bold" /> : <Copy size={14} />}
                       </button>
                     </div>
                   </td>
-                  <td className="p-3.5 font-bold text-slate-800">{u.class || '-'}</td>
+                  <td className="p-3.5 font-bold text-slate-800 dark:text-slate-200">{u.class || '-'}</td>
                   <td className="p-3.5">
                     {u.sessionToken ? (
                       <span className="inline-flex whitespace-nowrap text-slate-950 bg-rose-200 border-2 border-slate-950 px-2.5 py-1 rounded-xl font-black text-xs items-center gap-1 font-mono shadow-[1.5px_1.5px_0px_0px_#0f172a]">
@@ -339,7 +339,7 @@ export const AdminUsers: React.FC<{
                         title="Lepas Kunci Sesi Perangkat"
                       >
                         <Unlock size={13} />
-                        <span>Reset Kunci</span>
+                        <span>Reset</span>
                       </button>
                       {u.id !== currentUser.id && (
                         <button
@@ -348,7 +348,8 @@ export const AdminUsers: React.FC<{
                           className="text-xs font-mono font-black text-rose-950 bg-rose-100 hover:bg-rose-200 border-2 border-slate-950 px-2.5 py-1.5 rounded-xl transition-all shadow-[2px_2px_0px_0px_#0f172a] active:translate-x-0.5 active:translate-y-0.5 cursor-pointer flex items-center gap-1"
                           title="Hapus Akun"
                         >
-                          <Trash2 size={13} />
+                          <Trash2 size={13} className="text-rose-700" />
+                          <span>Hapus</span>
                         </button>
                       )}
                     </div>
@@ -358,7 +359,7 @@ export const AdminUsers: React.FC<{
 
               {filteredUsers.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="p-8 text-center text-slate-500 font-bold">
+                  <td colSpan={7} className="p-8 text-center text-slate-500 dark:text-slate-400 font-bold">
                     Tidak ada akun pengguna yang cocok dengan pencarian / filter.
                   </td>
                 </tr>
@@ -369,103 +370,107 @@ export const AdminUsers: React.FC<{
       </div>
 
       {/* 4. Modal Tambah Pengguna Baru */}
-      <Modal
-        isOpen={isAddOpen}
-        onClose={() => setIsAddOpen(false)}
-        title="Daftarkan Akun Pengguna Baru"
-        maxWidth="max-w-xl"
-      >
-        <form onSubmit={handleAddUser} className="space-y-4">
-          <div>
-            <label className="block text-xs font-mono font-black uppercase tracking-wider text-slate-900 mb-1.5">
-              Peran Pengguna (Role):
-            </label>
-            <select
-              value={role}
-              onChange={e => setRole(e.target.value as UserRole)}
-              className="w-full p-3 rounded-xl border-2 border-slate-950 bg-white text-slate-900 text-xs sm:text-sm font-black shadow-[2px_2px_0px_0px_#0f172a] outline-none font-mono"
-            >
-              <option value="siswa">Siswa SMP</option>
-              <option value="guru">Guru Matematika</option>
-              <option value="admin">Administrator Lab</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-xs font-mono font-black uppercase tracking-wider text-slate-900 mb-1.5">
-              Nama Lengkap:
-            </label>
-            <input
-              type="text"
-              required
-              value={name}
-              onChange={e => setName(e.target.value)}
-              placeholder="Contoh: Dimas Aditya"
-              className="w-full p-3 rounded-xl border-2 border-slate-950 bg-white text-slate-900 text-sm font-bold shadow-[2px_2px_0px_0px_#0f172a] outline-none focus:bg-amber-50"
-            />
-          </div>
-
-          {role === 'siswa' && (
+      {isAddOpen && (
+        <Modal
+          isOpen={isAddOpen}
+          onClose={() => setIsAddOpen(false)}
+          title="Daftarkan Akun Pengguna Baru"
+          maxWidth="max-w-xl"
+        >
+          <form onSubmit={handleAddUser} className="space-y-4">
             <div>
-              <label className="block text-xs font-mono font-black uppercase tracking-wider text-slate-900 mb-1.5">
-                Rombel / Kelas Siswa:
+              <label className="block text-xs font-mono font-black uppercase tracking-wider text-slate-950 dark:text-slate-200 mb-1.5">
+                Peran Pengguna (Role):
+              </label>
+              <select
+                value={role}
+                onChange={e => setRole(e.target.value as UserRole)}
+                className="w-full p-3 rounded-2xl border-3 border-slate-950 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-950 dark:text-slate-100 text-xs font-black shadow-[2px_2px_0px_0px_#0f172a] outline-none"
+              >
+                <option value="siswa">Siswa SMP</option>
+                <option value="guru">Guru Matematika</option>
+                <option value="admin">Administrator Lab</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-xs font-mono font-black uppercase tracking-wider text-slate-950 dark:text-slate-200 mb-1.5">
+                Nama Lengkap:
               </label>
               <input
                 type="text"
                 required
-                value={userClass}
-                onChange={e => setUserClass(e.target.value)}
-                placeholder="Contoh: Kelas 7-A"
-                className="w-full p-3 rounded-xl border-2 border-slate-950 bg-white text-slate-900 text-sm font-bold shadow-[2px_2px_0px_0px_#0f172a] outline-none focus:bg-amber-50"
+                value={name}
+                onChange={e => setName(e.target.value)}
+                placeholder="Contoh: Dimas Aditya"
+                className="w-full p-3 rounded-2xl border-3 border-slate-950 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-950 dark:text-slate-100 text-xs font-bold shadow-[2px_2px_0px_0px_#0f172a] outline-none"
               />
             </div>
-          )}
 
-          <div>
-            <label className="block text-xs font-mono font-black uppercase tracking-wider text-slate-900 mb-1.5">
-              Username / NIS:
-            </label>
-            <input
-              type="text"
-              required
-              value={username}
-              onChange={e => setUsername(e.target.value)}
-              placeholder="Contoh: siswa_dimas atau 102938"
-              className="w-full p-3 rounded-xl border-2 border-slate-950 bg-white text-slate-900 text-sm font-black shadow-[2px_2px_0px_0px_#0f172a] outline-none font-mono"
-            />
-          </div>
+            {role === 'siswa' && (
+              <div>
+                <label className="block text-xs font-mono font-black uppercase tracking-wider text-slate-950 dark:text-slate-200 mb-1.5">
+                  Rombel / Kelas Siswa:
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={userClass}
+                  onChange={e => setUserClass(e.target.value)}
+                  placeholder="Contoh: Kelas 7-A"
+                  className="w-full p-3 rounded-2xl border-3 border-slate-950 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-950 dark:text-slate-100 text-xs font-bold shadow-[2px_2px_0px_0px_#0f172a] outline-none"
+                />
+              </div>
+            )}
 
-          <div>
-            <label className="block text-xs font-mono font-black uppercase tracking-wider text-slate-900 mb-1.5">
-              Kata Sandi (Password):
-            </label>
-            <input
-              type="password"
-              required
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              placeholder="••••••••"
-              className="w-full p-3 rounded-xl border-2 border-slate-950 bg-white text-slate-900 text-sm font-black shadow-[2px_2px_0px_0px_#0f172a] outline-none"
-            />
-          </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-mono font-black uppercase tracking-wider text-slate-950 dark:text-slate-200 mb-1.5">
+                  Username / NIS:
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={username}
+                  onChange={e => setUsername(e.target.value)}
+                  placeholder="Contoh: siswa_dimas"
+                  className="w-full p-3 rounded-2xl border-3 border-slate-950 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-950 dark:text-slate-100 text-xs font-mono font-bold shadow-[2px_2px_0px_0px_#0f172a] outline-none"
+                />
+              </div>
 
-          <div className="flex justify-end gap-2.5 pt-3 border-t-2 border-slate-950">
-            <button
-              type="button"
-              onClick={() => setIsAddOpen(false)}
-              className="px-4 py-2 rounded-xl bg-white hover:bg-slate-100 text-slate-950 font-mono font-black text-xs border-2 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a] active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
-            >
-              Batal
-            </button>
-            <button
-              type="submit"
-              className="px-5 py-2 rounded-xl bg-[#ffe600] hover:bg-yellow-400 text-slate-950 font-mono font-black text-xs uppercase tracking-wider border-2 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a] active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
-            >
-              Daftarkan Akun
-            </button>
-          </div>
-        </form>
-      </Modal>
+              <div>
+                <label className="block text-xs font-mono font-black uppercase tracking-wider text-slate-950 dark:text-slate-200 mb-1.5">
+                  Kata Sandi (Password):
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="w-full p-3 rounded-2xl border-3 border-slate-950 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-950 dark:text-slate-100 text-xs font-mono font-bold shadow-[2px_2px_0px_0px_#0f172a] outline-none"
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3 pt-3 border-t-2 border-slate-950 dark:border-slate-700">
+              <button
+                type="button"
+                onClick={() => setIsAddOpen(false)}
+                className="px-5 py-2.5 rounded-xl font-mono font-bold text-xs bg-slate-200 dark:bg-slate-800 border-2 border-slate-950 dark:border-slate-700 text-slate-950 dark:text-slate-200 cursor-pointer"
+              >
+                Batal
+              </button>
+              <button
+                type="submit"
+                className="px-6 py-2.5 rounded-xl font-mono font-black text-xs uppercase bg-[#ffe600] text-slate-950 border-3 border-slate-950 shadow-[3px_3px_0px_0px_#0f172a] hover:bg-yellow-400 cursor-pointer active:translate-x-0.5 active:translate-y-0.5 transition-all"
+              >
+                Daftarkan Akun
+              </button>
+            </div>
+          </form>
+        </Modal>
+      )}
 
     </div>
   );

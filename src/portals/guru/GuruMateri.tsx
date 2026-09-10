@@ -141,7 +141,7 @@ export const GuruMateri: React.FC<{
     <div className="space-y-8 max-w-6xl mx-auto font-sans pb-12">
       
       {/* 1. Header Banner Pure Neobrutalism V3 */}
-      <div className="relative rounded-3xl bg-[#a3e635] border-4 border-slate-950 p-6 sm:p-8 shadow-[8px_8px_0px_0px_#0f172a] overflow-hidden text-slate-950">
+      <div className="relative rounded-3xl bg-[#a3e635] border-4 border-slate-950 dark:border-slate-700 p-6 sm:p-8 shadow-[8px_8px_0px_0px_#0f172a] dark:shadow-[8px_8px_0px_0px_#000000] overflow-hidden text-slate-950">
         <div className="absolute right-4 bottom-0 text-slate-950/10 font-mono text-8xl font-black pointer-events-none select-none">
           THEORY
         </div>
@@ -174,7 +174,7 @@ export const GuruMateri: React.FC<{
 
       {/* 2. Neobrutalist Tab Switcher */}
       <div className="flex items-center justify-between flex-wrap gap-4">
-        <div className="flex items-center gap-2 p-1.5 bg-white border-3 border-slate-950 rounded-2xl shadow-[4px_4px_0px_0px_#0f172a]">
+        <div className="flex items-center gap-2 p-1.5 bg-white dark:bg-[#111827] border-3 border-slate-950 dark:border-slate-700 rounded-2xl shadow-[4px_4px_0px_0px_#0f172a] dark:shadow-[4px_4px_0px_0px_#000000]">
           <button
             type="button"
             onClick={() => {
@@ -184,7 +184,7 @@ export const GuruMateri: React.FC<{
             className={`px-4 sm:px-5 py-2 rounded-xl text-xs font-mono font-black transition-all cursor-pointer border-2 flex items-center gap-1.5 ${
               activeTab === 'materi'
                 ? 'bg-[#ffe600] text-slate-950 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a]'
-                : 'border-transparent text-slate-700 hover:text-slate-950'
+                : 'border-transparent text-slate-700 dark:text-slate-300 hover:text-slate-950 dark:hover:text-white'
             }`}
           >
             <BookOpen size={14} />
@@ -199,7 +199,7 @@ export const GuruMateri: React.FC<{
             className={`px-4 sm:px-5 py-2 rounded-xl text-xs font-mono font-black transition-all cursor-pointer border-2 flex items-center gap-1.5 ${
               activeTab === 'video'
                 ? 'bg-[#38bdf8] text-slate-950 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a]'
-                : 'border-transparent text-slate-700 hover:text-slate-950'
+                : 'border-transparent text-slate-700 dark:text-slate-300 hover:text-slate-950 dark:hover:text-white'
             }`}
           >
             <Video size={14} />
@@ -232,7 +232,7 @@ export const GuruMateri: React.FC<{
       {activeTab === 'materi' && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {db.materials.map((m, idx) => (
-            <div key={m.id} className="rounded-3xl bg-white border-4 border-slate-950 p-6 shadow-[6px_6px_0px_0px_#0f172a] space-y-4 flex flex-col justify-between">
+            <div key={m.id} className="rounded-3xl bg-white dark:bg-[#111827] border-4 border-slate-950 dark:border-slate-700 p-6 shadow-[6px_6px_0px_0px_#0f172a] dark:shadow-[6px_6px_0px_0px_#000000] space-y-4 flex flex-col justify-between">
               <div className="space-y-3">
                 <div className="flex justify-between items-center text-xs">
                   <span className="px-2.5 py-0.5 rounded-lg bg-[#ffe600] text-slate-950 border-2 border-slate-950 font-mono font-black shadow-[1.5px_1.5px_0px_0px_#0f172a]">
@@ -247,8 +247,8 @@ export const GuruMateri: React.FC<{
                   </button>
                 </div>
 
-                <h3 className="text-lg font-black text-slate-950 font-mono">{m.title}</h3>
-                <div className="text-xs sm:text-sm text-slate-700 leading-relaxed font-bold">
+                <h3 className="text-lg font-black text-slate-950 dark:text-slate-100 font-mono">{m.title}</h3>
+                <div className="text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed font-bold">
                   {renderFormattedMathText(m.content, 'xs')}
                 </div>
 
@@ -259,9 +259,9 @@ export const GuruMateri: React.FC<{
                       download={m.fileName}
                       target="_blank"
                       rel="noreferrer"
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-sky-100 text-slate-950 border-2 border-slate-950 font-mono text-xs font-black shadow-[2px_2px_0px_0px_#0f172a] hover:bg-sky-200 transition"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-sky-100 dark:bg-sky-950 text-slate-950 dark:text-sky-200 border-2 border-slate-950 dark:border-sky-700 font-mono text-xs font-black shadow-[2px_2px_0px_0px_#0f172a] hover:bg-sky-200 transition"
                     >
-                      <FileText size={14} className="text-slate-950" />
+                      <FileText size={14} className="text-slate-950 dark:text-sky-200" />
                       <span>Unduh Berkas: {m.fileName}</span>
                     </a>
                   </div>
@@ -276,8 +276,8 @@ export const GuruMateri: React.FC<{
       {activeTab === 'video' && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {(db.videos || []).map(v => (
-            <div key={v.id} className="rounded-3xl bg-white border-4 border-slate-950 p-6 shadow-[6px_6px_0px_0px_#0f172a] space-y-4">
-              <div className="aspect-video w-full rounded-2xl overflow-hidden bg-slate-950 border-3 border-slate-950 shadow-[4px_4px_0px_0px_#0f172a]">
+            <div key={v.id} className="rounded-3xl bg-white dark:bg-[#111827] border-4 border-slate-950 dark:border-slate-700 p-6 shadow-[6px_6px_0px_0px_#0f172a] dark:shadow-[6px_6px_0px_0px_#000000] space-y-4">
+              <div className="aspect-video w-full rounded-2xl overflow-hidden bg-slate-950 border-3 border-slate-950 dark:border-slate-700 shadow-[4px_4px_0px_0px_#0f172a] dark:shadow-[4px_4px_0px_0px_#000000]">
                 <iframe
                   className="w-full h-full"
                   src={v.url}
@@ -302,9 +302,9 @@ export const GuruMateri: React.FC<{
                   </button>
                 </div>
 
-                <h3 className="font-black text-base sm:text-lg text-slate-950 font-mono">{v.title}</h3>
+                <h3 className="font-black text-base sm:text-lg text-slate-950 dark:text-slate-100 font-mono">{v.title}</h3>
                 {v.desc && (
-                  <p className="text-xs text-slate-700 font-bold leading-relaxed">
+                  <p className="text-xs text-slate-700 dark:text-slate-300 font-bold leading-relaxed">
                     {v.desc}
                   </p>
                 )}
@@ -313,7 +313,7 @@ export const GuruMateri: React.FC<{
           ))}
 
           {(db.videos || []).length === 0 && (
-            <div className="col-span-2 p-12 text-center text-slate-500 font-bold bg-white rounded-3xl border-4 border-slate-950 shadow-[5px_5px_0px_0px_#0f172a]">
+            <div className="col-span-2 p-12 text-center text-slate-500 dark:text-slate-400 font-bold bg-white dark:bg-[#111827] rounded-3xl border-4 border-slate-950 dark:border-slate-700 shadow-[5px_5px_0px_0px_#0f172a] dark:shadow-[5px_5px_0px_0px_#000000]">
               Belum ada video pembelajaran. Klik tombol "Tambah Video YouTube" di atas untuk menambahkan.
             </div>
           )}
@@ -329,7 +329,7 @@ export const GuruMateri: React.FC<{
         >
           <form onSubmit={handleAddMaterial} className="space-y-4">
             <div>
-              <label className="block text-xs font-mono font-black uppercase tracking-wider text-slate-950 mb-1.5">
+              <label className="block text-xs font-mono font-black uppercase tracking-wider text-slate-950 dark:text-slate-200 mb-1.5">
                 Judul Subbab Materi:
               </label>
               <input
@@ -338,12 +338,12 @@ export const GuruMateri: React.FC<{
                 value={materialTitle}
                 onChange={e => setMaterialTitle(e.target.value)}
                 placeholder="Contoh: Operasi Penjumlahan Pecahan Campuran"
-                className="w-full p-3.5 rounded-2xl border-3 border-slate-950 bg-slate-50 text-slate-950 text-sm font-bold shadow-[2px_2px_0px_0px_#0f172a] focus:bg-white outline-none"
+                className="w-full p-3.5 rounded-2xl border-3 border-slate-950 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-950 dark:text-slate-100 text-sm font-bold shadow-[2px_2px_0px_0px_#0f172a] focus:bg-white dark:focus:bg-slate-700 outline-none"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-mono font-black uppercase tracking-wider text-slate-950 mb-1.5">
+              <label className="block text-xs font-mono font-black uppercase tracking-wider text-slate-950 dark:text-slate-200 mb-1.5">
                 Kategori / Badge:
               </label>
               <input
@@ -352,12 +352,12 @@ export const GuruMateri: React.FC<{
                 value={materialBadge}
                 onChange={e => setMaterialBadge(e.target.value)}
                 placeholder="Contoh: Operasi Hitung"
-                className="w-full p-3.5 rounded-2xl border-3 border-slate-950 bg-slate-50 text-slate-950 text-sm font-bold shadow-[2px_2px_0px_0px_#0f172a] focus:bg-white outline-none"
+                className="w-full p-3.5 rounded-2xl border-3 border-slate-950 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-950 dark:text-slate-100 text-sm font-bold shadow-[2px_2px_0px_0px_#0f172a] focus:bg-white dark:focus:bg-slate-700 outline-none"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-mono font-black uppercase tracking-wider text-slate-950 mb-1.5">
+              <label className="block text-xs font-mono font-black uppercase tracking-wider text-slate-950 dark:text-slate-200 mb-1.5">
                 Isi Penjelasan Singkat Materi:
               </label>
               <textarea
@@ -365,22 +365,22 @@ export const GuruMateri: React.FC<{
                 value={materialContent}
                 onChange={e => setMaterialContent(e.target.value)}
                 placeholder="Tuliskan ringkasan materi atau biarkan kosong jika hanya upload berkas dokumen..."
-                className="w-full p-3.5 rounded-2xl border-3 border-slate-950 bg-slate-50 text-slate-950 text-xs sm:text-sm font-bold shadow-[2px_2px_0px_0px_#0f172a] focus:bg-white outline-none leading-relaxed"
+                className="w-full p-3.5 rounded-2xl border-3 border-slate-950 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-950 dark:text-slate-100 text-xs sm:text-sm font-bold shadow-[2px_2px_0px_0px_#0f172a] focus:bg-white dark:focus:bg-slate-700 outline-none leading-relaxed"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-mono font-black uppercase tracking-wider text-slate-950 mb-1.5">
+              <label className="block text-xs font-mono font-black uppercase tracking-wider text-slate-950 dark:text-slate-200 mb-1.5">
                 Unggah Dokumen Berkas Materi (PDF / PPT / DOCX / Gambar):
               </label>
               <input
                 type="file"
                 accept=".pdf,.ppt,.pptx,.doc,.docx,.png,.jpg,.jpeg"
                 onChange={handleFileUpload}
-                className="w-full text-xs text-slate-600 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-2 file:border-slate-950 file:text-xs file:font-mono file:font-black file:bg-[#ffe600] file:text-slate-950 hover:file:bg-yellow-400 cursor-pointer"
+                className="w-full text-xs text-slate-600 dark:text-slate-300 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-2 file:border-slate-950 file:text-xs file:font-mono file:font-black file:bg-[#ffe600] file:text-slate-950 hover:file:bg-yellow-400 cursor-pointer"
               />
               {materialFile && (
-                <span className="text-xs font-mono font-bold text-emerald-700 mt-1.5 block">
+                <span className="text-xs font-mono font-bold text-emerald-700 dark:text-emerald-400 mt-1.5 block">
                   ✓ Berkas terpilih: {materialFile.name}
                 </span>
               )}
@@ -389,7 +389,7 @@ export const GuruMateri: React.FC<{
             <div className="flex justify-end gap-3 pt-2">
               <button
                 type="button"
-                className="px-5 py-2.5 rounded-xl font-mono font-bold text-xs bg-slate-200 border-2 border-slate-950 text-slate-950 cursor-pointer"
+                className="px-5 py-2.5 rounded-xl font-mono font-bold text-xs bg-slate-200 dark:bg-slate-800 border-2 border-slate-950 dark:border-slate-700 text-slate-950 dark:text-slate-200 cursor-pointer"
                 onClick={() => setIsAddMaterialOpen(false)}
               >
                 Batal
@@ -414,7 +414,7 @@ export const GuruMateri: React.FC<{
         >
           <form onSubmit={handleAddVideo} className="space-y-4">
             <div>
-              <label className="block text-xs font-mono font-black uppercase tracking-wider text-slate-950 mb-1.5">
+              <label className="block text-xs font-mono font-black uppercase tracking-wider text-slate-950 dark:text-slate-200 mb-1.5">
                 Judul Video:
               </label>
               <input
@@ -423,12 +423,12 @@ export const GuruMateri: React.FC<{
                 value={videoTitle}
                 onChange={e => setVideoTitle(e.target.value)}
                 placeholder="Contoh: Konsep Pecahan Senilai & Geometri Pizza"
-                className="w-full p-3.5 rounded-2xl border-3 border-slate-950 bg-slate-50 text-slate-950 text-sm font-bold shadow-[2px_2px_0px_0px_#0f172a] focus:bg-white outline-none"
+                className="w-full p-3.5 rounded-2xl border-3 border-slate-950 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-950 dark:text-slate-100 text-sm font-bold shadow-[2px_2px_0px_0px_#0f172a] focus:bg-white dark:focus:bg-slate-700 outline-none"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-mono font-black uppercase tracking-wider text-slate-950 mb-1.5">
+              <label className="block text-xs font-mono font-black uppercase tracking-wider text-slate-950 dark:text-slate-200 mb-1.5">
                 Tautan / URL Video YouTube:
               </label>
               <input
@@ -437,12 +437,12 @@ export const GuruMateri: React.FC<{
                 value={videoUrl}
                 onChange={e => setVideoUrl(e.target.value)}
                 placeholder="Contoh: https://www.youtube.com/watch?v=... atau https://youtu.be/..."
-                className="w-full p-3.5 rounded-2xl border-3 border-slate-950 bg-slate-50 text-slate-950 text-sm font-mono shadow-[2px_2px_0px_0px_#0f172a] focus:bg-white outline-none"
+                className="w-full p-3.5 rounded-2xl border-3 border-slate-950 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-950 dark:text-slate-100 text-sm font-mono shadow-[2px_2px_0px_0px_#0f172a] focus:bg-white dark:focus:bg-slate-700 outline-none"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-mono font-black uppercase tracking-wider text-slate-950 mb-1.5">
+              <label className="block text-xs font-mono font-black uppercase tracking-wider text-slate-950 dark:text-slate-200 mb-1.5">
                 Durasi Video (Menit):
               </label>
               <input
@@ -451,12 +451,12 @@ export const GuruMateri: React.FC<{
                 value={videoDuration}
                 onChange={e => setVideoDuration(e.target.value)}
                 placeholder="Contoh: 12"
-                className="w-full p-3.5 rounded-2xl border-3 border-slate-950 bg-slate-50 text-slate-950 text-sm font-mono font-bold shadow-[2px_2px_0px_0px_#0f172a] focus:bg-white outline-none"
+                className="w-full p-3.5 rounded-2xl border-3 border-slate-950 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-950 dark:text-slate-100 text-sm font-mono font-bold shadow-[2px_2px_0px_0px_#0f172a] focus:bg-white dark:focus:bg-slate-700 outline-none"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-mono font-black uppercase tracking-wider text-slate-950 mb-1.5">
+              <label className="block text-xs font-mono font-black uppercase tracking-wider text-slate-950 dark:text-slate-200 mb-1.5">
                 Deskripsi Singkat Video:
               </label>
               <textarea
@@ -464,14 +464,14 @@ export const GuruMateri: React.FC<{
                 value={videoDesc}
                 onChange={e => setVideoDesc(e.target.value)}
                 placeholder="Penjelasan ringkas poin materi yang dibahas dalam video..."
-                className="w-full p-3.5 rounded-2xl border-3 border-slate-950 bg-slate-50 text-slate-950 text-xs sm:text-sm font-bold shadow-[2px_2px_0px_0px_#0f172a] focus:bg-white outline-none leading-relaxed"
+                className="w-full p-3.5 rounded-2xl border-3 border-slate-950 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-950 dark:text-slate-100 text-xs sm:text-sm font-bold shadow-[2px_2px_0px_0px_#0f172a] focus:bg-white dark:focus:bg-slate-700 outline-none leading-relaxed"
               />
             </div>
 
             <div className="flex justify-end gap-3 pt-2">
               <button
                 type="button"
-                className="px-5 py-2.5 rounded-xl font-mono font-bold text-xs bg-slate-200 border-2 border-slate-950 text-slate-950 cursor-pointer"
+                className="px-5 py-2.5 rounded-xl font-mono font-bold text-xs bg-slate-200 dark:bg-slate-800 border-2 border-slate-950 dark:border-slate-700 text-slate-950 dark:text-slate-200 cursor-pointer"
                 onClick={() => setIsAddVideoOpen(false)}
               >
                 Batal

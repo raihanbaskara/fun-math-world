@@ -77,7 +77,7 @@ export const GuruRekap: React.FC<{
     <div className="space-y-8 max-w-6xl mx-auto font-sans pb-12">
       
       {/* Header Banner Pure Neobrutalism V3 */}
-      <div className="relative rounded-3xl bg-[#ffe600] border-4 border-slate-950 p-6 sm:p-8 shadow-[8px_8px_0px_0px_#0f172a] overflow-hidden text-slate-950">
+      <div className="relative rounded-3xl bg-[#ffe600] border-4 border-slate-950 dark:border-slate-700 p-6 sm:p-8 shadow-[8px_8px_0px_0px_#0f172a] dark:shadow-[8px_8px_0px_0px_#000000] overflow-hidden text-slate-950">
         <div className="absolute right-4 bottom-0 text-slate-950/10 font-mono text-8xl font-black pointer-events-none select-none">
           EXCEL
         </div>
@@ -107,7 +107,7 @@ export const GuruRekap: React.FC<{
               variant="primary"
               size="lg"
               onClick={handleExportExcel}
-              className="bg-white text-slate-950 font-black border-3 border-slate-950 shadow-[4px_4px_0px_0px_#0f172a] hover:bg-yellow-100 shrink-0"
+              className="bg-white dark:bg-slate-900 text-slate-950 dark:text-slate-100 font-black border-3 border-slate-950 dark:border-slate-700 shadow-[4px_4px_0px_0px_#0f172a] dark:shadow-[4px_4px_0px_0px_#000000] hover:bg-yellow-100 shrink-0"
             >
               <FileSpreadsheet size={20} />
               <span>Unduh Excel (.xlsx)</span>
@@ -117,13 +117,13 @@ export const GuruRekap: React.FC<{
       </div>
 
       {/* Recap Table with Detailed Breakdown */}
-      <div className="rounded-3xl bg-white border-4 border-slate-950 p-6 shadow-[7px_7px_0px_0px_#0f172a] space-y-4">
+      <div className="rounded-3xl bg-white dark:bg-[#111827] border-4 border-slate-950 dark:border-slate-700 p-6 shadow-[7px_7px_0px_0px_#0f172a] dark:shadow-[7px_7px_0px_0px_#000000] space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-          <h2 className="text-lg font-black text-slate-950 font-mono flex items-center gap-2">
-            <BarChart3 className="text-indigo-600" />
+          <h2 className="text-lg font-black text-slate-950 dark:text-slate-100 font-mono flex items-center gap-2">
+            <BarChart3 className="text-indigo-600 dark:text-indigo-400" />
             <span>Tabel Rincian Nilai Per Aktivitas Belajar</span>
           </h2>
-          <span className="text-xs font-mono font-bold text-slate-500">
+          <span className="text-xs font-mono font-bold text-slate-500 dark:text-slate-400">
             Total Siswa: {students.length} Orang
           </span>
         </div>
@@ -144,7 +144,7 @@ export const GuruRekap: React.FC<{
                 <th className="p-3 text-center">Status</th>
               </tr>
             </thead>
-            <tbody className="divide-y-2 divide-slate-200 bg-white">
+            <tbody className="divide-y-2 divide-slate-200 dark:divide-slate-800 bg-white dark:bg-[#111827]">
               {students.map((s, idx) => {
                 const lkpd1Sub = db.lkpdSubmissions.find(sub => sub.studentId === s.id && (sub.lkpdId === 'lkpd_1' || sub.lkpdId === lkpdList[0]?.id));
                 const lkpd2Sub = db.lkpdSubmissions.find(sub => sub.studentId === s.id && (sub.lkpdId === 'lkpd_2' || sub.lkpdId === lkpdList[1]?.id));
@@ -169,82 +169,82 @@ export const GuruRekap: React.FC<{
                 const isPassed = avg >= 75;
 
                 return (
-                  <tr key={s.id} className="hover:bg-amber-50/50 transition-colors">
-                    <td className="p-3 font-mono font-black text-slate-400">{idx + 1}</td>
+                  <tr key={s.id} className="hover:bg-amber-50/50 dark:hover:bg-slate-800/60 transition-colors">
+                    <td className="p-3 font-mono font-black text-slate-400 dark:text-slate-500">{idx + 1}</td>
                     <td className="p-3">
-                      <div className="font-black text-slate-950">{s.name}</div>
-                      <div className="text-[10px] font-mono font-bold text-slate-500">NIS: {s.username}</div>
+                      <div className="font-black text-slate-950 dark:text-slate-100">{s.name}</div>
+                      <div className="text-[10px] font-mono font-bold text-slate-500 dark:text-slate-400">NIS: {s.username}</div>
                     </td>
-                    <td className="p-3 font-mono font-bold text-slate-700">{s.class || '7-A'}</td>
+                    <td className="p-3 font-mono font-bold text-slate-700 dark:text-slate-300">{s.class || '7-A'}</td>
 
                     {/* LKPD 1 */}
                     <td className="p-3 font-mono font-black text-center">
                       {lkpd1Score !== null ? (
-                        <span className="inline-block whitespace-nowrap px-2.5 py-0.5 rounded-lg bg-lime-100 text-lime-900 border border-slate-950">
+                        <span className="inline-block whitespace-nowrap px-2.5 py-0.5 rounded-lg bg-lime-100 dark:bg-lime-950/70 text-lime-900 dark:text-lime-200 border border-slate-950 dark:border-lime-700">
                           {lkpd1Score}
                         </span>
                       ) : (
-                        <span className="text-slate-400 text-xs font-bold">-</span>
+                        <span className="text-slate-400 dark:text-slate-600 text-xs font-bold">-</span>
                       )}
                     </td>
 
                     {/* LKPD 2 */}
                     <td className="p-3 font-mono font-black text-center">
                       {lkpd2Score !== null ? (
-                        <span className="inline-block whitespace-nowrap px-2.5 py-0.5 rounded-lg bg-lime-100 text-lime-900 border border-slate-950">
+                        <span className="inline-block whitespace-nowrap px-2.5 py-0.5 rounded-lg bg-lime-100 dark:bg-lime-950/70 text-lime-900 dark:text-lime-200 border border-slate-950 dark:border-lime-700">
                           {lkpd2Score}
                         </span>
                       ) : (
-                        <span className="text-slate-400 text-xs font-bold">-</span>
+                        <span className="text-slate-400 dark:text-slate-600 text-xs font-bold">-</span>
                       )}
                     </td>
 
                     {/* Latsol 1 */}
                     <td className="p-3 font-mono font-black text-center">
                       {latsol1Score !== null ? (
-                        <span className="inline-block whitespace-nowrap px-2.5 py-0.5 rounded-lg bg-purple-100 text-purple-900 border border-slate-950">
+                        <span className="inline-block whitespace-nowrap px-2.5 py-0.5 rounded-lg bg-purple-100 dark:bg-purple-950/70 text-purple-900 dark:text-purple-200 border border-slate-950 dark:border-purple-700">
                           {latsol1Score}
                         </span>
                       ) : (
-                        <span className="text-slate-400 text-xs font-bold">-</span>
+                        <span className="text-slate-400 dark:text-slate-600 text-xs font-bold">-</span>
                       )}
                     </td>
 
                     {/* Latsol 2 */}
                     <td className="p-3 font-mono font-black text-center">
                       {latsol2Score !== null ? (
-                        <span className="inline-block whitespace-nowrap px-2.5 py-0.5 rounded-lg bg-purple-100 text-purple-900 border border-slate-950">
+                        <span className="inline-block whitespace-nowrap px-2.5 py-0.5 rounded-lg bg-purple-100 dark:bg-purple-950/70 text-purple-900 dark:text-purple-200 border border-slate-950 dark:border-purple-700">
                           {latsol2Score}
                         </span>
                       ) : (
-                        <span className="text-slate-400 text-xs font-bold">-</span>
+                        <span className="text-slate-400 dark:text-slate-600 text-xs font-bold">-</span>
                       )}
                     </td>
 
                     {/* Evaluasi */}
                     <td className="p-3 font-mono font-black text-center">
                       {evalScore !== null ? (
-                        <span className="inline-block whitespace-nowrap px-2.5 py-0.5 rounded-lg bg-amber-100 text-amber-900 border border-slate-950">
+                        <span className="inline-block whitespace-nowrap px-2.5 py-0.5 rounded-lg bg-amber-100 dark:bg-amber-950/70 text-amber-900 dark:text-amber-200 border border-slate-950 dark:border-amber-700">
                           {evalScore}
                         </span>
                       ) : (
-                        <span className="text-slate-400 text-xs font-bold">-</span>
+                        <span className="text-slate-400 dark:text-slate-600 text-xs font-bold">-</span>
                       )}
                     </td>
 
                     {/* Rata-rata */}
                     <td className="p-3 font-mono font-black text-center text-sm">
-                      <span className="inline-block whitespace-nowrap px-2.5 py-1 rounded-xl bg-slate-950 text-[#ffe600] border border-slate-950 shadow-[1.5px_1.5px_0px_0px_#0f172a]">
+                      <span className="inline-block whitespace-nowrap px-2.5 py-1 rounded-xl bg-slate-950 dark:bg-slate-800 text-[#ffe600] border border-slate-950 dark:border-slate-700 shadow-[1.5px_1.5px_0px_0px_#0f172a] dark:shadow-[1.5px_1.5px_0px_0px_#000000]">
                         {avg}/100
                       </span>
                     </td>
 
                     {/* Status Ketuntasan */}
                     <td className="p-3 text-center">
-                      <span className={`inline-flex whitespace-nowrap px-2.5 py-1 rounded-xl text-[10px] font-black uppercase tracking-wider font-mono items-center gap-1 border-2 border-slate-950 ${
+                      <span className={`inline-flex whitespace-nowrap px-2.5 py-1 rounded-xl text-[10px] font-black uppercase tracking-wider font-mono items-center gap-1 border-2 border-slate-950 dark:border-slate-700 ${
                         isPassed
                           ? 'bg-[#a3e635] text-slate-950 shadow-[2px_2px_0px_0px_#0f172a]'
-                          : 'bg-rose-200 text-rose-950'
+                          : 'bg-rose-200 dark:bg-rose-900/70 text-rose-950 dark:text-rose-200'
                       }`}>
                         {isPassed ? <CheckCircle2 size={12} /> : <ShieldAlert size={12} />}
                         <span>{isPassed ? 'TUNTAS' : 'REMEDIAL'}</span>

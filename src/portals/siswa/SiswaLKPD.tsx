@@ -194,7 +194,7 @@ export const SiswaLKPD: React.FC<{
     <div className="space-y-8 pb-12 font-sans max-w-5xl mx-auto">
       
       {/* Top Header Card */}
-      <div className="relative rounded-3xl bg-[#ffe600] border-4 border-slate-950 p-6 sm:p-8 shadow-[8px_8px_0px_0px_#0f172a] text-slate-950">
+      <div className="relative rounded-3xl bg-[#ffe600] border-4 border-slate-950 dark:border-slate-800 p-6 sm:p-8 shadow-[8px_8px_0px_0px_#0f172a] dark:shadow-[8px_8px_0px_0px_#000000] text-slate-950">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-2 max-w-2xl">
             <div className="flex flex-wrap items-center gap-2">
@@ -215,8 +215,8 @@ export const SiswaLKPD: React.FC<{
 
           {/* Anti-cheat badge */}
           {switchCount > 0 && (
-            <div className="bg-red-100 border-3 border-red-950 rounded-2xl p-3 shadow-[4px_4px_0px_0px_#7f1d1d] flex items-center gap-2 text-red-950 font-mono text-xs font-black">
-              <ShieldAlert size={20} className="text-red-600 shrink-0" />
+            <div className="bg-red-100 dark:bg-red-950/60 border-3 border-red-950 dark:border-red-700 rounded-2xl p-3 shadow-[4px_4px_0px_0px_#7f1d1d] dark:shadow-[4px_4px_0px_0px_#000000] flex items-center gap-2 text-red-950 dark:text-red-200 font-mono text-xs font-black">
+              <ShieldAlert size={20} className="text-red-600 dark:text-red-400 shrink-0" />
               <span>Terdeteksi Pindah Tab: {switchCount}x (Tercatat ke Guru)</span>
             </div>
           )}
@@ -238,27 +238,27 @@ export const SiswaLKPD: React.FC<{
                 soundService.click();
                 setSelectedLkpdId(lkpd.id);
               }}
-              className={`px-5 py-3 rounded-2xl border-3 border-slate-950 font-mono font-black text-xs uppercase tracking-wider transition-all cursor-pointer flex items-center gap-2 ${
+              className={`px-5 py-3 rounded-2xl border-3 border-slate-950 dark:border-slate-700 font-mono font-black text-xs uppercase tracking-wider transition-all cursor-pointer flex items-center gap-2 ${
                 isSelected
-                  ? 'bg-[#ffe600] text-slate-950 shadow-[4px_4px_0px_0px_#0f172a] translate-x-[-1px] translate-y-[-1px]'
-                  : 'bg-white text-slate-700 hover:bg-slate-100 shadow-[2px_2px_0px_0px_#0f172a]'
+                  ? 'bg-[#ffe600] text-slate-950 shadow-[4px_4px_0px_0px_#0f172a] dark:shadow-[4px_4px_0px_0px_#000000] translate-x-[-1px] translate-y-[-1px]'
+                  : 'bg-white dark:bg-[#111827] text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 shadow-[2px_2px_0px_0px_#0f172a] dark:shadow-[2px_2px_0px_0px_#000000]'
               }`}
             >
               <span>{lkpd.title.split('—')[0] || `LKPD ${idx + 1}`}</span>
-              {isDone && <CheckCircle2 size={16} className="text-emerald-700" />}
+              {isDone && <CheckCircle2 size={16} className="text-emerald-700 dark:text-emerald-400" />}
             </button>
           );
         })}
       </div>
 
       {/* LKPD Details & Objectives */}
-      <div className="bg-white border-3 border-slate-950 rounded-3xl p-6 shadow-[6px_6px_0px_0px_#0f172a] space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b-2 border-slate-950 pb-4">
+      <div className="bg-white dark:bg-[#111827] border-3 border-slate-950 dark:border-slate-800 rounded-3xl p-6 shadow-[6px_6px_0px_0px_#0f172a] dark:shadow-[6px_6px_0px_0px_#000000] space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b-2 border-slate-950 dark:border-slate-800 pb-4">
           <div>
-            <h2 className="text-lg sm:text-xl font-black font-mono text-slate-950">
+            <h2 className="text-lg sm:text-xl font-black font-mono text-slate-950 dark:text-slate-100">
               {selectedLkpd.title}
             </h2>
-            <p className="text-xs font-bold text-slate-600 mt-1">
+            <p className="text-xs font-bold text-slate-600 dark:text-slate-400 mt-1">
               {selectedLkpd.description}
             </p>
           </div>
@@ -275,19 +275,19 @@ export const SiswaLKPD: React.FC<{
           </button>
         </div>
 
-        <div className="p-4 bg-amber-50 border-2 border-slate-950 rounded-2xl text-xs font-bold text-slate-800">
-          <span className="font-black text-amber-900 uppercase">Tujuan Aktivitas:</span>
-          <pre className="font-sans whitespace-pre-line mt-1 text-slate-700">{selectedLkpd.objectives}</pre>
+        <div className="p-4 bg-amber-50 dark:bg-amber-950/40 border-2 border-slate-950 dark:border-slate-700 rounded-2xl text-xs font-bold text-slate-800 dark:text-slate-200">
+          <span className="font-black text-amber-900 dark:text-amber-300 uppercase">Tujuan Aktivitas:</span>
+          <pre className="font-sans whitespace-pre-line mt-1 text-slate-700 dark:text-slate-300">{selectedLkpd.objectives}</pre>
         </div>
       </div>
 
       {/* Questions List */}
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <h3 className="text-base sm:text-lg font-black font-mono text-slate-950">
+          <h3 className="text-base sm:text-lg font-black font-mono text-slate-950 dark:text-slate-100">
             Daftar Butir Pertanyaan ({answeredCount}/{totalQuestions} Terisi)
           </h3>
-          <span className="text-xs font-mono font-bold bg-[#bef264] px-3 py-1 rounded-xl border-2 border-slate-950">
+          <span className="text-xs font-mono font-bold bg-[#bef264] text-slate-950 px-3 py-1 rounded-xl border-2 border-slate-950">
             Status: {existingSubmission ? `Sudah Dikirim (${existingSubmission.status})` : 'Sedang Dikerjakan'}
           </span>
         </div>
@@ -298,27 +298,27 @@ export const SiswaLKPD: React.FC<{
           return (
             <div
               key={q.id}
-              className="bg-white border-3 border-slate-950 rounded-3xl p-6 shadow-[6px_6px_0px_0px_#0f172a] space-y-4"
+              className="bg-white dark:bg-[#111827] border-3 border-slate-950 dark:border-slate-800 rounded-3xl p-6 shadow-[6px_6px_0px_0px_#0f172a] dark:shadow-[6px_6px_0px_0px_#000000] space-y-4"
             >
               {/* Question Header */}
-              <div className="flex items-center justify-between border-b-2 border-slate-950 pb-3">
+              <div className="flex items-center justify-between border-b-2 border-slate-950 dark:border-slate-800 pb-3">
                 <div className="flex items-center gap-2">
                   <span className="w-8 h-8 rounded-xl bg-[#ffe600] border-2 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a] flex items-center justify-center font-mono font-black text-xs text-slate-950">
                     {idx + 1}
                   </span>
-                  <span className="font-black text-sm text-slate-950">{q.title}</span>
+                  <span className="font-black text-sm text-slate-950 dark:text-slate-100">{q.title}</span>
                 </div>
-                <span className="text-xs font-mono font-bold text-slate-600">Bobot: {q.weight} Poin</span>
+                <span className="text-xs font-mono font-bold text-slate-600 dark:text-slate-400">Bobot: {q.weight} Poin</span>
               </div>
 
               {/* Prompt */}
-              <div className="p-4 bg-slate-50 border-2 border-slate-950 rounded-2xl text-xs sm:text-sm font-bold text-slate-900 leading-relaxed">
+              <div className="p-4 bg-slate-50 dark:bg-slate-800/90 border-2 border-slate-950 dark:border-slate-700 rounded-2xl text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100 leading-relaxed">
                 {q.prompt}
               </div>
 
               {/* Text Input Area */}
               <div className="space-y-1.5">
-                <label className="block text-xs font-mono font-black uppercase text-slate-900">
+                <label className="block text-xs font-mono font-black uppercase text-slate-900 dark:text-slate-100">
                   Jawaban Essai Anda:
                 </label>
                 <textarea
@@ -327,21 +327,21 @@ export const SiswaLKPD: React.FC<{
                   onChange={(e) => handleTextChange(q.id, e.target.value)}
                   placeholder="Ketik langkah pengerjaan, kesimpulan, atau jawaban perhitunganmu di sini..."
                   disabled={Boolean(existingSubmission)}
-                  className="w-full p-3.5 bg-[#fffdf5] border-2 border-slate-950 rounded-2xl font-sans text-xs sm:text-sm font-bold text-slate-950 focus:outline-none focus:ring-2 focus:ring-[#ffe600] disabled:bg-slate-100 disabled:opacity-80"
+                  className="w-full p-3.5 bg-[#fffdf5] dark:bg-slate-900 border-2 border-slate-950 dark:border-slate-700 rounded-2xl font-sans text-xs sm:text-sm font-bold text-slate-950 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#ffe600] disabled:bg-slate-100 dark:disabled:bg-slate-800 disabled:opacity-80"
                 />
               </div>
 
               {/* Photo Upload Area (Optional) */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <label className="text-xs font-mono font-black uppercase text-slate-900 flex items-center gap-1.5">
+                  <label className="text-xs font-mono font-black uppercase text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
                     <Upload size={14} />
                     <span>Lampiran Foto Lembar Kerja Fisik (Opsional):</span>
                   </label>
                   {ans.photoUrl && !existingSubmission && (
                     <button
                       onClick={() => handleRemovePhoto(q.id)}
-                      className="text-xs font-mono text-red-600 hover:text-red-800 font-bold flex items-center gap-1 cursor-pointer"
+                      className="text-xs font-mono text-red-600 dark:text-red-400 hover:text-red-800 font-bold flex items-center gap-1 cursor-pointer"
                     >
                       <Trash2 size={13} />
                       <span>Hapus Foto</span>
@@ -350,7 +350,7 @@ export const SiswaLKPD: React.FC<{
                 </div>
 
                 {ans.photoUrl ? (
-                  <div className="relative rounded-2xl border-2 border-slate-950 overflow-hidden bg-slate-100 p-2 max-w-sm">
+                  <div className="relative rounded-2xl border-2 border-slate-950 dark:border-slate-700 overflow-hidden bg-slate-100 dark:bg-slate-900 p-2 max-w-sm">
                     <img
                       src={ans.photoUrl}
                       alt={`Foto Soal ${idx + 1}`}
@@ -359,7 +359,7 @@ export const SiswaLKPD: React.FC<{
                   </div>
                 ) : (
                   !existingSubmission && (
-                    <label className="flex items-center justify-center gap-2 p-3 bg-slate-50 border-2 border-dashed border-slate-950 rounded-2xl cursor-pointer hover:bg-slate-100 transition text-xs font-mono font-bold text-slate-700">
+                    <label className="flex items-center justify-center gap-2 p-3 bg-slate-50 dark:bg-slate-800/80 border-2 border-dashed border-slate-950 dark:border-slate-700 rounded-2xl cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 transition text-xs font-mono font-bold text-slate-700 dark:text-slate-300">
                       <Upload size={16} />
                       <span>Pilih Foto dari Galeri / Kamera</span>
                       <input
@@ -375,12 +375,12 @@ export const SiswaLKPD: React.FC<{
 
               {/* AI Discussion Box (Unlocked after clicking Koreksi AI) */}
               {aiDiscussionUnlocked && (
-                <div className="p-4 bg-[#a5f3fc]/30 border-3 border-cyan-950 rounded-2xl shadow-[3px_3px_0px_0px_#083344] space-y-2 animate-in fade-in slide-in-from-top-2">
-                  <div className="flex items-center gap-2 text-cyan-950 font-mono text-xs font-black">
-                    <Bot size={18} className="text-cyan-800" />
+                <div className="p-4 bg-[#a5f3fc]/30 dark:bg-cyan-950/40 border-3 border-cyan-950 dark:border-cyan-700 rounded-2xl shadow-[3px_3px_0px_0px_#083344] dark:shadow-[3px_3px_0px_0px_#000000] space-y-2 animate-in fade-in slide-in-from-top-2">
+                  <div className="flex items-center gap-2 text-cyan-950 dark:text-cyan-300 font-mono text-xs font-black">
+                    <Bot size={18} className="text-cyan-800 dark:text-cyan-400" />
                     <span>PEMBAHASAN ASISTEN AI (SOAL {idx + 1}):</span>
                   </div>
-                  <pre className="font-sans whitespace-pre-line text-xs font-bold text-slate-900 leading-relaxed bg-white/70 p-3 rounded-xl border border-cyan-900/30">
+                  <pre className="font-sans whitespace-pre-line text-xs font-bold text-slate-900 dark:text-slate-100 leading-relaxed bg-white/80 dark:bg-slate-900/90 p-3 rounded-xl border border-cyan-900/30 dark:border-cyan-700">
                     {q.discussion}
                   </pre>
                 </div>
@@ -392,12 +392,12 @@ export const SiswaLKPD: React.FC<{
       </div>
 
       {/* Action Footer Buttons */}
-      <div className="bg-white border-4 border-slate-950 rounded-3xl p-6 shadow-[8px_8px_0px_0px_#0f172a] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="bg-white dark:bg-[#111827] border-4 border-slate-950 dark:border-slate-800 rounded-3xl p-6 shadow-[8px_8px_0px_0px_#0f172a] dark:shadow-[8px_8px_0px_0px_#000000] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <span className="font-mono text-xs font-black text-slate-900 block">
+          <span className="font-mono text-xs font-black text-slate-900 dark:text-slate-100 block">
             Kelengkapan Soal: {answeredCount} dari {totalQuestions} Butir Selesai
           </span>
-          <span className="text-[11px] font-bold text-slate-600">
+          <span className="text-[11px] font-bold text-slate-600 dark:text-slate-400">
             {aiDiscussionUnlocked ? "✓ Pembahasan AI sudah dibuka." : "Ketik semua jawaban untuk membuka Koreksi AI."}
           </span>
         </div>
@@ -407,7 +407,7 @@ export const SiswaLKPD: React.FC<{
           <button
             onClick={handleRunAiCorrection}
             disabled={!isAllAnswered || isAiLoading}
-            className="px-6 py-3 bg-[#a5f3fc] hover:bg-cyan-300 disabled:opacity-50 text-slate-950 border-3 border-slate-950 rounded-2xl font-mono text-xs font-black shadow-[4px_4px_0px_0px_#0f172a] transition-all cursor-pointer flex items-center gap-2"
+            className="px-6 py-3 bg-[#a5f3fc] hover:bg-cyan-300 disabled:opacity-50 text-slate-950 border-3 border-slate-950 rounded-2xl font-mono text-xs font-black shadow-[4px_4px_0px_0px_#0f172a] dark:shadow-[4px_4px_0px_0px_#000000] transition-all cursor-pointer flex items-center gap-2"
           >
             <Bot size={16} />
             <span>{isAiLoading ? 'Menganalisis...' : 'Koreksi AI (Buka Pembahasan)'}</span>
@@ -418,7 +418,7 @@ export const SiswaLKPD: React.FC<{
             <button
               onClick={handleSubmitLKPD}
               disabled={!isAllAnswered}
-              className="px-6 py-3 bg-[#ffe600] hover:bg-yellow-400 disabled:opacity-50 text-slate-950 border-3 border-slate-950 rounded-2xl font-mono text-xs font-black shadow-[4px_4px_0px_0px_#0f172a] transition-all cursor-pointer flex items-center gap-2"
+              className="px-6 py-3 bg-[#ffe600] hover:bg-yellow-400 disabled:opacity-50 text-slate-950 border-3 border-slate-950 rounded-2xl font-mono text-xs font-black shadow-[4px_4px_0px_0px_#0f172a] dark:shadow-[4px_4px_0px_0px_#000000] transition-all cursor-pointer flex items-center gap-2"
             >
               <Send size={16} />
               <span>Kirim LKPD ke Guru</span>
@@ -435,7 +435,7 @@ export const SiswaLKPD: React.FC<{
           title={`Panduan Berkas: ${previewLKPDModal.title}`}
         >
           <div className="space-y-4">
-            <div className="p-4 bg-slate-100 border-2 border-slate-950 rounded-2xl text-xs font-mono space-y-2">
+            <div className="p-4 bg-slate-100 dark:bg-slate-800 border-2 border-slate-950 dark:border-slate-700 rounded-2xl text-xs font-mono space-y-2 text-slate-900 dark:text-slate-100">
               <div><b>Nama File:</b> {previewLKPDModal.pdfFilename}</div>
               <div><b>Deskripsi:</b> {previewLKPDModal.description}</div>
             </div>

@@ -161,29 +161,29 @@ export const SiswaLatsol: React.FC<{
   if (!hasCompletedLKPD) {
     return (
       <div className="space-y-6 max-w-4xl mx-auto font-sans">
-        <div className="rounded-3xl bg-amber-100 border-4 border-slate-950 p-8 shadow-[8px_8px_0px_0px_#0f172a] text-slate-950 space-y-4">
+        <div className="rounded-3xl bg-amber-100 dark:bg-amber-950/40 border-4 border-slate-950 dark:border-slate-800 p-8 shadow-[8px_8px_0px_0px_#0f172a] dark:shadow-[8px_8px_0px_0px_#000000] text-slate-950 dark:text-slate-100 space-y-4">
           <div className="flex items-center gap-3">
-            <div className="p-3 bg-[#ffe600] border-3 border-slate-950 rounded-2xl shadow-[3px_3px_0px_0px_#0f172a]">
+            <div className="p-3 bg-[#ffe600] border-3 border-slate-950 rounded-2xl shadow-[3px_3px_0px_0px_#0f172a] text-slate-950">
               <Lock size={28} />
             </div>
             <div>
-              <span className="text-xs font-mono font-black uppercase tracking-wider bg-red-400 px-3 py-1 rounded-xl border-2 border-slate-950">
+              <span className="text-xs font-mono font-black uppercase tracking-wider bg-red-400 text-slate-950 px-3 py-1 rounded-xl border-2 border-slate-950">
                 ALUR BERURUTAN (STEP 2 TERKUNCI)
               </span>
-              <h2 className="text-2xl font-black font-mono mt-1">
+              <h2 className="text-2xl font-black font-mono mt-1 text-slate-950 dark:text-slate-100">
                 Latihan Soal Belum Dapat Diakses
               </h2>
             </div>
           </div>
 
-          <p className="text-sm font-bold text-slate-800 leading-relaxed max-w-2xl">
+          <p className="text-sm font-bold text-slate-800 dark:text-slate-300 leading-relaxed max-w-2xl">
             Sesuai aturan alur pembelajaran berurutan: Kamu harus menyelesaikan dan mengumpulkan <b>LKPD Digital (Tahap 1)</b> terlebih dahulu sebelum dapat membuka kuis interaktif Latihan Soal Quizizz.
           </p>
 
           <div className="pt-2">
             <button
               onClick={() => onNavigate('siswa/lkpd')}
-              className="px-6 py-3.5 bg-[#ffe600] hover:bg-yellow-400 text-slate-950 font-mono font-black text-xs uppercase tracking-wider border-3 border-slate-950 rounded-2xl shadow-[4px_4px_0px_0px_#0f172a] hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[6px_6px_0px_0px_#0f172a] transition-all cursor-pointer flex items-center gap-2"
+              className="px-6 py-3.5 bg-[#ffe600] hover:bg-yellow-400 text-slate-950 font-mono font-black text-xs uppercase tracking-wider border-3 border-slate-950 rounded-2xl shadow-[4px_4px_0px_0px_#0f172a] dark:shadow-[4px_4px_0px_0px_#000000] hover:translate-x-[-1px] hover:translate-y-[-1px] transition-all cursor-pointer flex items-center gap-2"
             >
               <span>Kerjakan LKPD Sekarang</span>
               <ArrowRight size={16} />
@@ -200,7 +200,7 @@ export const SiswaLatsol: React.FC<{
       <div className="space-y-6 max-w-4xl mx-auto font-sans pb-12 animate-in fade-in zoom-in-95 duration-300">
         
         {/* Header Celebration Card */}
-        <div className="rounded-3xl bg-[#ffe600] border-4 border-slate-950 p-8 shadow-[8px_8px_0px_0px_#0f172a] text-slate-950 text-center space-y-4">
+        <div className="rounded-3xl bg-[#ffe600] border-4 border-slate-950 dark:border-slate-800 p-8 shadow-[8px_8px_0px_0px_#0f172a] dark:shadow-[8px_8px_0px_0px_#000000] text-slate-950 text-center space-y-4">
           <div className="inline-flex p-4 bg-white border-3 border-slate-950 rounded-3xl shadow-[4px_4px_0px_0px_#0f172a] mb-2">
             <Trophy size={48} className="text-amber-500" />
           </div>
@@ -219,7 +219,7 @@ export const SiswaLatsol: React.FC<{
               : 'Semangat belajar! Periksa langkah pembahasan di bawah ini untuk belajar lebih mendalam.'}
           </p>
 
-          <div className="flex flex-wrap justify-center gap-4 text-xs font-mono font-black pt-2">
+          <div className="flex flex-wrap justify-center gap-4 text-xs font-mono font-black pt-2 text-slate-950">
             <span className="px-4 py-2 bg-emerald-300 border-2 border-slate-950 rounded-xl shadow-[2px_2px_0px_0px_#0f172a]">
               ✓ Benar: {latestSubmission.correctCount} Soal
             </span>
@@ -234,7 +234,7 @@ export const SiswaLatsol: React.FC<{
 
         {/* Question Discussion List */}
         <div className="space-y-4">
-          <h3 className="text-lg font-black font-mono text-slate-950">
+          <h3 className="text-lg font-black font-mono text-slate-950 dark:text-slate-100">
             Pembahasan Jawaban Lengkap:
           </h3>
 
@@ -245,12 +245,12 @@ export const SiswaLatsol: React.FC<{
             return (
               <div
                 key={q.id}
-                className={`bg-white border-3 border-slate-950 rounded-3xl p-6 shadow-[6px_6px_0px_0px_#0f172a] space-y-3 ${
+                className={`bg-white dark:bg-[#111827] border-3 border-slate-950 dark:border-slate-800 rounded-3xl p-6 shadow-[6px_6px_0px_0px_#0f172a] dark:shadow-[6px_6px_0px_0px_#000000] space-y-3 ${
                   isCorrect ? 'border-l-8 border-l-emerald-500' : 'border-l-8 border-l-red-500'
                 }`}
               >
                 <div className="flex items-center justify-between">
-                  <span className="font-mono text-xs font-black bg-slate-100 px-3 py-1 rounded-xl border border-slate-950">
+                  <span className="font-mono text-xs font-black bg-slate-100 dark:bg-slate-800 text-slate-950 dark:text-slate-100 px-3 py-1 rounded-xl border border-slate-950 dark:border-slate-700">
                     Soal #{idx + 1}
                   </span>
                   <span className={`font-mono text-xs font-black px-3 py-1 rounded-xl border-2 border-slate-950 ${isCorrect ? 'bg-emerald-300 text-emerald-950' : 'bg-red-300 text-red-950'}`}>
@@ -258,16 +258,16 @@ export const SiswaLatsol: React.FC<{
                   </span>
                 </div>
 
-                <p className="font-bold text-sm text-slate-950">{q.question}</p>
+                <p className="font-bold text-sm text-slate-950 dark:text-slate-100">{q.question}</p>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs font-bold font-sans">
                   {q.options.map((opt, oIdx) => {
                     const isSelected = userChosen === oIdx;
                     const isAnswerKey = q.correctIndex === oIdx;
 
-                    let bgClass = "bg-slate-50 border-slate-300 text-slate-700";
-                    if (isAnswerKey) bgClass = "bg-emerald-100 border-emerald-950 text-emerald-950 font-black";
-                    else if (isSelected && !isAnswerKey) bgClass = "bg-red-100 border-red-950 text-red-950 line-through";
+                    let bgClass = "bg-slate-50 dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300";
+                    if (isAnswerKey) bgClass = "bg-emerald-100 dark:bg-emerald-950/60 border-emerald-950 dark:border-emerald-700 text-emerald-950 dark:text-emerald-300 font-black";
+                    else if (isSelected && !isAnswerKey) bgClass = "bg-red-100 dark:bg-red-950/60 border-red-950 dark:border-red-700 text-red-950 dark:text-red-300 line-through";
 
                     return (
                       <div
@@ -275,14 +275,14 @@ export const SiswaLatsol: React.FC<{
                         className={`p-3 rounded-xl border-2 ${bgClass} flex items-center justify-between`}
                       >
                         <span>{String.fromCharCode(65 + oIdx)}. {opt}</span>
-                        {isAnswerKey && <span className="text-[10px] uppercase font-mono px-1.5 py-0.5 bg-emerald-400 rounded border border-emerald-950">Kunci</span>}
+                        {isAnswerKey && <span className="text-[10px] uppercase font-mono px-1.5 py-0.5 bg-emerald-400 text-emerald-950 rounded border border-emerald-950">Kunci</span>}
                       </div>
                     );
                   })}
                 </div>
 
-                <div className="p-3 bg-amber-50 border-2 border-slate-950 rounded-2xl text-xs font-bold text-slate-800">
-                  <span className="font-black text-amber-900 uppercase">Langkah Pembahasan:</span>
+                <div className="p-3 bg-amber-50 dark:bg-amber-950/40 border-2 border-slate-950 dark:border-slate-700 rounded-2xl text-xs font-bold text-slate-800 dark:text-slate-200">
+                  <span className="font-black text-amber-900 dark:text-amber-300 uppercase">Langkah Pembahasan:</span>
                   <p className="mt-0.5">{q.explanation}</p>
                 </div>
               </div>
@@ -291,17 +291,17 @@ export const SiswaLatsol: React.FC<{
         </div>
 
         {/* Return Button */}
-        <div className="flex justify-between items-center bg-white border-3 border-slate-950 rounded-3xl p-6 shadow-[6px_6px_0px_0px_#0f172a]">
+        <div className="flex justify-between items-center bg-white dark:bg-[#111827] border-3 border-slate-950 dark:border-slate-800 rounded-3xl p-6 shadow-[6px_6px_0px_0px_#0f172a] dark:shadow-[6px_6px_0px_0px_#000000]">
           <button
             onClick={() => setActiveRoom(null)}
-            className="px-6 py-3 bg-slate-200 hover:bg-slate-300 text-slate-950 font-mono text-xs font-black rounded-2xl border-3 border-slate-950 shadow-[3px_3px_0px_0px_#0f172a] transition-all cursor-pointer"
+            className="px-6 py-3 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-950 dark:text-slate-100 font-mono text-xs font-black rounded-2xl border-3 border-slate-950 dark:border-slate-700 shadow-[3px_3px_0px_0px_#0f172a] dark:shadow-[3px_3px_0px_0px_#000000] transition-all cursor-pointer"
           >
             ← Kembali ke Daftar Room
           </button>
 
           <button
             onClick={() => onNavigate('siswa/evaluasi')}
-            className="px-6 py-3 bg-[#ffe600] hover:bg-yellow-400 text-slate-950 font-mono text-xs font-black rounded-2xl border-3 border-slate-950 shadow-[4px_4px_0px_0px_#0f172a] transition-all cursor-pointer flex items-center gap-2"
+            className="px-6 py-3 bg-[#ffe600] hover:bg-yellow-400 text-slate-950 font-mono text-xs font-black rounded-2xl border-3 border-slate-950 shadow-[4px_4px_0px_0px_#0f172a] dark:shadow-[4px_4px_0px_0px_#000000] transition-all cursor-pointer flex items-center gap-2"
           >
             <span>Lanjut ke Evaluasi (Tahap 3)</span>
             <ArrowRight size={16} />
@@ -322,14 +322,14 @@ export const SiswaLatsol: React.FC<{
       <div className="space-y-6 max-w-3xl mx-auto font-sans pb-12 animate-in fade-in">
         
         {/* Top Header Bar with Live Countdown & Progress */}
-        <div className="bg-white border-4 border-slate-950 rounded-3xl p-5 shadow-[8px_8px_0px_0px_#0f172a] flex items-center justify-between">
+        <div className="bg-white dark:bg-[#111827] border-4 border-slate-950 dark:border-slate-800 rounded-3xl p-5 shadow-[8px_8px_0px_0px_#0f172a] dark:shadow-[8px_8px_0px_0px_#000000] flex items-center justify-between">
           <div className="flex items-center gap-3">
             <span className="w-10 h-10 rounded-2xl bg-[#ffe600] border-2 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a] flex items-center justify-center font-mono font-black text-sm text-slate-950">
               {currentQuestionIndex + 1}/{totalQ}
             </span>
             <div>
-              <div className="font-mono text-xs font-black text-slate-950 uppercase">{activeRoom.title}</div>
-              <div className="text-[11px] font-bold text-slate-600">Jawab tepat untuk skor maksimal</div>
+              <div className="font-mono text-xs font-black text-slate-950 dark:text-slate-100 uppercase">{activeRoom.title}</div>
+              <div className="text-[11px] font-bold text-slate-600 dark:text-slate-400">Jawab tepat untuk skor maksimal</div>
             </div>
           </div>
 
@@ -343,7 +343,7 @@ export const SiswaLatsol: React.FC<{
         </div>
 
         {/* Progress bar */}
-        <div className="w-full bg-slate-200 h-3 rounded-full border-2 border-slate-950 overflow-hidden shadow-[2px_2px_0px_0px_#0f172a]">
+        <div className="w-full bg-slate-200 dark:bg-slate-800 h-3 rounded-full border-2 border-slate-950 dark:border-slate-700 overflow-hidden shadow-[2px_2px_0px_0px_#0f172a] dark:shadow-none">
           <div
             className="bg-[#ffe600] h-full transition-all duration-300 border-r-2 border-slate-950"
             style={{ width: `${progressPercent}%` }}
@@ -352,15 +352,15 @@ export const SiswaLatsol: React.FC<{
 
         {/* Anti-cheat warning alert */}
         {switchCount > 0 && (
-          <div className="bg-red-100 border-3 border-red-950 rounded-2xl p-3 shadow-[3px_3px_0px_0px_#7f1d1d] flex items-center gap-2 text-red-950 font-mono text-xs font-black">
-            <ShieldAlert size={18} className="text-red-600 shrink-0" />
+          <div className="bg-red-100 dark:bg-red-950/60 border-3 border-red-950 dark:border-red-700 rounded-2xl p-3 shadow-[3px_3px_0px_0px_#7f1d1d] dark:shadow-[3px_3px_0px_0px_#000000] flex items-center gap-2 text-red-950 dark:text-red-200 font-mono text-xs font-black">
+            <ShieldAlert size={18} className="text-red-600 dark:text-red-400 shrink-0" />
             <span>Peringatan: Kamu berpindah tab sebanyak {switchCount}x. Insiden ini tercatat ke guru.</span>
           </div>
         )}
 
         {/* Question Card */}
-        <div className="bg-white border-4 border-slate-950 rounded-3xl p-6 sm:p-8 shadow-[8px_8px_0px_0px_#0f172a] space-y-6">
-          <div className="text-base sm:text-xl font-black text-slate-950 leading-relaxed font-sans">
+        <div className="bg-white dark:bg-[#111827] border-4 border-slate-950 dark:border-slate-800 rounded-3xl p-6 sm:p-8 shadow-[8px_8px_0px_0px_#0f172a] dark:shadow-[8px_8px_0px_0px_#000000] space-y-6">
+          <div className="text-base sm:text-xl font-black text-slate-950 dark:text-slate-100 leading-relaxed font-sans">
             {currentQ.question}
           </div>
 
@@ -369,14 +369,14 @@ export const SiswaLatsol: React.FC<{
             {currentQ.options.map((optionText, idx) => {
               const isSelected = userAnswers[currentQ.id] === idx;
               const optionColors = [
-                'hover:bg-[#ffe600]',
-                'hover:bg-[#a5f3fc]',
-                'hover:bg-[#fbcfe8]',
-                'hover:bg-[#bef264]'
+                'hover:bg-[#ffe600] dark:hover:text-slate-950',
+                'hover:bg-[#a5f3fc] dark:hover:text-slate-950',
+                'hover:bg-[#fbcfe8] dark:hover:text-slate-950',
+                'hover:bg-[#bef264] dark:hover:text-slate-950'
               ];
               const selectedBg = isSelected
-                ? 'bg-[#ffe600] border-slate-950 shadow-[4px_4px_0px_0px_#0f172a] translate-x-[-1px] translate-y-[-1px]'
-                : `bg-[#fffdf5] border-slate-950 shadow-[2px_2px_0px_0px_#0f172a] ${optionColors[idx % 4]}`;
+                ? 'bg-[#ffe600] text-slate-950 border-slate-950 shadow-[4px_4px_0px_0px_#0f172a] translate-x-[-1px] translate-y-[-1px]'
+                : `bg-[#fffdf5] dark:bg-slate-800/90 text-slate-950 dark:text-slate-100 border-slate-950 dark:border-slate-700 shadow-[2px_2px_0px_0px_#0f172a] dark:shadow-[2px_2px_0px_0px_#000000] ${optionColors[idx % 4]}`;
 
               return (
                 <button
@@ -384,10 +384,10 @@ export const SiswaLatsol: React.FC<{
                   onClick={() => handleSelectOption(currentQ.id, idx)}
                   className={`p-4 rounded-2xl border-3 text-left transition-all cursor-pointer font-sans text-xs sm:text-sm font-bold flex items-center gap-3 ${selectedBg}`}
                 >
-                  <span className="w-8 h-8 rounded-xl bg-white border-2 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a] flex items-center justify-center font-mono font-black text-xs shrink-0">
+                  <span className="w-8 h-8 rounded-xl bg-white border-2 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a] flex items-center justify-center font-mono font-black text-xs text-slate-950 shrink-0">
                     {String.fromCharCode(65 + idx)}
                   </span>
-                  <span className="text-slate-950">{optionText}</span>
+                  <span>{optionText}</span>
                 </button>
               );
             })}
@@ -402,7 +402,7 @@ export const SiswaLatsol: React.FC<{
               setCurrentQuestionIndex(prev => Math.max(0, prev - 1));
             }}
             disabled={currentQuestionIndex === 0}
-            className="px-5 py-3 bg-white hover:bg-slate-100 disabled:opacity-40 text-slate-950 font-mono text-xs font-black rounded-2xl border-3 border-slate-950 shadow-[3px_3px_0px_0px_#0f172a] transition-all cursor-pointer"
+            className="px-5 py-3 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-40 text-slate-950 dark:text-slate-100 font-mono text-xs font-black rounded-2xl border-3 border-slate-950 dark:border-slate-700 shadow-[3px_3px_0px_0px_#0f172a] dark:shadow-[3px_3px_0px_0px_#000000] transition-all cursor-pointer"
           >
             ← Soal Sebelumnya
           </button>
@@ -413,7 +413,7 @@ export const SiswaLatsol: React.FC<{
                 soundService.click();
                 setCurrentQuestionIndex(prev => prev + 1);
               }}
-              className="px-6 py-3 bg-[#ffe600] hover:bg-yellow-400 text-slate-950 font-mono text-xs font-black rounded-2xl border-3 border-slate-950 shadow-[4px_4px_0px_0px_#0f172a] transition-all cursor-pointer flex items-center gap-2"
+              className="px-6 py-3 bg-[#ffe600] hover:bg-yellow-400 text-slate-950 font-mono text-xs font-black rounded-2xl border-3 border-slate-950 shadow-[4px_4px_0px_0px_#0f172a] dark:shadow-[4px_4px_0px_0px_#000000] transition-all cursor-pointer flex items-center gap-2"
             >
               <span>Soal Berikutnya</span>
               <ArrowRight size={16} />
@@ -421,7 +421,7 @@ export const SiswaLatsol: React.FC<{
           ) : (
             <button
               onClick={handleFinishQuiz}
-              className="px-8 py-3.5 bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-mono text-xs font-black rounded-2xl border-3 border-slate-950 shadow-[4px_4px_0px_0px_#0f172a] transition-all cursor-pointer flex items-center gap-2"
+              className="px-8 py-3.5 bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-mono text-xs font-black rounded-2xl border-3 border-slate-950 shadow-[4px_4px_0px_0px_#0f172a] dark:shadow-[4px_4px_0px_0px_#000000] transition-all cursor-pointer flex items-center gap-2"
             >
               <span>Selesai &amp; Kumpulkan Kuis</span>
               <CheckCircle2 size={18} />
@@ -438,7 +438,7 @@ export const SiswaLatsol: React.FC<{
     <div className="space-y-8 pb-12 font-sans max-w-5xl mx-auto">
       
       {/* Top Banner */}
-      <div className="relative rounded-3xl bg-[#ffe600] border-4 border-slate-950 p-6 sm:p-8 shadow-[8px_8px_0px_0px_#0f172a] text-slate-950">
+      <div className="relative rounded-3xl bg-[#ffe600] border-4 border-slate-950 dark:border-slate-800 p-6 sm:p-8 shadow-[8px_8px_0px_0px_#0f172a] dark:shadow-[8px_8px_0px_0px_#000000] text-slate-950">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-2 max-w-2xl">
             <div className="flex flex-wrap items-center gap-2">
@@ -474,29 +474,29 @@ export const SiswaLatsol: React.FC<{
           return (
             <div
               key={room.id}
-              className={`rounded-3xl border-4 border-slate-950 p-6 transition-all relative overflow-hidden flex flex-col justify-between ${
+              className={`rounded-3xl border-4 border-slate-950 dark:border-slate-800 p-6 transition-all relative overflow-hidden flex flex-col justify-between ${
                 isLocked
-                  ? 'bg-slate-100 shadow-[4px_4px_0px_0px_#64748b] opacity-90'
-                  : 'bg-white shadow-[8px_8px_0px_0px_#0f172a] hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[10px_10px_0px_0px_#0f172a]'
+                  ? 'bg-slate-100 dark:bg-slate-800/40 shadow-[4px_4px_0px_0px_#64748b] dark:shadow-none opacity-90'
+                  : 'bg-white dark:bg-[#111827] shadow-[8px_8px_0px_0px_#0f172a] dark:shadow-[8px_8px_0px_0px_#000000] hover:translate-x-[-2px] hover:translate-y-[-2px]'
               }`}
             >
               <div className="space-y-4">
                 {/* Room Header Badge */}
                 <div className="flex items-center justify-between">
                   <span className={`px-3 py-1 font-mono text-xs font-black rounded-xl border-2 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a] ${
-                    isLocked ? 'bg-slate-300 text-slate-800' : 'bg-[#ffe600] text-slate-950'
+                    isLocked ? 'bg-slate-300 dark:bg-slate-700 text-slate-800 dark:text-slate-300' : 'bg-[#ffe600] text-slate-950'
                   }`}>
                     {room.badge ? room.badge.replace(/\s*\(Menunggu Akses Guru\)/g, '').replace(/Latsol/g, 'Latihan Soal') : `Latihan Soal ${idx + 1}`}
                   </span>
 
                   {isLocked ? (
-                    <span className="flex items-center gap-1.5 px-3 py-1 bg-red-100 text-red-900 border-2 border-red-950 rounded-xl font-mono text-[11px] font-black">
+                    <span className="flex items-center gap-1.5 px-3 py-1 bg-red-100 dark:bg-red-950/60 text-red-900 dark:text-red-300 border-2 border-red-950 dark:border-red-700 rounded-xl font-mono text-[11px] font-black">
                       <Lock size={13} />
                       <span>Menunggu Akses Guru</span>
                     </span>
                   ) : mySub ? (
-                    <span className="flex items-center gap-1.5 px-3 py-1 bg-emerald-100 text-emerald-950 border-2 border-emerald-950 rounded-xl font-mono text-xs font-black">
-                      <CheckCircle2 size={14} className="text-emerald-700" />
+                    <span className="flex items-center gap-1.5 px-3 py-1 bg-emerald-100 dark:bg-emerald-950/60 text-emerald-950 dark:text-emerald-300 border-2 border-emerald-950 dark:border-emerald-700 rounded-xl font-mono text-xs font-black">
+                      <CheckCircle2 size={14} className="text-emerald-700 dark:text-emerald-400" />
                       <span>Skor: {mySub.score}/100</span>
                     </span>
                   ) : (
@@ -508,15 +508,15 @@ export const SiswaLatsol: React.FC<{
                 </div>
 
                 <div>
-                  <h3 className="text-lg font-black font-mono text-slate-950">
+                  <h3 className="text-lg font-black font-mono text-slate-950 dark:text-slate-100">
                     {room.title}
                   </h3>
-                  <p className="text-xs font-bold text-slate-600 mt-1">
+                  <p className="text-xs font-bold text-slate-600 dark:text-slate-400 mt-1">
                     {room.topic}
                   </p>
                 </div>
 
-                <div className="flex items-center gap-4 text-xs font-mono font-bold text-slate-700 bg-slate-50 p-3 rounded-2xl border-2 border-slate-950">
+                <div className="flex items-center gap-4 text-xs font-mono font-bold text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-800 p-3 rounded-2xl border-2 border-slate-950 dark:border-slate-700">
                   <div className="flex items-center gap-1.5">
                     <Clock size={14} />
                     <span>Durasi: {room.durationSeconds} Detik</span>
@@ -532,8 +532,8 @@ export const SiswaLatsol: React.FC<{
                   disabled={isLocked}
                   className={`w-full py-3.5 rounded-2xl font-mono font-black text-xs uppercase tracking-wider border-3 border-slate-950 transition-all flex items-center justify-center gap-2 ${
                     isLocked
-                      ? 'bg-slate-300 text-slate-600 cursor-not-allowed'
-                      : 'bg-[#ffe600] hover:bg-yellow-400 text-slate-950 shadow-[4px_4px_0px_0px_#0f172a] hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[6px_6px_0px_0px_#0f172a] active:translate-x-[1px] active:translate-y-[1px] cursor-pointer'
+                      ? 'bg-slate-300 dark:bg-slate-700 text-slate-600 dark:text-slate-400 cursor-not-allowed'
+                      : 'bg-[#ffe600] hover:bg-yellow-400 text-slate-950 shadow-[4px_4px_0px_0px_#0f172a] dark:shadow-[4px_4px_0px_0px_#000000] hover:translate-x-[-1px] hover:translate-y-[-1px] cursor-pointer'
                   }`}
                 >
                   {isLocked ? (

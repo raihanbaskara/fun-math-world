@@ -119,7 +119,7 @@ export const GuruSoal: React.FC<{
     <div className="space-y-8 max-w-6xl mx-auto font-sans pb-12">
       
       {/* 1. Header Banner Pure Neobrutalism V3 */}
-      <div className="relative rounded-3xl bg-[#ff9838] border-4 border-slate-950 p-6 sm:p-8 shadow-[8px_8px_0px_0px_#0f172a] overflow-hidden text-slate-950">
+      <div className="relative rounded-3xl bg-[#ff9838] border-4 border-slate-950 dark:border-slate-800 p-6 sm:p-8 shadow-[8px_8px_0px_0px_#0f172a] dark:shadow-[8px_8px_0px_0px_#000000] overflow-hidden text-slate-950">
         <div className="absolute right-4 bottom-0 text-slate-950/10 font-mono text-8xl font-black pointer-events-none select-none">
           HOTS ESSAY
         </div>
@@ -127,10 +127,10 @@ export const GuruSoal: React.FC<{
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 relative z-10">
           <div className="space-y-3 max-w-2xl">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="px-3 py-1 bg-white text-slate-950 border-2 border-slate-950 rounded-xl text-xs font-mono font-black shadow-[2px_2px_0px_0px_#0f172a]">
+              <span className="px-3 py-1 bg-white dark:bg-slate-900 dark:text-slate-100 text-slate-950 border-2 border-slate-950 dark:border-slate-800 rounded-xl text-xs font-mono font-black shadow-[2px_2px_0px_0px_#0f172a] dark:shadow-[2px_2px_0px_0px_#000]">
                 BANK SOAL ESSAI HOTS
               </span>
-              <span className="px-3 py-1 bg-white/80 text-slate-900 border-2 border-slate-950 rounded-xl text-xs font-bold font-mono">
+              <span className="px-3 py-1 bg-white/80 dark:bg-slate-900/80 text-slate-900 dark:text-slate-200 border-2 border-slate-950 dark:border-slate-800 rounded-xl text-xs font-bold font-mono">
                 {questions.length} Butir Soal Tersedia
               </span>
             </div>
@@ -153,7 +153,7 @@ export const GuruSoal: React.FC<{
       {/* 2. Top Controls & Action Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-2">
-          <h2 className="text-lg sm:text-xl font-black text-slate-950 font-mono">
+          <h2 className="text-lg sm:text-xl font-black text-slate-950 dark:text-slate-100 font-mono">
             Daftar Butir Soal Evaluasi
           </h2>
           <span className="px-2.5 py-0.5 rounded-lg bg-[#38bdf8] text-slate-950 font-mono font-black text-xs border-2 border-slate-950 shadow-[1.5px_1.5px_0px_0px_#0f172a]">
@@ -167,7 +167,7 @@ export const GuruSoal: React.FC<{
             soundService.click();
             setIsAddOpen(true);
           }}
-          className="px-5 py-2.5 rounded-2xl bg-[#ffe600] hover:bg-yellow-400 text-slate-950 font-mono font-black text-xs uppercase tracking-wider border-3 border-slate-950 shadow-[3px_3px_0px_0px_#0f172a] active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer flex items-center gap-2 w-fit"
+          className="px-5 py-2.5 rounded-2xl bg-[#ffe600] hover:bg-yellow-400 text-slate-950 font-mono font-black text-xs uppercase tracking-wider border-3 border-slate-950 dark:border-slate-700 shadow-[3px_3px_0px_0px_#0f172a] dark:shadow-[3px_3px_0px_0px_#000] active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer flex items-center gap-2 w-fit"
         >
           <Plus size={16} />
           <span>Tambah Soal Essai Baru</span>
@@ -179,10 +179,10 @@ export const GuruSoal: React.FC<{
         {questions.map((q, idx) => (
           <div
             key={q.id}
-            className="rounded-3xl bg-white border-4 border-slate-950 p-6 shadow-[6px_6px_0px_0px_#0f172a] space-y-5"
+            className="rounded-3xl bg-white dark:bg-[#111827] border-4 border-slate-950 dark:border-slate-700 p-6 shadow-[6px_6px_0px_0px_#0f172a] dark:shadow-[6px_6px_0px_0px_#000000] space-y-5"
           >
             {/* Card Header */}
-            <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b-2 border-slate-950">
+            <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b-2 border-slate-950 dark:border-slate-700">
               <div className="flex items-center gap-2">
                 <span className="px-3 py-1 rounded-xl bg-[#ffe600] text-slate-950 font-mono font-black text-xs border-2 border-slate-950 shadow-[1.5px_1.5px_0px_0px_#0f172a]">
                   Soal #{idx + 1}
@@ -216,26 +216,26 @@ export const GuruSoal: React.FC<{
 
             {/* Title */}
             <div>
-              <h3 className="text-lg sm:text-xl font-black text-slate-950 font-mono">
+              <h3 className="text-lg sm:text-xl font-black text-slate-950 dark:text-slate-100 font-mono">
                 {q.title}
               </h3>
             </div>
 
             {/* Prompt Box */}
-            <div className="p-4 sm:p-5 rounded-2xl bg-[#fffdf5] border-2 border-slate-950 text-slate-950 text-xs sm:text-sm font-bold leading-relaxed space-y-1">
-              <div className="text-[11px] font-mono font-black text-amber-800 uppercase tracking-wider mb-1">
+            <div className="p-4 sm:p-5 rounded-2xl bg-[#fffdf5] dark:bg-slate-800/80 border-2 border-slate-950 dark:border-slate-700 text-slate-950 dark:text-slate-100 text-xs sm:text-sm font-bold leading-relaxed space-y-1">
+              <div className="text-[11px] font-mono font-black text-amber-800 dark:text-amber-400 uppercase tracking-wider mb-1">
                 Teks Soal / Skenario Masalah:
               </div>
               <div>{renderFormattedMathText(q.prompt, 'sm')}</div>
             </div>
 
             {/* Discussion Box */}
-            <div className="p-4 sm:p-5 bg-purple-50 rounded-2xl border-2 border-slate-950 text-xs sm:text-sm space-y-2">
-              <div className="font-black text-purple-950 font-mono flex items-center gap-2">
-                <CheckCircle2 size={16} className="text-purple-700" />
+            <div className="p-4 sm:p-5 bg-purple-50 dark:bg-purple-950/40 rounded-2xl border-2 border-slate-950 dark:border-purple-800 text-xs sm:text-sm space-y-2">
+              <div className="font-black text-purple-950 dark:text-purple-300 font-mono flex items-center gap-2">
+                <CheckCircle2 size={16} className="text-purple-700 dark:text-purple-400" />
                 <span>Kunci Langkah Pembahasan Runtut:</span>
               </div>
-              <div className="text-slate-800 leading-relaxed font-bold">
+              <div className="text-slate-800 dark:text-purple-100 leading-relaxed font-bold">
                 {renderFormattedMathText(q.discussion, 'xs')}
               </div>
             </div>
@@ -243,10 +243,10 @@ export const GuruSoal: React.FC<{
         ))}
 
         {questions.length === 0 && (
-          <div className="rounded-3xl bg-white border-4 border-slate-950 p-12 text-center shadow-[6px_6px_0px_0px_#0f172a] space-y-3">
+          <div className="rounded-3xl bg-white dark:bg-[#111827] border-4 border-slate-950 dark:border-slate-700 p-12 text-center shadow-[6px_6px_0px_0px_#0f172a] dark:shadow-[6px_6px_0px_0px_#000] space-y-3">
             <BookOpen size={48} className="mx-auto text-slate-400" />
-            <div className="text-lg font-black text-slate-950 font-mono">Bank Soal Essai Kosong</div>
-            <p className="text-xs font-bold text-slate-500">
+            <div className="text-lg font-black text-slate-950 dark:text-slate-100 font-mono">Bank Soal Essai Kosong</div>
+            <p className="text-xs font-bold text-slate-500 dark:text-slate-400">
               Belum ada butir soal evaluasi essai yang dibuat. Klik tombol di atas untuk menambahkan soal baru.
             </p>
           </div>
@@ -262,7 +262,7 @@ export const GuruSoal: React.FC<{
       >
         <form onSubmit={handleAddQuestion} className="space-y-4">
           <div>
-            <label className="block text-xs font-mono font-black uppercase tracking-wider text-slate-900 mb-1.5">
+            <label className="block text-xs font-mono font-black uppercase tracking-wider text-slate-900 dark:text-slate-200 mb-1.5">
               Judul / Topik Soal:
             </label>
             <input
@@ -271,12 +271,12 @@ export const GuruSoal: React.FC<{
               value={title}
               onChange={e => setTitle(e.target.value)}
               placeholder="Contoh: Soal Cerita — Perbandingan Panjang Pita"
-              className="w-full p-3 rounded-xl border-2 border-slate-950 bg-white text-slate-900 text-sm font-bold shadow-[2px_2px_0px_0px_#0f172a] outline-none focus:bg-amber-50"
+              className="w-full p-3 rounded-xl border-2 border-slate-950 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-sm font-bold shadow-[2px_2px_0px_0px_#0f172a] dark:shadow-[2px_2px_0px_0px_#000] outline-none focus:bg-amber-50 dark:focus:bg-slate-750"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-mono font-black uppercase tracking-wider text-slate-900 mb-1.5">
+            <label className="block text-xs font-mono font-black uppercase tracking-wider text-slate-900 dark:text-slate-200 mb-1.5">
               Pertanyaan Cerita / Kasus HOTS:
             </label>
             <textarea
@@ -285,13 +285,13 @@ export const GuruSoal: React.FC<{
               value={prompt}
               onChange={e => setPrompt(e.target.value)}
               placeholder="Tuliskan narasi soal cerita pecahan..."
-              className="w-full p-3 rounded-xl border-2 border-slate-950 bg-white text-slate-900 text-xs sm:text-sm font-bold shadow-[2px_2px_0px_0px_#0f172a] outline-none focus:bg-amber-50 leading-relaxed"
+              className="w-full p-3 rounded-xl border-2 border-slate-950 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-xs sm:text-sm font-bold shadow-[2px_2px_0px_0px_#0f172a] dark:shadow-[2px_2px_0px_0px_#000] outline-none focus:bg-amber-50 dark:focus:bg-slate-750 leading-relaxed"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-mono font-black uppercase tracking-wider text-slate-900 mb-1.5">
-              Kunci & Langkah Pembahasan Runtut:
+            <label className="block text-xs font-mono font-black uppercase tracking-wider text-slate-900 dark:text-slate-200 mb-1.5">
+              Kunci &amp; Langkah Pembahasan Runtut:
             </label>
             <textarea
               required
@@ -299,12 +299,12 @@ export const GuruSoal: React.FC<{
               value={discussion}
               onChange={e => setDiscussion(e.target.value)}
               placeholder="Langkah 1: Menentukan pecahan biasa... Langkah 2: Menyamakan penyebut..."
-              className="w-full p-3 rounded-xl border-2 border-slate-950 bg-white text-slate-900 text-xs sm:text-sm font-bold shadow-[2px_2px_0px_0px_#0f172a] outline-none focus:bg-purple-50 leading-relaxed"
+              className="w-full p-3 rounded-xl border-2 border-slate-950 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-xs sm:text-sm font-bold shadow-[2px_2px_0px_0px_#0f172a] dark:shadow-[2px_2px_0px_0px_#000] outline-none focus:bg-purple-50 dark:focus:bg-slate-750 leading-relaxed"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-mono font-black uppercase tracking-wider text-slate-900 mb-1.5">
+            <label className="block text-xs font-mono font-black uppercase tracking-wider text-slate-900 dark:text-slate-200 mb-1.5">
               Bobot Nilai (Poin):
             </label>
             <input
@@ -314,15 +314,15 @@ export const GuruSoal: React.FC<{
               required
               value={weight}
               onChange={e => setWeight(parseInt(e.target.value) || 50)}
-              className="w-full p-3 rounded-xl border-2 border-slate-950 bg-white text-slate-900 text-sm font-black shadow-[2px_2px_0px_0px_#0f172a] outline-none font-mono"
+              className="w-full p-3 rounded-xl border-2 border-slate-950 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-sm font-black shadow-[2px_2px_0px_0px_#0f172a] dark:shadow-[2px_2px_0px_0px_#000] outline-none font-mono"
             />
           </div>
 
-          <div className="flex justify-end gap-2.5 pt-3 border-t-2 border-slate-950">
+          <div className="flex justify-end gap-2.5 pt-3 border-t-2 border-slate-950 dark:border-slate-700">
             <button
               type="button"
               onClick={() => setIsAddOpen(false)}
-              className="px-4 py-2 rounded-xl bg-white hover:bg-slate-100 text-slate-950 font-mono font-black text-xs border-2 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a] active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
+              className="px-4 py-2 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-950 dark:text-slate-100 font-mono font-black text-xs border-2 border-slate-950 dark:border-slate-700 shadow-[2px_2px_0px_0px_#0f172a] dark:shadow-[2px_2px_0px_0px_#000] active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
             >
               Batal
             </button>
@@ -346,7 +346,7 @@ export const GuruSoal: React.FC<{
         >
           <form onSubmit={handleSaveEdit} className="space-y-4">
             <div>
-              <label className="block text-xs font-mono font-black uppercase tracking-wider text-slate-900 mb-1.5">
+              <label className="block text-xs font-mono font-black uppercase tracking-wider text-slate-900 dark:text-slate-200 mb-1.5">
                 Judul / Topik Soal:
               </label>
               <input
@@ -354,12 +354,12 @@ export const GuruSoal: React.FC<{
                 required
                 value={editTitle}
                 onChange={e => setEditTitle(e.target.value)}
-                className="w-full p-3 rounded-xl border-2 border-slate-950 bg-white text-slate-900 text-sm font-bold shadow-[2px_2px_0px_0px_#0f172a] outline-none focus:bg-amber-50"
+                className="w-full p-3 rounded-xl border-2 border-slate-950 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-sm font-bold shadow-[2px_2px_0px_0px_#0f172a] dark:shadow-[2px_2px_0px_0px_#000] outline-none focus:bg-amber-50 dark:focus:bg-slate-750"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-mono font-black uppercase tracking-wider text-slate-900 mb-1.5">
+              <label className="block text-xs font-mono font-black uppercase tracking-wider text-slate-900 dark:text-slate-200 mb-1.5">
                 Pertanyaan Cerita / Kasus HOTS:
               </label>
               <textarea
@@ -367,25 +367,25 @@ export const GuruSoal: React.FC<{
                 rows={3}
                 value={editPrompt}
                 onChange={e => setEditPrompt(e.target.value)}
-                className="w-full p-3 rounded-xl border-2 border-slate-950 bg-white text-slate-900 text-xs sm:text-sm font-bold shadow-[2px_2px_0px_0px_#0f172a] outline-none focus:bg-amber-50 leading-relaxed"
+                className="w-full p-3 rounded-xl border-2 border-slate-950 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-xs sm:text-sm font-bold shadow-[2px_2px_0px_0px_#0f172a] dark:shadow-[2px_2px_0px_0px_#000] outline-none focus:bg-amber-50 dark:focus:bg-slate-750 leading-relaxed"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-mono font-black uppercase tracking-wider text-slate-900 mb-1.5">
-                Kunci & Langkah Pembahasan Runtut:
+              <label className="block text-xs font-mono font-black uppercase tracking-wider text-slate-900 dark:text-slate-200 mb-1.5">
+                Kunci &amp; Langkah Pembahasan Runtut:
               </label>
               <textarea
                 required
                 rows={3}
                 value={editDiscussion}
                 onChange={e => setEditDiscussion(e.target.value)}
-                className="w-full p-3 rounded-xl border-2 border-slate-950 bg-white text-slate-900 text-xs sm:text-sm font-bold shadow-[2px_2px_0px_0px_#0f172a] outline-none focus:bg-purple-50 leading-relaxed"
+                className="w-full p-3 rounded-xl border-2 border-slate-950 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-xs sm:text-sm font-bold shadow-[2px_2px_0px_0px_#0f172a] dark:shadow-[2px_2px_0px_0px_#000] outline-none focus:bg-purple-50 dark:focus:bg-slate-750 leading-relaxed"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-mono font-black uppercase tracking-wider text-slate-900 mb-1.5">
+              <label className="block text-xs font-mono font-black uppercase tracking-wider text-slate-900 dark:text-slate-200 mb-1.5">
                 Bobot Nilai (Poin):
               </label>
               <input
@@ -395,15 +395,15 @@ export const GuruSoal: React.FC<{
                 required
                 value={editWeight}
                 onChange={e => setEditWeight(parseInt(e.target.value) || 50)}
-                className="w-full p-3 rounded-xl border-2 border-slate-950 bg-white text-slate-900 text-sm font-black shadow-[2px_2px_0px_0px_#0f172a] outline-none font-mono"
+                className="w-full p-3 rounded-xl border-2 border-slate-950 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-sm font-black shadow-[2px_2px_0px_0px_#0f172a] dark:shadow-[2px_2px_0px_0px_#000] outline-none font-mono"
               />
             </div>
 
-            <div className="flex justify-end gap-2.5 pt-3 border-t-2 border-slate-950">
+            <div className="flex justify-end gap-2.5 pt-3 border-t-2 border-slate-950 dark:border-slate-700">
               <button
                 type="button"
                 onClick={() => setEditingQuestion(null)}
-                className="px-4 py-2 rounded-xl bg-white hover:bg-slate-100 text-slate-950 font-mono font-black text-xs border-2 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a] active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
+                className="px-4 py-2 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-950 dark:text-slate-100 font-mono font-black text-xs border-2 border-slate-950 dark:border-slate-700 shadow-[2px_2px_0px_0px_#0f172a] dark:shadow-[2px_2px_0px_0px_#000] active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
               >
                 Batal
               </button>

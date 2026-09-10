@@ -43,7 +43,7 @@ export const SiswaHome: React.FC<{
     <div className="space-y-8 pb-12 font-sans max-w-6xl mx-auto">
       
       {/* 1. TOP GREETING BANNER (RAMPING & SLEEK NEOBRUTALISM V3) */}
-      <div className="relative rounded-3xl bg-[#ffe600] border-4 border-slate-950 p-6 sm:p-8 shadow-[8px_8px_0px_0px_#0f172a] overflow-hidden text-slate-950">
+      <div className="relative rounded-3xl bg-[#ffe600] border-4 border-slate-950 dark:border-slate-800 p-6 sm:p-8 shadow-[8px_8px_0px_0px_#0f172a] dark:shadow-[8px_8px_0px_0px_#000000] overflow-hidden text-slate-950">
         <div className="absolute right-4 bottom-0 text-slate-950/10 font-mono text-8xl font-black pointer-events-none select-none tracking-tight">
           LEARNING
         </div>
@@ -53,7 +53,7 @@ export const SiswaHome: React.FC<{
             <span className="px-3 py-1 bg-white text-slate-950 border-2 border-slate-950 rounded-xl text-xs font-mono font-black shadow-[2px_2px_0px_0px_#0f172a]">
               PORTAL SISWA
             </span>
-            <span className="px-3 py-1 bg-white/80 text-slate-900 border-2 border-slate-950 rounded-xl text-xs font-bold font-mono">
+            <span className="px-3 py-1 bg-white/90 text-slate-900 border-2 border-slate-950 rounded-xl text-xs font-bold font-mono">
               {currentUser.class || "Kelas 7-A"} • Kurikulum Merdeka
             </span>
           </div>
@@ -69,19 +69,19 @@ export const SiswaHome: React.FC<{
       </div>
 
       {/* 2. STRICT 3-STEP SEQUENTIAL LEARNING TRACKER */}
-      <div className="bg-white border-4 border-slate-950 rounded-3xl p-6 sm:p-8 shadow-[8px_8px_0px_0px_#0f172a] space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b-3 border-slate-950 pb-4">
+      <div className="bg-white dark:bg-[#111827] border-4 border-slate-950 dark:border-slate-800 rounded-3xl p-6 sm:p-8 shadow-[8px_8px_0px_0px_#0f172a] dark:shadow-[8px_8px_0px_0px_#000000] space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b-3 border-slate-950 dark:border-slate-800 pb-4">
           <div>
             <div className="flex items-center gap-2">
               <span className="px-3 py-0.5 bg-[#fbcfe8] text-slate-950 font-mono font-black text-xs uppercase rounded-xl border-2 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a]">
                 ALUR BELAJAR WAJIB BERURUTAN
               </span>
             </div>
-            <h2 className="text-xl sm:text-2xl font-black font-mono text-slate-950 mt-1">
+            <h2 className="text-xl sm:text-2xl font-black font-mono text-slate-950 dark:text-slate-100 mt-1">
               Tahapan Belajar Matematika Pecahan
             </h2>
           </div>
-          <span className="text-xs font-mono font-bold bg-[#fffdf5] px-3 py-1 rounded-xl border-2 border-slate-950 text-slate-700">
+          <span className="text-xs font-mono font-bold bg-[#fffdf5] dark:bg-slate-800 px-3 py-1 rounded-xl border-2 border-slate-950 dark:border-slate-700 text-slate-700 dark:text-slate-300">
             Wajib LKPD → Latihan Soal → Evaluasi
           </span>
         </div>
@@ -89,8 +89,10 @@ export const SiswaHome: React.FC<{
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
           
           {/* STEP 1: LKPD DIGITAL */}
-          <div className={`rounded-2xl border-3 border-slate-950 p-5 flex flex-col justify-between transition-all ${
-            hasLKPD ? 'bg-emerald-50 shadow-[4px_4px_0px_0px_#0f172a]' : 'bg-[#fffdf5] shadow-[6px_6px_0px_0px_#0f172a]'
+          <div className={`rounded-2xl border-3 border-slate-950 dark:border-slate-700 p-5 flex flex-col justify-between transition-all ${
+            hasLKPD
+              ? 'bg-emerald-50 dark:bg-emerald-950/40 shadow-[4px_4px_0px_0px_#0f172a] dark:shadow-[4px_4px_0px_0px_#000000]'
+              : 'bg-[#fffdf5] dark:bg-slate-800/90 shadow-[6px_6px_0px_0px_#0f172a] dark:shadow-[6px_6px_0px_0px_#000000]'
           }`}>
             <div className="space-y-3">
               <div className="flex items-center justify-between">
@@ -98,7 +100,7 @@ export const SiswaHome: React.FC<{
                   1
                 </span>
                 {hasLKPD ? (
-                  <span className="px-2.5 py-1 bg-emerald-300 text-emerald-950 font-mono text-[11px] font-black rounded-lg border-2 border-slate-950 flex items-center gap-1">
+                  <span className="px-2.5 py-1 bg-emerald-300 dark:bg-emerald-400 text-emerald-950 font-mono text-[11px] font-black rounded-lg border-2 border-slate-950 flex items-center gap-1">
                     <CheckCircle2 size={13} /> Selesai
                   </span>
                 ) : (
@@ -109,8 +111,8 @@ export const SiswaHome: React.FC<{
               </div>
 
               <div>
-                <h3 className="font-mono font-black text-base text-slate-950">LKPD Digital Soal Essai</h3>
-                <p className="text-xs font-bold text-slate-600 mt-1 leading-relaxed">
+                <h3 className="font-mono font-black text-base text-slate-950 dark:text-slate-100">LKPD Digital Soal Essai</h3>
+                <p className="text-xs font-bold text-slate-600 dark:text-slate-400 mt-1 leading-relaxed">
                   Jawab butir soal uraian dan buka pembahasan otomatis bersama Asisten AI.
                 </p>
               </div>
@@ -119,7 +121,7 @@ export const SiswaHome: React.FC<{
             <div className="pt-5">
               <button
                 onClick={() => handleAction('siswa/lkpd')}
-                className="w-full py-2.5 bg-[#ffe600] hover:bg-yellow-400 text-slate-950 font-mono font-black text-xs uppercase tracking-wider rounded-xl border-2 border-slate-950 shadow-[3px_3px_0px_0px_#0f172a] cursor-pointer flex items-center justify-center gap-1.5"
+                className="w-full py-2.5 bg-[#ffe600] hover:bg-yellow-400 text-slate-950 font-mono font-black text-xs uppercase tracking-wider rounded-xl border-2 border-slate-950 shadow-[3px_3px_0px_0px_#0f172a] dark:shadow-[3px_3px_0px_0px_#000000] cursor-pointer flex items-center justify-center gap-1.5"
               >
                 <span>{hasLKPD ? 'Lihat Tugas LKPD' : 'Kerjakan LKPD 1'}</span>
                 <ArrowRight size={14} />
@@ -128,26 +130,26 @@ export const SiswaHome: React.FC<{
           </div>
 
           {/* STEP 2: LATIHAN SOAL QUIZIZZ */}
-          <div className={`rounded-2xl border-3 border-slate-950 p-5 flex flex-col justify-between transition-all ${
+          <div className={`rounded-2xl border-3 border-slate-950 dark:border-slate-700 p-5 flex flex-col justify-between transition-all ${
             !hasLKPD
-              ? 'bg-slate-100 opacity-80 shadow-[2px_2px_0px_0px_#64748b]'
+              ? 'bg-slate-100 dark:bg-slate-800/40 opacity-80 shadow-[2px_2px_0px_0px_#64748b] dark:shadow-none'
               : hasLatsol
-              ? 'bg-emerald-50 shadow-[4px_4px_0px_0px_#0f172a]'
-              : 'bg-[#fffdf5] shadow-[6px_6px_0px_0px_#0f172a]'
+              ? 'bg-emerald-50 dark:bg-emerald-950/40 shadow-[4px_4px_0px_0px_#0f172a] dark:shadow-[4px_4px_0px_0px_#000000]'
+              : 'bg-[#fffdf5] dark:bg-slate-800/90 shadow-[6px_6px_0px_0px_#0f172a] dark:shadow-[6px_6px_0px_0px_#000000]'
           }`}>
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <span className={`w-8 h-8 rounded-xl border-2 border-slate-950 font-mono font-black text-xs flex items-center justify-center ${
-                  hasLKPD ? 'bg-[#a5f3fc] text-slate-950' : 'bg-slate-300 text-slate-600'
+                  hasLKPD ? 'bg-[#a5f3fc] text-slate-950' : 'bg-slate-300 dark:bg-slate-700 text-slate-600 dark:text-slate-400'
                 }`}>
                   2
                 </span>
                 {!hasLKPD ? (
-                  <span className="px-2.5 py-1 bg-slate-300 text-slate-700 font-mono text-[11px] font-black rounded-lg border-2 border-slate-950 flex items-center gap-1">
+                  <span className="px-2.5 py-1 bg-slate-300 dark:bg-slate-700 text-slate-700 dark:text-slate-300 font-mono text-[11px] font-black rounded-lg border-2 border-slate-950 flex items-center gap-1">
                     <Lock size={12} /> Terkunci
                   </span>
                 ) : hasLatsol ? (
-                  <span className="px-2.5 py-1 bg-emerald-300 text-emerald-950 font-mono text-[11px] font-black rounded-lg border-2 border-slate-950 flex items-center gap-1">
+                  <span className="px-2.5 py-1 bg-emerald-300 dark:bg-emerald-400 text-emerald-950 font-mono text-[11px] font-black rounded-lg border-2 border-slate-950 flex items-center gap-1">
                     <CheckCircle2 size={13} /> Selesai
                   </span>
                 ) : (
@@ -158,8 +160,8 @@ export const SiswaHome: React.FC<{
               </div>
 
               <div>
-                <h3 className="font-mono font-black text-base text-slate-950">Latihan Soal (Quizizz)</h3>
-                <p className="text-xs font-bold text-slate-600 mt-1 leading-relaxed">
+                <h3 className="font-mono font-black text-base text-slate-950 dark:text-slate-100">Latihan Soal (Quizizz)</h3>
+                <p className="text-xs font-bold text-slate-600 dark:text-slate-400 mt-1 leading-relaxed">
                   Kuis room berwaktu dengan auto-submit dan papan skor instan.
                 </p>
               </div>
@@ -171,8 +173,8 @@ export const SiswaHome: React.FC<{
                 disabled={!hasLKPD}
                 className={`w-full py-2.5 font-mono font-black text-xs uppercase tracking-wider rounded-xl border-2 border-slate-950 transition-all flex items-center justify-center gap-1.5 ${
                   hasLKPD
-                    ? 'bg-[#a5f3fc] hover:bg-cyan-300 text-slate-950 shadow-[3px_3px_0px_0px_#0f172a] cursor-pointer'
-                    : 'bg-slate-300 text-slate-500 cursor-not-allowed'
+                    ? 'bg-[#a5f3fc] hover:bg-cyan-300 text-slate-950 shadow-[3px_3px_0px_0px_#0f172a] dark:shadow-[3px_3px_0px_0px_#000000] cursor-pointer'
+                    : 'bg-slate-300 dark:bg-slate-700 text-slate-500 dark:text-slate-400 cursor-not-allowed'
                 }`}
               >
                 <span>{hasLatsol ? 'Buka Latihan Soal' : 'Mulai Latihan Soal'}</span>
@@ -182,26 +184,26 @@ export const SiswaHome: React.FC<{
           </div>
 
           {/* STEP 3: EVALUASI SUMATIF */}
-          <div className={`rounded-2xl border-3 border-slate-950 p-5 flex flex-col justify-between transition-all ${
+          <div className={`rounded-2xl border-3 border-slate-950 dark:border-slate-700 p-5 flex flex-col justify-between transition-all ${
             !hasLatsol
-              ? 'bg-slate-100 opacity-80 shadow-[2px_2px_0px_0px_#64748b]'
+              ? 'bg-slate-100 dark:bg-slate-800/40 opacity-80 shadow-[2px_2px_0px_0px_#64748b] dark:shadow-none'
               : hasEvaluasi
-              ? 'bg-emerald-50 shadow-[4px_4px_0px_0px_#0f172a]'
-              : 'bg-[#fffdf5] shadow-[6px_6px_0px_0px_#0f172a]'
+              ? 'bg-emerald-50 dark:bg-emerald-950/40 shadow-[4px_4px_0px_0px_#0f172a] dark:shadow-[4px_4px_0px_0px_#000000]'
+              : 'bg-[#fffdf5] dark:bg-slate-800/90 shadow-[6px_6px_0px_0px_#0f172a] dark:shadow-[6px_6px_0px_0px_#000000]'
           }`}>
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <span className={`w-8 h-8 rounded-xl border-2 border-slate-950 font-mono font-black text-xs flex items-center justify-center ${
-                  hasLatsol ? 'bg-[#fbcfe8] text-slate-950' : 'bg-slate-300 text-slate-600'
+                  hasLatsol ? 'bg-[#fbcfe8] text-slate-950' : 'bg-slate-300 dark:bg-slate-700 text-slate-600 dark:text-slate-400'
                 }`}>
                   3
                 </span>
                 {!hasLatsol ? (
-                  <span className="px-2.5 py-1 bg-slate-300 text-slate-700 font-mono text-[11px] font-black rounded-lg border-2 border-slate-950 flex items-center gap-1">
+                  <span className="px-2.5 py-1 bg-slate-300 dark:bg-slate-700 text-slate-700 dark:text-slate-300 font-mono text-[11px] font-black rounded-lg border-2 border-slate-950 flex items-center gap-1">
                     <Lock size={12} /> Terkunci
                   </span>
                 ) : hasEvaluasi ? (
-                  <span className="px-2.5 py-1 bg-emerald-300 text-emerald-950 font-mono text-[11px] font-black rounded-lg border-2 border-slate-950 flex items-center gap-1">
+                  <span className="px-2.5 py-1 bg-emerald-300 dark:bg-emerald-400 text-emerald-950 font-mono text-[11px] font-black rounded-lg border-2 border-slate-950 flex items-center gap-1">
                     <CheckCircle2 size={13} /> Selesai
                   </span>
                 ) : (
@@ -212,8 +214,8 @@ export const SiswaHome: React.FC<{
               </div>
 
               <div>
-                <h3 className="font-mono font-black text-base text-slate-950">Evaluasi Sumatif HOTS</h3>
-                <p className="text-xs font-bold text-slate-600 mt-1 leading-relaxed">
+                <h3 className="font-mono font-black text-base text-slate-950 dark:text-slate-100">Evaluasi Sumatif HOTS</h3>
+                <p className="text-xs font-bold text-slate-600 dark:text-slate-400 mt-1 leading-relaxed">
                   Ujian akhir bab pecahan dengan pengawasan tab integrity monitor.
                 </p>
               </div>
@@ -225,8 +227,8 @@ export const SiswaHome: React.FC<{
                 disabled={!hasLatsol}
                 className={`w-full py-2.5 font-mono font-black text-xs uppercase tracking-wider rounded-xl border-2 border-slate-950 transition-all flex items-center justify-center gap-1.5 ${
                   hasLatsol
-                    ? 'bg-[#fbcfe8] hover:bg-pink-300 text-slate-950 shadow-[3px_3px_0px_0px_#0f172a] cursor-pointer'
-                    : 'bg-slate-300 text-slate-500 cursor-not-allowed'
+                    ? 'bg-[#fbcfe8] hover:bg-pink-300 text-slate-950 shadow-[3px_3px_0px_0px_#0f172a] dark:shadow-[3px_3px_0px_0px_#000000] cursor-pointer'
+                    : 'bg-slate-300 dark:bg-slate-700 text-slate-500 dark:text-slate-400 cursor-not-allowed'
                 }`}
               >
                 <span>{hasEvaluasi ? 'Lihat Hasil Evaluasi' : 'Mulai Evaluasi'}</span>
@@ -239,17 +241,17 @@ export const SiswaHome: React.FC<{
       </div>
 
       {/* 3. JADWAL PEMBELAJARAN & TUGAS (SCHEDULES FEATURE) */}
-      <div className="bg-white border-4 border-slate-950 rounded-3xl p-6 sm:p-8 shadow-[8px_8px_0px_0px_#0f172a] space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b-3 border-slate-950 pb-4">
+      <div className="bg-white dark:bg-[#111827] border-4 border-slate-950 dark:border-slate-800 rounded-3xl p-6 sm:p-8 shadow-[8px_8px_0px_0px_#0f172a] dark:shadow-[8px_8px_0px_0px_#000000] space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b-3 border-slate-950 dark:border-slate-800 pb-4">
           <div className="flex items-center gap-3">
             <div className="p-2.5 bg-[#a5f3fc] border-2 border-slate-950 rounded-xl shadow-[2px_2px_0px_0px_#0f172a]">
               <Calendar size={20} className="text-slate-950" />
             </div>
             <div>
-              <h2 className="text-xl sm:text-2xl font-black font-mono text-slate-950">
+              <h2 className="text-xl sm:text-2xl font-black font-mono text-slate-950 dark:text-slate-100">
                 Jadwal Materi &amp; Agenda Tugas
               </h2>
-              <p className="text-xs font-bold text-slate-600">
+              <p className="text-xs font-bold text-slate-600 dark:text-slate-400">
                 Timeline pelaksanaan pembelajaran semester ganjil
               </p>
             </div>
@@ -268,26 +270,26 @@ export const SiswaHome: React.FC<{
             return (
               <div
                 key={sch.id}
-                className="p-5 rounded-2xl bg-[#fffdf5] border-3 border-slate-950 shadow-[4px_4px_0px_0px_#0f172a] space-y-3"
+                className="p-5 rounded-2xl bg-[#fffdf5] dark:bg-slate-800/90 border-3 border-slate-950 dark:border-slate-700 shadow-[4px_4px_0px_0px_#0f172a] dark:shadow-[4px_4px_0px_0px_#000000] space-y-3"
               >
                 <div className="flex items-center justify-between">
-                  <span className={`px-2.5 py-1 font-mono text-[11px] font-black rounded-lg border-2 border-slate-950 uppercase ${typeBadgeColors[sch.type] || 'bg-slate-200'}`}>
+                  <span className={`px-2.5 py-1 font-mono text-[11px] font-black rounded-lg border-2 border-slate-950 uppercase ${typeBadgeColors[sch.type] || 'bg-slate-200 text-slate-950'}`}>
                     {sch.type}
                   </span>
-                  <div className="flex items-center gap-1.5 font-mono text-xs font-bold text-slate-700">
+                  <div className="flex items-center gap-1.5 font-mono text-xs font-bold text-slate-700 dark:text-slate-300">
                     <Clock size={13} />
                     <span>{sch.date} • {sch.dueTime}</span>
                   </div>
                 </div>
 
                 <div>
-                  <h4 className="font-mono font-black text-sm text-slate-950">{sch.title}</h4>
-                  <p className="text-xs font-bold text-slate-600 mt-1">{sch.description}</p>
+                  <h4 className="font-mono font-black text-sm text-slate-950 dark:text-slate-100">{sch.title}</h4>
+                  <p className="text-xs font-bold text-slate-600 dark:text-slate-400 mt-1">{sch.description}</p>
                 </div>
 
                 <div className="pt-1 flex items-center justify-between text-xs font-mono">
-                  <span className="text-slate-500 font-bold">{sch.topic}</span>
-                  <span className="font-black text-slate-950 bg-white px-2 py-0.5 rounded border border-slate-950">
+                  <span className="text-slate-500 dark:text-slate-400 font-bold">{sch.topic}</span>
+                  <span className="font-black text-slate-950 bg-white dark:bg-slate-700 dark:text-slate-100 px-2 py-0.5 rounded border border-slate-950 dark:border-slate-600">
                     {sch.status}
                   </span>
                 </div>

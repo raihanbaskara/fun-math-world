@@ -55,33 +55,33 @@ export const AdminAuth: React.FC<AdminAuthProps> = ({
   };
 
   return (
-    <div className="min-h-screen w-full bg-[#fffdf5] bg-graph-grid flex flex-col items-center justify-center p-4 relative font-sans text-slate-950 select-none">
+    <div className="min-h-screen bg-[#fffdf5] dark:bg-[#090d16] flex flex-col items-center justify-center p-4 relative font-sans text-slate-950 dark:text-slate-100">
       
-      {/* Top Floating Back Button */}
+      {/* Back Button */}
       <button
         onClick={() => {
           soundService.click();
           onBackToLanding();
         }}
-        className="fixed top-6 left-6 px-4 py-2 rounded-full bg-white border-2 border-slate-950 shadow-[3px_3px_0px_0px_#0f172a] text-slate-950 font-black text-xs hover:bg-[#ffe600] transition-all flex items-center gap-2 cursor-pointer active:translate-x-0.5 active:translate-y-0.5 active:shadow-none z-50"
+        className="absolute top-6 left-6 px-4 py-2 rounded-2xl bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-950 dark:text-slate-100 font-mono font-black text-xs uppercase tracking-wider border-2 border-slate-950 dark:border-slate-800 shadow-[2px_2px_0px_0px_#0f172a] dark:shadow-[2px_2px_0px_0px_#000000] cursor-pointer flex items-center gap-2"
       >
         <ArrowLeft size={16} />
         <span>Kembali ke Beranda</span>
       </button>
 
       {/* Main Neobrutal Admin Card */}
-      <div className="w-full max-w-md bg-white border-4 border-slate-950 rounded-3xl p-6 sm:p-8 shadow-[8px_8px_0px_0px_#0f172a] space-y-6 relative my-12">
+      <div className="w-full max-w-md bg-white dark:bg-[#111827] border-4 border-slate-950 dark:border-slate-800 rounded-3xl p-6 sm:p-8 shadow-[8px_8px_0px_0px_#0f172a] dark:shadow-[8px_8px_0px_0px_#000000] space-y-6 relative my-12">
         
         {/* Header */}
-        <div className="flex items-center gap-3 pb-4 border-b-3 border-slate-950">
-          <div className="w-11 h-11 rounded-2xl bg-[#c084fc] border-2 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a] flex items-center justify-center font-black text-slate-950">
+        <div className="flex items-center gap-3 pb-4 border-b-3 border-slate-950 dark:border-slate-800">
+          <div className="w-11 h-11 rounded-2xl bg-[#c084fc] border-2 border-slate-950 dark:border-slate-800 shadow-[2px_2px_0px_0px_#0f172a] dark:shadow-[2px_2px_0px_0px_#000000] flex items-center justify-center font-black text-slate-950">
             <ShieldAlert size={24} />
           </div>
           <div>
-            <span className="px-2.5 py-0.5 bg-[#c084fc] text-slate-950 font-mono font-black text-[10px] rounded border border-slate-950 shadow-[1px_1px_0px_0px_#0f172a]">
+            <span className="px-2.5 py-0.5 bg-[#c084fc] text-slate-950 font-mono font-black text-[10px] rounded border border-slate-950 dark:border-slate-800 shadow-[1px_1px_0px_0px_#0f172a] dark:shadow-[1px_1px_0px_0px_#000000]">
               KONTROL ADMINISTRATOR
             </span>
-            <h2 className="text-xl font-black text-slate-950 font-mono mt-0.5">
+            <h2 className="text-xl font-black text-slate-950 dark:text-slate-100 font-mono mt-0.5">
               Terminal Admin
             </h2>
           </div>
@@ -90,7 +90,7 @@ export const AdminAuth: React.FC<AdminAuthProps> = ({
         {/* Login Form */}
         <form onSubmit={handleLogin} className="space-y-4">
           <div>
-            <label className="block text-xs font-mono font-black uppercase text-slate-700 mb-1">
+            <label className="block text-xs font-mono font-black uppercase text-slate-700 dark:text-slate-300 mb-1">
               Username Admin:
             </label>
             <input
@@ -99,12 +99,12 @@ export const AdminAuth: React.FC<AdminAuthProps> = ({
               placeholder="Masukkan username admin"
               value={username}
               onChange={e => setUsername(e.target.value)}
-              className="w-full p-3 bg-amber-50/50 border-2 border-slate-950 rounded-xl text-xs font-bold text-slate-950 focus:bg-white focus:ring-2 focus:ring-amber-400 outline-none shadow-[2px_2px_0px_0px_#0f172a]"
+              className="w-full p-3 bg-amber-50/50 dark:bg-slate-900 border-2 border-slate-950 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-950 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-amber-400 outline-none shadow-[2px_2px_0px_0px_#0f172a] dark:shadow-[2px_2px_0px_0px_#000000]"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-mono font-black uppercase text-slate-700 mb-1">
+            <label className="block text-xs font-mono font-black uppercase text-slate-700 dark:text-slate-300 mb-1">
               Kata Sandi (Password):
             </label>
             <div className="relative flex items-center">
@@ -114,12 +114,12 @@ export const AdminAuth: React.FC<AdminAuthProps> = ({
                 placeholder="••••••••"
                 value={password}
                 onChange={e => setPassword(e.target.value)}
-                className="w-full p-3 bg-amber-50/50 border-2 border-slate-950 rounded-xl text-xs font-bold text-slate-950 focus:bg-white focus:ring-2 focus:ring-amber-400 outline-none shadow-[2px_2px_0px_0px_#0f172a] pr-10"
+                className="w-full p-3 bg-amber-50/50 dark:bg-slate-900 border-2 border-slate-950 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-950 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-amber-400 outline-none shadow-[2px_2px_0px_0px_#0f172a] dark:shadow-[2px_2px_0px_0px_#000000] pr-10"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 text-slate-700 hover:text-slate-950 cursor-pointer"
+                className="absolute right-3 text-slate-700 dark:text-slate-300 hover:text-slate-950 dark:hover:text-white cursor-pointer"
               >
                 {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>

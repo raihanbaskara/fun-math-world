@@ -61,7 +61,7 @@ export const AdminMaintenance: React.FC<{
     <div className="space-y-8 max-w-4xl mx-auto font-sans pb-12">
       
       {/* 1. Header Banner Pure Neobrutalism V3 */}
-      <div className="relative rounded-3xl bg-[#38bdf8] text-slate-950 border-4 border-slate-950 p-6 sm:p-8 shadow-[8px_8px_0px_0px_#0f172a] overflow-hidden">
+      <div className="relative rounded-3xl bg-[#38bdf8] text-slate-950 border-4 border-slate-950 dark:border-slate-700 p-6 sm:p-8 shadow-[8px_8px_0px_0px_#0f172a] dark:shadow-[8px_8px_0px_0px_#000000] overflow-hidden">
         <div className="absolute right-4 bottom-0 text-slate-950/10 font-mono text-8xl font-black pointer-events-none select-none tracking-tight">
           DATABASE
         </div>
@@ -90,7 +90,7 @@ export const AdminMaintenance: React.FC<{
       <div className="space-y-6">
         
         {/* Card 1: Backup Database */}
-        <div className="rounded-3xl bg-white border-4 border-slate-950 p-6 sm:p-7 shadow-[6px_6px_0px_0px_#0f172a] space-y-4">
+        <div className="rounded-3xl bg-white dark:bg-[#111827] border-4 border-slate-950 dark:border-slate-700 p-6 sm:p-7 shadow-[6px_6px_0px_0px_#0f172a] dark:shadow-[6px_6px_0px_0px_#000000] space-y-4">
           <div className="flex items-start justify-between gap-3">
             <div className="space-y-1">
               <div className="flex items-center gap-2">
@@ -101,7 +101,7 @@ export const AdminMaintenance: React.FC<{
                   Format JSON
                 </span>
               </div>
-              <h3 className="font-black text-slate-950 text-lg sm:text-xl font-mono">
+              <h3 className="font-black text-slate-950 dark:text-slate-100 text-lg sm:text-xl font-mono">
                 Cadangkan Basis Data (Export JSON)
               </h3>
             </div>
@@ -111,7 +111,7 @@ export const AdminMaintenance: React.FC<{
             </div>
           </div>
 
-          <p className="text-xs sm:text-sm font-bold text-slate-700 leading-relaxed">
+          <p className="text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-300 leading-relaxed">
             Unduh seluruh berkas snapshot data (akun siswa, guru, materi, modul video, pengumuman, dan riwayat pengerjaan soal) ke komputer Anda.
           </p>
 
@@ -128,7 +128,7 @@ export const AdminMaintenance: React.FC<{
         </div>
 
         {/* Card 2: Restore Database */}
-        <div className="rounded-3xl bg-white border-4 border-slate-950 p-6 sm:p-7 shadow-[6px_6px_0px_0px_#0f172a] space-y-4">
+        <div className="rounded-3xl bg-white dark:bg-[#111827] border-4 border-slate-950 dark:border-slate-700 p-6 sm:p-7 shadow-[6px_6px_0px_0px_#0f172a] dark:shadow-[6px_6px_0px_0px_#000000] space-y-4">
           <div className="flex items-start justify-between gap-3">
             <div className="space-y-1">
               <div className="flex items-center gap-2">
@@ -139,7 +139,7 @@ export const AdminMaintenance: React.FC<{
                   Pemulihan Data
                 </span>
               </div>
-              <h3 className="font-black text-slate-950 text-lg sm:text-xl font-mono">
+              <h3 className="font-black text-slate-950 dark:text-slate-100 text-lg sm:text-xl font-mono">
                 Pulihkan Database dari Berkas (Import JSON)
               </h3>
             </div>
@@ -149,33 +149,33 @@ export const AdminMaintenance: React.FC<{
             </div>
           </div>
 
-          <p className="text-xs sm:text-sm font-bold text-slate-700 leading-relaxed">
+          <p className="text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-300 leading-relaxed">
             Pilih berkas JSON cadangan yang valid untuk menimpa dan memulihkan seluruh struktur data aplikasi ke kondisi sebelumnya.
           </p>
 
-          <div className="p-4 rounded-2xl bg-[#fffdf5] border-3 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a]">
+          <div className="p-4 rounded-2xl bg-[#fffdf5] dark:bg-slate-800 border-3 border-slate-950 dark:border-slate-700 shadow-[2px_2px_0px_0px_#0f172a] dark:shadow-[2px_2px_0px_0px_#000000]">
             <input
               type="file"
               accept=".json"
               onChange={handleImportJSON}
-              className="w-full text-xs font-mono font-bold text-slate-700 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-2 file:border-slate-950 file:text-xs file:font-mono file:font-black file:bg-[#ffe600] file:text-slate-950 hover:file:bg-yellow-400 file:cursor-pointer cursor-pointer"
+              className="w-full text-xs font-mono font-bold text-slate-700 dark:text-slate-200 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-2 file:border-slate-950 file:text-xs file:font-mono file:font-black file:bg-[#ffe600] file:text-slate-950 hover:file:bg-yellow-400 file:cursor-pointer cursor-pointer"
             />
           </div>
         </div>
 
         {/* Card 3: Critical Zone / Factory Reset */}
-        <div className="rounded-3xl bg-rose-50/70 border-4 border-slate-950 p-6 sm:p-7 shadow-[6px_6px_0px_0px_#0f172a] space-y-4">
+        <div className="rounded-3xl bg-rose-50/70 dark:bg-rose-950/30 border-4 border-slate-950 dark:border-rose-800 p-6 sm:p-7 shadow-[6px_6px_0px_0px_#0f172a] dark:shadow-[6px_6px_0px_0px_#000000] space-y-4">
           <div className="flex items-start justify-between gap-3">
             <div className="space-y-1">
               <div className="flex items-center gap-2">
                 <span className="px-2.5 py-0.5 rounded-lg bg-rose-300 text-slate-950 font-mono font-black text-xs border-2 border-slate-950 shadow-[1.5px_1.5px_0px_0px_#0f172a]">
                   ZONA KRITIS
                 </span>
-                <span className="px-2.5 py-0.5 rounded-lg bg-white text-rose-900 font-mono font-black text-xs border-2 border-slate-950">
+                <span className="px-2.5 py-0.5 rounded-lg bg-white dark:bg-rose-900 text-rose-900 dark:text-rose-100 font-mono font-black text-xs border-2 border-slate-950 dark:border-rose-700">
                   Tindakan Berbahaya
                 </span>
               </div>
-              <h3 className="font-black text-rose-950 text-lg sm:text-xl font-mono">
+              <h3 className="font-black text-rose-950 dark:text-rose-200 text-lg sm:text-xl font-mono">
                 Reset Semua Data ke Setelan Awal Pabrik
               </h3>
             </div>
@@ -185,7 +185,7 @@ export const AdminMaintenance: React.FC<{
             </div>
           </div>
 
-          <p className="text-xs sm:text-sm font-bold text-rose-900 leading-relaxed">
+          <p className="text-xs sm:text-sm font-bold text-rose-900 dark:text-rose-300 leading-relaxed">
             Tindakan ini akan menghapus semua pengguna tambahan, tugas LKPD yang dikumpulkan, nilai kuis siswa, dan mengembalikan seluruh database ke kondisi awal instalasi.
           </p>
 

@@ -59,7 +59,7 @@ export const GuruPengumuman: React.FC<{
     <div className="space-y-8 max-w-5xl mx-auto font-sans pb-12">
       
       {/* 1. Header Banner Pure Neobrutalism V3 */}
-      <div className="relative rounded-3xl bg-[#38bdf8] border-4 border-slate-950 p-6 sm:p-8 shadow-[8px_8px_0px_0px_#0f172a] overflow-hidden text-slate-950">
+      <div className="relative rounded-3xl bg-[#38bdf8] border-4 border-slate-950 dark:border-slate-700 p-6 sm:p-8 shadow-[8px_8px_0px_0px_#0f172a] dark:shadow-[8px_8px_0px_0px_#000000] overflow-hidden text-slate-950">
         <div className="absolute right-4 bottom-0 text-slate-950/10 font-mono text-8xl font-black pointer-events-none select-none">
           BROADCAST
         </div>
@@ -91,16 +91,16 @@ export const GuruPengumuman: React.FC<{
       </div>
 
       {/* 2. Form Publikasi Neobrutalism */}
-      <div className="rounded-3xl bg-white border-4 border-slate-950 p-6 sm:p-8 shadow-[7px_7px_0px_0px_#0f172a] space-y-6">
-        <div className="flex items-center gap-2 border-b-3 border-slate-950 pb-4">
+      <div className="rounded-3xl bg-white dark:bg-[#111827] border-4 border-slate-950 dark:border-slate-700 p-6 sm:p-8 shadow-[7px_7px_0px_0px_#0f172a] dark:shadow-[7px_7px_0px_0px_#000000] space-y-6">
+        <div className="flex items-center gap-2 border-b-3 border-slate-950 dark:border-slate-700 pb-4">
           <div className="p-2 rounded-xl bg-[#ffe600] border-2 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a]">
             <Bell size={20} className="text-slate-950" />
           </div>
           <div>
-            <h2 className="text-lg sm:text-xl font-black text-slate-950 font-mono">
+            <h2 className="text-lg sm:text-xl font-black text-slate-950 dark:text-slate-100 font-mono">
               Tulis Pengumuman Baru
             </h2>
-            <p className="text-xs font-bold text-slate-600">
+            <p className="text-xs font-bold text-slate-600 dark:text-slate-400">
               Pesan ini akan otomatis tampil di layar utama siswa
             </p>
           </div>
@@ -108,7 +108,7 @@ export const GuruPengumuman: React.FC<{
 
         <form onSubmit={handlePublish} className="space-y-5">
           <div className="space-y-1.5">
-            <label className="block text-xs font-mono font-black uppercase tracking-wider text-slate-950">
+            <label className="block text-xs font-mono font-black uppercase tracking-wider text-slate-950 dark:text-slate-200">
               Judul Pengumuman:
             </label>
             <input
@@ -117,12 +117,12 @@ export const GuruPengumuman: React.FC<{
               value={title}
               onChange={e => setTitle(e.target.value)}
               placeholder="Contoh: Jadwal Pengumpulan Tugas Mandiri LKPD 2 Pecahan"
-              className="w-full p-4 rounded-2xl border-3 border-slate-950 bg-slate-50 text-slate-950 text-sm font-bold shadow-[3px_3px_0px_0px_#0f172a] focus:bg-white focus:shadow-[5px_5px_0px_0px_#0f172a] focus:translate-x-[-1px] focus:translate-y-[-1px] outline-none transition-all"
+              className="w-full p-4 rounded-2xl border-3 border-slate-950 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-950 dark:text-slate-100 text-sm font-bold shadow-[3px_3px_0px_0px_#0f172a] focus:bg-white dark:focus:bg-slate-700 focus:shadow-[5px_5px_0px_0px_#0f172a] focus:translate-x-[-1px] focus:translate-y-[-1px] outline-none transition-all"
             />
           </div>
 
           <div className="space-y-1.5">
-            <label className="block text-xs font-mono font-black uppercase tracking-wider text-slate-950">
+            <label className="block text-xs font-mono font-black uppercase tracking-wider text-slate-950 dark:text-slate-200">
               Isi Pesan Pengumuman:
             </label>
             <textarea
@@ -131,7 +131,7 @@ export const GuruPengumuman: React.FC<{
               value={content}
               onChange={e => setContent(e.target.value)}
               placeholder="Tuliskan instruksi lengkap tugas, petunjuk teknis, atau batas waktu pengerjaan..."
-              className="w-full p-4 rounded-2xl border-3 border-slate-950 bg-slate-50 text-slate-950 text-xs sm:text-sm font-bold shadow-[3px_3px_0px_0px_#0f172a] focus:bg-white focus:shadow-[5px_5px_0px_0px_#0f172a] focus:translate-x-[-1px] focus:translate-y-[-1px] outline-none leading-relaxed transition-all"
+              className="w-full p-4 rounded-2xl border-3 border-slate-950 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-950 dark:text-slate-100 text-xs sm:text-sm font-bold shadow-[3px_3px_0px_0px_#0f172a] focus:bg-white dark:focus:bg-slate-700 focus:shadow-[5px_5px_0px_0px_#0f172a] focus:translate-x-[-1px] focus:translate-y-[-1px] outline-none leading-relaxed transition-all"
             />
           </div>
 
@@ -149,7 +149,7 @@ export const GuruPengumuman: React.FC<{
 
       {/* 3. Daftar Pengumuman Aktif */}
       <div className="space-y-4">
-        <h2 className="text-lg sm:text-xl font-black text-slate-950 font-mono flex items-center gap-2">
+        <h2 className="text-lg sm:text-xl font-black text-slate-950 dark:text-slate-100 font-mono flex items-center gap-2">
           <span>Daftar Siaran Aktif</span>
           <span className="text-xs px-2.5 py-0.5 bg-[#ffe600] text-slate-950 rounded-lg border-2 border-slate-950 font-mono font-black">
             {announcements.length}
@@ -157,7 +157,7 @@ export const GuruPengumuman: React.FC<{
         </h2>
 
         {announcements.length === 0 ? (
-          <div className="p-8 rounded-3xl bg-white border-4 border-slate-950 text-center text-slate-500 font-bold shadow-[5px_5px_0px_0px_#0f172a]">
+          <div className="p-8 rounded-3xl bg-white dark:bg-[#111827] border-4 border-slate-950 dark:border-slate-700 text-center text-slate-500 dark:text-slate-400 font-bold shadow-[5px_5px_0px_0px_#0f172a] dark:shadow-[5px_5px_0px_0px_#000000]">
             Belum ada siaran pengumuman aktif saat ini.
           </div>
         ) : (
@@ -165,28 +165,28 @@ export const GuruPengumuman: React.FC<{
             {announcements.map((ann, idx) => (
               <div
                 key={ann.id || idx}
-                className="rounded-3xl bg-white border-4 border-slate-950 p-6 shadow-[5px_5px_0px_0px_#0f172a] flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                className="rounded-3xl bg-white dark:bg-[#111827] border-4 border-slate-950 dark:border-slate-700 p-6 shadow-[5px_5px_0px_0px_#0f172a] dark:shadow-[5px_5px_0px_0px_#000000] flex flex-col sm:flex-row sm:items-center justify-between gap-4"
               >
                 <div className="space-y-2 max-w-3xl">
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="px-2.5 py-0.5 rounded-lg bg-[#38bdf8] text-slate-950 font-mono font-black text-xs border-2 border-slate-950">
                       PENGUMUMAN #{idx + 1}
                     </span>
-                    <span className="inline-flex items-center gap-1 text-[11px] font-mono font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md border border-slate-400">
+                    <span className="inline-flex items-center gap-1 text-[11px] font-mono font-bold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md border border-slate-400 dark:border-slate-600">
                       <Calendar size={12} />
                       <span>{ann.date}</span>
                     </span>
-                    <span className="inline-flex items-center gap-1 text-[11px] font-mono font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md border border-slate-400">
+                    <span className="inline-flex items-center gap-1 text-[11px] font-mono font-bold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md border border-slate-400 dark:border-slate-600">
                       <UserCheck size={12} />
                       <span>{ann.author}</span>
                     </span>
                   </div>
 
-                  <h3 className="text-base sm:text-lg font-black text-slate-950 font-mono">
+                  <h3 className="text-base sm:text-lg font-black text-slate-950 dark:text-slate-100 font-mono">
                     {ann.title}
                   </h3>
 
-                  <p className="text-xs sm:text-sm font-bold text-slate-700 leading-relaxed">
+                  <p className="text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-300 leading-relaxed">
                     {ann.content}
                   </p>
                 </div>

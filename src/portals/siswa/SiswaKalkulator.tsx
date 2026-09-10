@@ -220,7 +220,7 @@ export const SiswaKalkulator: React.FC<{
     <div className="space-y-8 max-w-5xl mx-auto pb-12 font-sans">
       
       {/* Header Banner Pure Neobrutalism V3 */}
-      <div className="relative rounded-3xl bg-[#ff94e8] border-4 border-slate-950 p-6 sm:p-8 shadow-[8px_8px_0px_0px_#0f172a] overflow-hidden text-slate-950">
+      <div className="relative rounded-3xl bg-[#ff94e8] border-4 border-slate-950 dark:border-slate-800 p-6 sm:p-8 shadow-[8px_8px_0px_0px_#0f172a] dark:shadow-[8px_8px_0px_0px_#000000] overflow-hidden text-slate-950">
         <div className="absolute right-4 bottom-0 text-slate-950/10 font-mono text-8xl font-black pointer-events-none select-none">
           + - × ÷
         </div>
@@ -231,7 +231,7 @@ export const SiswaKalkulator: React.FC<{
               <span className="px-3 py-1 bg-white text-slate-950 border-2 border-slate-950 rounded-xl text-xs font-mono font-black shadow-[2px_2px_0px_0px_#0f172a]">
                 KALKULATOR PECAHAN CERDAS
               </span>
-              <span className="px-3 py-1 bg-white/80 text-slate-900 border-2 border-slate-950 rounded-xl text-xs font-bold font-mono">
+              <span className="px-3 py-1 bg-white/90 text-slate-900 border-2 border-slate-950 rounded-xl text-xs font-bold font-mono">
                 Langkah Penyelesaian KPK &amp; FPB Lengkap
               </span>
             </div>
@@ -256,10 +256,10 @@ export const SiswaKalkulator: React.FC<{
         <button
           type="button"
           onClick={() => handleModeChange('biasa')}
-          className={`px-5 py-2.5 rounded-2xl border-3 border-slate-950 font-mono font-black text-xs sm:text-sm transition-all cursor-pointer flex items-center gap-2 ${
+          className={`px-5 py-2.5 rounded-2xl border-3 border-slate-950 dark:border-slate-700 font-mono font-black text-xs sm:text-sm transition-all cursor-pointer flex items-center gap-2 ${
             calcType === 'biasa'
-              ? 'bg-[#ffe600] text-slate-950 shadow-[4px_4px_0px_0px_#0f172a] -translate-x-0.5 -translate-y-0.5'
-              : 'bg-white text-slate-800 shadow-[2px_2px_0px_0px_#0f172a] hover:bg-yellow-50'
+              ? 'bg-[#ffe600] text-slate-950 shadow-[4px_4px_0px_0px_#0f172a] dark:shadow-[4px_4px_0px_0px_#000000] -translate-x-0.5 -translate-y-0.5'
+              : 'bg-white dark:bg-[#111827] text-slate-800 dark:text-slate-200 shadow-[2px_2px_0px_0px_#0f172a] dark:shadow-[2px_2px_0px_0px_#000000] hover:bg-yellow-50 dark:hover:bg-slate-800'
           }`}
         >
           <span>Pecahan Biasa (a/b)</span>
@@ -268,10 +268,10 @@ export const SiswaKalkulator: React.FC<{
         <button
           type="button"
           onClick={() => handleModeChange('campuran')}
-          className={`px-5 py-2.5 rounded-2xl border-3 border-slate-950 font-mono font-black text-xs sm:text-sm transition-all cursor-pointer flex items-center gap-2 ${
+          className={`px-5 py-2.5 rounded-2xl border-3 border-slate-950 dark:border-slate-700 font-mono font-black text-xs sm:text-sm transition-all cursor-pointer flex items-center gap-2 ${
             calcType === 'campuran'
-              ? 'bg-[#38bdf8] text-slate-950 shadow-[4px_4px_0px_0px_#0f172a] -translate-x-0.5 -translate-y-0.5'
-              : 'bg-white text-slate-800 shadow-[2px_2px_0px_0px_#0f172a] hover:bg-sky-50'
+              ? 'bg-[#38bdf8] text-slate-950 shadow-[4px_4px_0px_0px_#0f172a] dark:shadow-[4px_4px_0px_0px_#000000] -translate-x-0.5 -translate-y-0.5'
+              : 'bg-white dark:bg-[#111827] text-slate-800 dark:text-slate-200 shadow-[2px_2px_0px_0px_#0f172a] dark:shadow-[2px_2px_0px_0px_#000000] hover:bg-sky-50 dark:hover:bg-slate-800'
           }`}
         >
           <span>Pecahan Campuran (w a/b)</span>
@@ -279,52 +279,52 @@ export const SiswaKalkulator: React.FC<{
       </div>
 
       {/* Calculator Interactive Form */}
-      <form onSubmit={calculateFraction} className="rounded-3xl bg-white border-4 border-slate-950 p-6 sm:p-8 shadow-[8px_8px_0px_0px_#0f172a] space-y-6">
+      <form onSubmit={calculateFraction} className="rounded-3xl bg-white dark:bg-[#111827] border-4 border-slate-950 dark:border-slate-800 p-6 sm:p-8 shadow-[8px_8px_0px_0px_#0f172a] dark:shadow-[8px_8px_0px_0px_#000000] space-y-6">
         
         <div className="flex flex-col md:flex-row items-center justify-center gap-6 py-4">
           
           {/* Fraction 1 Card */}
-          <div className="p-5 rounded-2xl bg-[#fffdf5] border-3 border-slate-950 shadow-[4px_4px_0px_0px_#0f172a] flex items-center gap-3">
+          <div className="p-5 rounded-2xl bg-[#fffdf5] dark:bg-slate-800/90 border-3 border-slate-950 dark:border-slate-700 shadow-[4px_4px_0px_0px_#0f172a] dark:shadow-[4px_4px_0px_0px_#000000] flex items-center gap-3">
             {calcType === 'campuran' && (
               <div className="flex flex-col items-center">
-                <span className="text-[10px] font-bold text-slate-500 mb-1">Utuh</span>
+                <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 mb-1">Utuh</span>
                 <input
                   type="number"
                   min="0"
                   max="99"
                   value={w1}
                   onChange={(e) => setW1(parseInt(e.target.value) || 0)}
-                  className="w-14 p-2.5 rounded-xl border-2 border-slate-950 bg-white text-center font-mono font-black text-lg focus:bg-yellow-50 outline-none"
+                  className="w-14 p-2.5 rounded-xl border-2 border-slate-950 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-950 dark:text-slate-100 text-center font-mono font-black text-lg focus:bg-yellow-50 dark:focus:bg-slate-800 outline-none"
                 />
               </div>
             )}
 
             <div className="flex flex-col items-center gap-1.5">
-              <span className="text-[10px] font-bold text-slate-500">Pembilang</span>
+              <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400">Pembilang</span>
               <input
                 type="number"
                 min="0"
                 max="999"
                 value={n1}
                 onChange={(e) => setN1(parseInt(e.target.value) || 0)}
-                className="w-16 p-2 rounded-xl border-2 border-slate-950 bg-white text-center font-mono font-black text-lg focus:bg-yellow-50 outline-none"
+                className="w-16 p-2 rounded-xl border-2 border-slate-950 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-950 dark:text-slate-100 text-center font-mono font-black text-lg focus:bg-yellow-50 dark:focus:bg-slate-800 outline-none"
               />
-              <div className="w-16 h-1 bg-slate-950 rounded-full" />
+              <div className="w-16 h-1 bg-slate-950 dark:bg-slate-400 rounded-full" />
               <input
                 type="number"
                 min="1"
                 max="999"
                 value={d1}
                 onChange={(e) => setD1(parseInt(e.target.value) || 1)}
-                className="w-16 p-2 rounded-xl border-2 border-slate-950 bg-white text-center font-mono font-black text-lg focus:bg-yellow-50 outline-none"
+                className="w-16 p-2 rounded-xl border-2 border-slate-950 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-950 dark:text-slate-100 text-center font-mono font-black text-lg focus:bg-yellow-50 dark:focus:bg-slate-800 outline-none"
               />
-              <span className="text-[10px] font-bold text-slate-500">Penyebut</span>
+              <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400">Penyebut</span>
             </div>
           </div>
 
           {/* Operation Selector */}
           <div className="flex flex-col items-center gap-2">
-            <span className="text-[10px] font-mono font-black uppercase text-slate-500">Operasi</span>
+            <span className="text-[10px] font-mono font-black uppercase text-slate-500 dark:text-slate-400">Operasi</span>
             <div className="grid grid-cols-2 gap-2">
               {[
                 { op: '+', label: '+', icon: Plus, bg: 'bg-[#ffe600]' },
@@ -339,10 +339,10 @@ export const SiswaKalkulator: React.FC<{
                     soundService.click();
                     setOp(item.op as '+' | '-' | '*' | '/');
                   }}
-                  className={`w-11 h-11 rounded-xl border-2 border-slate-950 font-mono font-black text-lg flex items-center justify-center transition-all cursor-pointer ${
+                  className={`w-11 h-11 rounded-xl border-2 border-slate-950 dark:border-slate-700 font-mono font-black text-lg flex items-center justify-center transition-all cursor-pointer ${
                     op === item.op
-                      ? `${item.bg} text-slate-950 shadow-[3px_3px_0px_0px_#0f172a] -translate-x-0.5 -translate-y-0.5`
-                      : 'bg-white text-slate-700 hover:bg-slate-100'
+                      ? `${item.bg} text-slate-950 shadow-[3px_3px_0px_0px_#0f172a] dark:shadow-[3px_3px_0px_0px_#000000] -translate-x-0.5 -translate-y-0.5`
+                      : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'
                   }`}
                 >
                   <item.icon size={18} />
@@ -352,41 +352,41 @@ export const SiswaKalkulator: React.FC<{
           </div>
 
           {/* Fraction 2 Card */}
-          <div className="p-5 rounded-2xl bg-[#fffdf5] border-3 border-slate-950 shadow-[4px_4px_0px_0px_#0f172a] flex items-center gap-3">
+          <div className="p-5 rounded-2xl bg-[#fffdf5] dark:bg-slate-800/90 border-3 border-slate-950 dark:border-slate-700 shadow-[4px_4px_0px_0px_#0f172a] dark:shadow-[4px_4px_0px_0px_#000000] flex items-center gap-3">
             {calcType === 'campuran' && (
               <div className="flex flex-col items-center">
-                <span className="text-[10px] font-bold text-slate-500 mb-1">Utuh</span>
+                <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 mb-1">Utuh</span>
                 <input
                   type="number"
                   min="0"
                   max="99"
                   value={w2}
                   onChange={(e) => setW2(parseInt(e.target.value) || 0)}
-                  className="w-14 p-2.5 rounded-xl border-2 border-slate-950 bg-white text-center font-mono font-black text-lg focus:bg-yellow-50 outline-none"
+                  className="w-14 p-2.5 rounded-xl border-2 border-slate-950 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-950 dark:text-slate-100 text-center font-mono font-black text-lg focus:bg-yellow-50 dark:focus:bg-slate-800 outline-none"
                 />
               </div>
             )}
 
             <div className="flex flex-col items-center gap-1.5">
-              <span className="text-[10px] font-bold text-slate-500">Pembilang</span>
+              <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400">Pembilang</span>
               <input
                 type="number"
                 min="0"
                 max="999"
                 value={n2}
                 onChange={(e) => setN2(parseInt(e.target.value) || 0)}
-                className="w-16 p-2 rounded-xl border-2 border-slate-950 bg-white text-center font-mono font-black text-lg focus:bg-yellow-50 outline-none"
+                className="w-16 p-2 rounded-xl border-2 border-slate-950 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-950 dark:text-slate-100 text-center font-mono font-black text-lg focus:bg-yellow-50 dark:focus:bg-slate-800 outline-none"
               />
-              <div className="w-16 h-1 bg-slate-950 rounded-full" />
+              <div className="w-16 h-1 bg-slate-950 dark:bg-slate-400 rounded-full" />
               <input
                 type="number"
                 min="1"
                 max="999"
                 value={d2}
                 onChange={(e) => setD2(parseInt(e.target.value) || 1)}
-                className="w-16 p-2 rounded-xl border-2 border-slate-950 bg-white text-center font-mono font-black text-lg focus:bg-yellow-50 outline-none"
+                className="w-16 p-2 rounded-xl border-2 border-slate-950 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-950 dark:text-slate-100 text-center font-mono font-black text-lg focus:bg-yellow-50 dark:focus:bg-slate-800 outline-none"
               />
-              <span className="text-[10px] font-bold text-slate-500">Penyebut</span>
+              <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400">Penyebut</span>
             </div>
           </div>
 
@@ -420,14 +420,14 @@ export const SiswaKalkulator: React.FC<{
 
       {/* Results Arena */}
       {result && (
-        <div className="rounded-3xl bg-white border-4 border-slate-950 p-6 sm:p-8 shadow-[8px_8px_0px_0px_#0f172a] space-y-6">
+        <div className="rounded-3xl bg-white dark:bg-[#111827] border-4 border-slate-950 dark:border-slate-800 p-6 sm:p-8 shadow-[8px_8px_0px_0px_#0f172a] dark:shadow-[8px_8px_0px_0px_#000000] space-y-6">
           
-          <div className="flex items-center justify-between pb-3 border-b-2 border-slate-950">
-            <h3 className="font-mono font-black text-lg text-slate-950 flex items-center gap-2">
-              <CheckCircle2 className="text-emerald-600" />
+          <div className="flex items-center justify-between pb-3 border-b-2 border-slate-950 dark:border-slate-800">
+            <h3 className="font-mono font-black text-lg text-slate-950 dark:text-slate-100 flex items-center gap-2">
+              <CheckCircle2 className="text-emerald-600 dark:text-emerald-400" />
               <span>Hasil Perhitungan Akhir</span>
             </h3>
-            <span className="px-2.5 py-1 rounded-lg bg-emerald-100 text-slate-950 font-mono text-xs font-black border border-slate-950">
+            <span className="px-2.5 py-1 rounded-lg bg-emerald-100 dark:bg-emerald-950/60 text-slate-950 dark:text-emerald-200 font-mono text-xs font-black border border-slate-950 dark:border-slate-700">
               Terverifikasi Matematika
             </span>
           </div>
@@ -435,30 +435,30 @@ export const SiswaKalkulator: React.FC<{
           {/* Primary Result Box */}
           <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 text-center">
             
-            <div className="p-4 rounded-2xl bg-[#ffe600] border-3 border-slate-950 shadow-[3px_3px_0px_0px_#0f172a] space-y-1">
+            <div className="p-4 rounded-2xl bg-[#ffe600] border-3 border-slate-950 shadow-[3px_3px_0px_0px_#0f172a] space-y-1 text-slate-950">
               <div className="text-[10px] font-mono font-bold text-slate-800 uppercase">Pecahan Sederhana</div>
-              <div className="text-2xl font-black font-mono text-slate-950">
+              <div className="text-2xl font-black font-mono">
                 {result.simD === 1 ? result.simN : `${result.simN}/${result.simD}`}
               </div>
             </div>
 
-            <div className="p-4 rounded-2xl bg-[#38bdf8] border-3 border-slate-950 shadow-[3px_3px_0px_0px_#0f172a] space-y-1">
+            <div className="p-4 rounded-2xl bg-[#38bdf8] border-3 border-slate-950 shadow-[3px_3px_0px_0px_#0f172a] space-y-1 text-slate-950">
               <div className="text-[10px] font-mono font-bold text-slate-800 uppercase">Pecahan Campuran</div>
-              <div className="text-xl font-black font-mono text-slate-950">
+              <div className="text-xl font-black font-mono">
                 {result.mixed || '-'}
               </div>
             </div>
 
-            <div className="p-4 rounded-2xl bg-[#a3e635] border-3 border-slate-950 shadow-[3px_3px_0px_0px_#0f172a] space-y-1">
+            <div className="p-4 rounded-2xl bg-[#a3e635] border-3 border-slate-950 shadow-[3px_3px_0px_0px_#0f172a] space-y-1 text-slate-950">
               <div className="text-[10px] font-mono font-bold text-slate-800 uppercase">Bentuk Desimal</div>
-              <div className="text-2xl font-black font-mono text-slate-950">
+              <div className="text-2xl font-black font-mono">
                 {result.decimal}
               </div>
             </div>
 
-            <div className="p-4 rounded-2xl bg-[#ff94e8] border-3 border-slate-950 shadow-[3px_3px_0px_0px_#0f172a] space-y-1">
+            <div className="p-4 rounded-2xl bg-[#ff94e8] border-3 border-slate-950 shadow-[3px_3px_0px_0px_#0f172a] space-y-1 text-slate-950">
               <div className="text-[10px] font-mono font-bold text-slate-800 uppercase">Bentuk Persentase</div>
-              <div className="text-2xl font-black font-mono text-slate-950">
+              <div className="text-2xl font-black font-mono">
                 {result.percentage}
               </div>
             </div>
@@ -466,15 +466,15 @@ export const SiswaKalkulator: React.FC<{
           </div>
 
           {/* Step-by-Step Breakdown */}
-          <div className="p-5 rounded-2xl bg-[#fffdf5] border-3 border-slate-950 space-y-3 shadow-[3px_3px_0px_0px_#0f172a]">
-            <div className="text-xs font-mono font-black uppercase text-slate-950 flex items-center gap-1.5">
+          <div className="p-5 rounded-2xl bg-[#fffdf5] dark:bg-slate-800/90 border-3 border-slate-950 dark:border-slate-700 space-y-3 shadow-[3px_3px_0px_0px_#0f172a] dark:shadow-[3px_3px_0px_0px_#000000]">
+            <div className="text-xs font-mono font-black uppercase text-slate-950 dark:text-slate-100 flex items-center gap-1.5">
               <Layers size={15} />
               <span>Penjabaran Langkah demi Langkah:</span>
             </div>
 
             <div className="space-y-2.5">
               {result.stepExplanation.map((step, idx) => (
-                <div key={idx} className="p-3.5 rounded-xl bg-white border-2 border-slate-950 text-xs sm:text-sm font-mono font-bold text-slate-900 whitespace-pre-line leading-relaxed">
+                <div key={idx} className="p-3.5 rounded-xl bg-white dark:bg-slate-900 border-2 border-slate-950 dark:border-slate-700 text-xs sm:text-sm font-mono font-bold text-slate-900 dark:text-slate-100 whitespace-pre-line leading-relaxed">
                   {step}
                 </div>
               ))}

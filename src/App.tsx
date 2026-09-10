@@ -232,7 +232,7 @@ export function App() {
   const isAuthenticatedDashboard = !isLandingView && !isAuthView && currentUser;
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50 text-slate-900 transition-colors duration-300">
+    <div className="min-h-screen flex flex-col bg-[#fffdf5] dark:bg-[#090d16] text-slate-900 dark:text-slate-100 transition-colors duration-300 font-sans">
       
       {/* Toast Notification Stack */}
       <div className="fixed top-5 right-5 z-50 flex flex-col gap-2.5 max-w-sm pointer-events-none">

@@ -109,7 +109,7 @@ export const SiswaStudio: React.FC = () => {
     <div className="space-y-8 max-w-5xl mx-auto pb-12 font-sans">
       
       {/* Header Banner Pure Neobrutalism V3 */}
-      <div className="relative rounded-3xl bg-[#c084fc] border-4 border-slate-950 p-6 sm:p-8 shadow-[8px_8px_0px_0px_#0f172a] overflow-hidden text-slate-950">
+      <div className="relative rounded-3xl bg-[#c084fc] border-4 border-slate-950 dark:border-slate-800 p-6 sm:p-8 shadow-[8px_8px_0px_0px_#0f172a] dark:shadow-[8px_8px_0px_0px_#000000] overflow-hidden text-slate-950">
         <div className="absolute right-4 bottom-0 text-slate-950/10 font-mono text-8xl font-black pointer-events-none select-none">
           PIZZA
         </div>
@@ -120,7 +120,7 @@ export const SiswaStudio: React.FC = () => {
               <span className="px-3 py-1 bg-white text-slate-950 border-2 border-slate-950 rounded-xl text-xs font-mono font-black shadow-[2px_2px_0px_0px_#0f172a]">
                 SIMULATOR VISUAL INTERAKTIF
               </span>
-              <span className="px-3 py-1 bg-white/80 text-slate-900 border-2 border-slate-950 rounded-xl text-xs font-bold font-mono">
+              <span className="px-3 py-1 bg-white/90 text-slate-900 border-2 border-slate-950 rounded-xl text-xs font-bold font-mono">
                 Geometri Pizza &amp; Batang Cokelat
               </span>
             </div>
@@ -148,10 +148,10 @@ export const SiswaStudio: React.FC = () => {
             soundService.click();
             setStudioMode('pizza');
           }}
-          className={`px-5 py-2.5 rounded-2xl border-3 border-slate-950 font-mono font-black text-xs sm:text-sm transition-all cursor-pointer flex items-center gap-2 ${
+          className={`px-5 py-2.5 rounded-2xl border-3 border-slate-950 dark:border-slate-700 font-mono font-black text-xs sm:text-sm transition-all cursor-pointer flex items-center gap-2 ${
             studioMode === 'pizza'
-              ? 'bg-[#ffe600] text-slate-950 shadow-[4px_4px_0px_0px_#0f172a] -translate-x-0.5 -translate-y-0.5'
-              : 'bg-white text-slate-800 shadow-[2px_2px_0px_0px_#0f172a] hover:bg-yellow-50'
+              ? 'bg-[#ffe600] text-slate-950 shadow-[4px_4px_0px_0px_#0f172a] dark:shadow-[4px_4px_0px_0px_#000000] -translate-x-0.5 -translate-y-0.5'
+              : 'bg-white dark:bg-[#111827] text-slate-800 dark:text-slate-200 shadow-[2px_2px_0px_0px_#0f172a] dark:shadow-[2px_2px_0px_0px_#000000] hover:bg-yellow-50 dark:hover:bg-slate-800'
           }`}
         >
           <PieChart size={18} />
@@ -164,10 +164,10 @@ export const SiswaStudio: React.FC = () => {
             soundService.click();
             setStudioMode('chocolate');
           }}
-          className={`px-5 py-2.5 rounded-2xl border-3 border-slate-950 font-mono font-black text-xs sm:text-sm transition-all cursor-pointer flex items-center gap-2 ${
+          className={`px-5 py-2.5 rounded-2xl border-3 border-slate-950 dark:border-slate-700 font-mono font-black text-xs sm:text-sm transition-all cursor-pointer flex items-center gap-2 ${
             studioMode === 'chocolate'
-              ? 'bg-[#38bdf8] text-slate-950 shadow-[4px_4px_0px_0px_#0f172a] -translate-x-0.5 -translate-y-0.5'
-              : 'bg-white text-slate-800 shadow-[2px_2px_0px_0px_#0f172a] hover:bg-sky-50'
+              ? 'bg-[#38bdf8] text-slate-950 shadow-[4px_4px_0px_0px_#0f172a] dark:shadow-[4px_4px_0px_0px_#000000] -translate-x-0.5 -translate-y-0.5'
+              : 'bg-white dark:bg-[#111827] text-slate-800 dark:text-slate-200 shadow-[2px_2px_0px_0px_#0f172a] dark:shadow-[2px_2px_0px_0px_#000000] hover:bg-sky-50 dark:hover:bg-slate-800'
           }`}
         >
           <Grid size={18} />
@@ -180,10 +180,10 @@ export const SiswaStudio: React.FC = () => {
             soundService.click();
             setStudioMode('compare');
           }}
-          className={`px-5 py-2.5 rounded-2xl border-3 border-slate-950 font-mono font-black text-xs sm:text-sm transition-all cursor-pointer flex items-center gap-2 ${
+          className={`px-5 py-2.5 rounded-2xl border-3 border-slate-950 dark:border-slate-700 font-mono font-black text-xs sm:text-sm transition-all cursor-pointer flex items-center gap-2 ${
             studioMode === 'compare'
-              ? 'bg-[#a3e635] text-slate-950 shadow-[4px_4px_0px_0px_#0f172a] -translate-x-0.5 -translate-y-0.5'
-              : 'bg-white text-slate-800 shadow-[2px_2px_0px_0px_#0f172a] hover:bg-lime-50'
+              ? 'bg-[#a3e635] text-slate-950 shadow-[4px_4px_0px_0px_#0f172a] dark:shadow-[4px_4px_0px_0px_#000000] -translate-x-0.5 -translate-y-0.5'
+              : 'bg-white dark:bg-[#111827] text-slate-800 dark:text-slate-200 shadow-[2px_2px_0px_0px_#0f172a] dark:shadow-[2px_2px_0px_0px_#000000] hover:bg-lime-50 dark:hover:bg-slate-800'
           }`}
         >
           <Scale size={18} />
@@ -195,9 +195,9 @@ export const SiswaStudio: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         
         {/* Left: Fraction Controls */}
-        <div className="lg:col-span-5 rounded-3xl bg-white border-4 border-slate-950 p-6 shadow-[7px_7px_0px_0px_#0f172a] space-y-6">
-          <div className="flex items-center justify-between pb-3 border-b-2 border-slate-950">
-            <h3 className="font-mono font-black text-base text-slate-950">
+        <div className="lg:col-span-5 rounded-3xl bg-white dark:bg-[#111827] border-4 border-slate-950 dark:border-slate-800 p-6 shadow-[7px_7px_0px_0px_#0f172a] dark:shadow-[7px_7px_0px_0px_#000000] space-y-6">
+          <div className="flex items-center justify-between pb-3 border-b-2 border-slate-950 dark:border-slate-800">
+            <h3 className="font-mono font-black text-base text-slate-950 dark:text-slate-100">
               Panel Pengaturan Nilai
             </h3>
             <button
@@ -208,7 +208,7 @@ export const SiswaStudio: React.FC = () => {
                 setNum2(1);
                 setDen2(2);
               }}
-              className="p-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 border-2 border-slate-950 text-slate-950 text-xs font-black flex items-center gap-1 shadow-[1.5px_1.5px_0px_0px_#0f172a]"
+              className="p-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 border-2 border-slate-950 dark:border-slate-700 text-slate-950 dark:text-slate-200 text-xs font-black flex items-center gap-1 shadow-[1.5px_1.5px_0px_0px_#0f172a]"
               title="Reset Nilai"
             >
               <RotateCcw size={13} />
@@ -217,22 +217,22 @@ export const SiswaStudio: React.FC = () => {
           </div>
 
           {/* Fraction 1 Controls */}
-          <div className="p-4 rounded-2xl bg-[#fffdf5] border-3 border-slate-950 space-y-4">
-            <div className="text-xs font-mono font-black uppercase text-slate-950">
+          <div className="p-4 rounded-2xl bg-[#fffdf5] dark:bg-slate-800/90 border-3 border-slate-950 dark:border-slate-700 space-y-4">
+            <div className="text-xs font-mono font-black uppercase text-slate-950 dark:text-slate-100">
               Pecahan Utama: {safeNum}/{safeDen}
             </div>
 
             {/* Pembilang (Numerator) */}
             <div className="space-y-1.5">
-              <div className="flex justify-between text-xs font-bold text-slate-700">
+              <div className="flex justify-between text-xs font-bold text-slate-700 dark:text-slate-300">
                 <span>Pembilang (Terarsir):</span>
-                <span className="font-mono font-black text-slate-950">{safeNum}</span>
+                <span className="font-mono font-black text-slate-950 dark:text-slate-100">{safeNum}</span>
               </div>
               <div className="flex items-center gap-2">
                 <button
                   type="button"
                   onClick={() => handleNumChange(safeNum - 1)}
-                  className="w-10 h-10 rounded-xl bg-white border-2 border-slate-950 font-black text-base shadow-[2px_2px_0px_0px_#0f172a] hover:bg-yellow-100 active:translate-x-0.5 active:translate-y-0.5 active:shadow-none flex items-center justify-center cursor-pointer"
+                  className="w-10 h-10 rounded-xl bg-white dark:bg-slate-700 border-2 border-slate-950 dark:border-slate-600 font-black text-base text-slate-950 dark:text-slate-100 shadow-[2px_2px_0px_0px_#0f172a] hover:bg-yellow-100 active:translate-x-0.5 active:translate-y-0.5 active:shadow-none flex items-center justify-center cursor-pointer"
                 >
                   <Minus size={16} />
                 </button>
@@ -247,7 +247,7 @@ export const SiswaStudio: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => handleNumChange(safeNum + 1)}
-                  className="w-10 h-10 rounded-xl bg-[#ffe600] border-2 border-slate-950 font-black text-base shadow-[2px_2px_0px_0px_#0f172a] hover:bg-yellow-400 active:translate-x-0.5 active:translate-y-0.5 active:shadow-none flex items-center justify-center cursor-pointer"
+                  className="w-10 h-10 rounded-xl bg-[#ffe600] border-2 border-slate-950 font-black text-base text-slate-950 shadow-[2px_2px_0px_0px_#0f172a] hover:bg-yellow-400 active:translate-x-0.5 active:translate-y-0.5 active:shadow-none flex items-center justify-center cursor-pointer"
                 >
                   <Plus size={16} />
                 </button>
@@ -255,16 +255,16 @@ export const SiswaStudio: React.FC = () => {
             </div>
 
             {/* Penyebut (Denominator) */}
-            <div className="space-y-1.5 pt-2 border-t border-slate-200">
-              <div className="flex justify-between text-xs font-bold text-slate-700">
+            <div className="space-y-1.5 pt-2 border-t border-slate-200 dark:border-slate-700">
+              <div className="flex justify-between text-xs font-bold text-slate-700 dark:text-slate-300">
                 <span>Penyebut (Total Potongan):</span>
-                <span className="font-mono font-black text-slate-950">{safeDen}</span>
+                <span className="font-mono font-black text-slate-950 dark:text-slate-100">{safeDen}</span>
               </div>
               <div className="flex items-center gap-2">
                 <button
                   type="button"
                   onClick={() => handleDenChange(safeDen - 1)}
-                  className="w-10 h-10 rounded-xl bg-white border-2 border-slate-950 font-black text-base shadow-[2px_2px_0px_0px_#0f172a] hover:bg-yellow-100 active:translate-x-0.5 active:translate-y-0.5 active:shadow-none flex items-center justify-center cursor-pointer"
+                  className="w-10 h-10 rounded-xl bg-white dark:bg-slate-700 border-2 border-slate-950 dark:border-slate-600 font-black text-base text-slate-950 dark:text-slate-100 shadow-[2px_2px_0px_0px_#0f172a] hover:bg-yellow-100 active:translate-x-0.5 active:translate-y-0.5 active:shadow-none flex items-center justify-center cursor-pointer"
                 >
                   <Minus size={16} />
                 </button>
@@ -279,7 +279,7 @@ export const SiswaStudio: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => handleDenChange(safeDen + 1)}
-                  className="w-10 h-10 rounded-xl bg-[#38bdf8] border-2 border-slate-950 font-black text-base shadow-[2px_2px_0px_0px_#0f172a] hover:bg-sky-400 active:translate-x-0.5 active:translate-y-0.5 active:shadow-none flex items-center justify-center cursor-pointer"
+                  className="w-10 h-10 rounded-xl bg-[#38bdf8] border-2 border-slate-950 font-black text-base text-slate-950 shadow-[2px_2px_0px_0px_#0f172a] hover:bg-sky-400 active:translate-x-0.5 active:translate-y-0.5 active:shadow-none flex items-center justify-center cursor-pointer"
                 >
                   <Plus size={16} />
                 </button>
@@ -289,21 +289,21 @@ export const SiswaStudio: React.FC = () => {
 
           {/* Fraction 2 Controls for Compare Mode */}
           {studioMode === 'compare' && (
-            <div className="p-4 rounded-2xl bg-[#f0fdf4] border-3 border-slate-950 space-y-4">
-              <div className="text-xs font-mono font-black uppercase text-slate-950">
+            <div className="p-4 rounded-2xl bg-[#f0fdf4] dark:bg-emerald-950/30 border-3 border-slate-950 dark:border-slate-700 space-y-4">
+              <div className="text-xs font-mono font-black uppercase text-slate-950 dark:text-slate-100">
                 Pecahan Kedua: {num2}/{den2}
               </div>
 
               <div className="space-y-1.5">
-                <div className="flex justify-between text-xs font-bold text-slate-700">
+                <div className="flex justify-between text-xs font-bold text-slate-700 dark:text-slate-300">
                   <span>Pembilang 2:</span>
-                  <span className="font-mono font-black text-slate-950">{num2}</span>
+                  <span className="font-mono font-black text-slate-950 dark:text-slate-100">{num2}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
                     onClick={() => handleNum2Change(num2 - 1)}
-                    className="w-10 h-10 rounded-xl bg-white border-2 border-slate-950 font-black text-base shadow-[2px_2px_0px_0px_#0f172a] hover:bg-lime-100 flex items-center justify-center cursor-pointer"
+                    className="w-10 h-10 rounded-xl bg-white dark:bg-slate-700 border-2 border-slate-950 dark:border-slate-600 font-black text-base text-slate-950 dark:text-slate-100 shadow-[2px_2px_0px_0px_#0f172a] hover:bg-lime-100 flex items-center justify-center cursor-pointer"
                   >
                     <Minus size={16} />
                   </button>
@@ -318,23 +318,23 @@ export const SiswaStudio: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => handleNum2Change(num2 + 1)}
-                    className="w-10 h-10 rounded-xl bg-[#a3e635] border-2 border-slate-950 font-black text-base shadow-[2px_2px_0px_0px_#0f172a] hover:bg-lime-400 flex items-center justify-center cursor-pointer"
+                    className="w-10 h-10 rounded-xl bg-[#a3e635] border-2 border-slate-950 font-black text-base text-slate-950 shadow-[2px_2px_0px_0px_#0f172a] hover:bg-lime-400 flex items-center justify-center cursor-pointer"
                   >
                     <Plus size={16} />
                   </button>
                 </div>
               </div>
 
-              <div className="space-y-1.5 pt-2 border-t border-slate-200">
-                <div className="flex justify-between text-xs font-bold text-slate-700">
+              <div className="space-y-1.5 pt-2 border-t border-slate-200 dark:border-slate-700">
+                <div className="flex justify-between text-xs font-bold text-slate-700 dark:text-slate-300">
                   <span>Penyebut 2:</span>
-                  <span className="font-mono font-black text-slate-950">{den2}</span>
+                  <span className="font-mono font-black text-slate-950 dark:text-slate-100">{den2}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
                     onClick={() => handleDen2Change(den2 - 1)}
-                    className="w-10 h-10 rounded-xl bg-white border-2 border-slate-950 font-black text-base shadow-[2px_2px_0px_0px_#0f172a] hover:bg-lime-100 flex items-center justify-center cursor-pointer"
+                    className="w-10 h-10 rounded-xl bg-white dark:bg-slate-700 border-2 border-slate-950 dark:border-slate-600 font-black text-base text-slate-950 dark:text-slate-100 shadow-[2px_2px_0px_0px_#0f172a] hover:bg-lime-100 flex items-center justify-center cursor-pointer"
                   >
                     <Minus size={16} />
                   </button>
@@ -349,7 +349,7 @@ export const SiswaStudio: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => handleDen2Change(den2 + 1)}
-                    className="w-10 h-10 rounded-xl bg-[#a3e635] border-2 border-slate-950 font-black text-base shadow-[2px_2px_0px_0px_#0f172a] hover:bg-lime-400 flex items-center justify-center cursor-pointer"
+                    className="w-10 h-10 rounded-xl bg-[#a3e635] border-2 border-slate-950 font-black text-base text-slate-950 shadow-[2px_2px_0px_0px_#0f172a] hover:bg-lime-400 flex items-center justify-center cursor-pointer"
                   >
                     <Plus size={16} />
                   </button>
@@ -360,23 +360,23 @@ export const SiswaStudio: React.FC = () => {
 
           {/* Real-Time Conversion Metrics */}
           <div className="grid grid-cols-3 gap-2">
-            <div className="p-3 bg-slate-50 rounded-2xl border-2 border-slate-950 text-center">
-              <div className="text-[10px] font-mono font-bold text-slate-600">Desimal</div>
-              <div className="text-sm font-black font-mono text-slate-950">{decimalVal}</div>
+            <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-2xl border-2 border-slate-950 dark:border-slate-700 text-center">
+              <div className="text-[10px] font-mono font-bold text-slate-600 dark:text-slate-400">Desimal</div>
+              <div className="text-sm font-black font-mono text-slate-950 dark:text-slate-100">{decimalVal}</div>
             </div>
-            <div className="p-3 bg-slate-50 rounded-2xl border-2 border-slate-950 text-center">
-              <div className="text-[10px] font-mono font-bold text-slate-600">Persen</div>
-              <div className="text-sm font-black font-mono text-slate-950">{percentVal}</div>
+            <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-2xl border-2 border-slate-950 dark:border-slate-700 text-center">
+              <div className="text-[10px] font-mono font-bold text-slate-600 dark:text-slate-400">Persen</div>
+              <div className="text-sm font-black font-mono text-slate-950 dark:text-slate-100">{percentVal}</div>
             </div>
-            <div className="p-3 bg-slate-50 rounded-2xl border-2 border-slate-950 text-center">
-              <div className="text-[10px] font-mono font-bold text-slate-600">Campuran</div>
-              <div className="text-sm font-black font-mono text-slate-950">{mixedStr}</div>
+            <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-2xl border-2 border-slate-950 dark:border-slate-700 text-center">
+              <div className="text-[10px] font-mono font-bold text-slate-600 dark:text-slate-400">Campuran</div>
+              <div className="text-sm font-black font-mono text-slate-950 dark:text-slate-100">{mixedStr}</div>
             </div>
           </div>
         </div>
 
         {/* Right: Graphic Canvas Visualizer */}
-        <div className="lg:col-span-7 rounded-3xl bg-white border-4 border-slate-950 p-6 sm:p-8 shadow-[7px_7px_0px_0px_#0f172a] flex flex-col items-center justify-center gap-6 min-h-[360px]">
+        <div className="lg:col-span-7 rounded-3xl bg-white dark:bg-[#111827] border-4 border-slate-950 dark:border-slate-800 p-6 sm:p-8 shadow-[7px_7px_0px_0px_#0f172a] dark:shadow-[7px_7px_0px_0px_#000000] flex flex-col items-center justify-center gap-6 min-h-[360px]">
           
           {studioMode === 'pizza' && (
             <div className="flex flex-col items-center gap-4">
@@ -397,7 +397,7 @@ export const SiswaStudio: React.FC = () => {
 
           {studioMode === 'chocolate' && (
             <div className="w-full space-y-4 max-w-md">
-              <div className="text-center font-mono font-black text-slate-950 text-sm">
+              <div className="text-center font-mono font-black text-slate-950 dark:text-slate-100 text-sm">
                 Batang Cokelat Terbagi {safeDen} Bagian
               </div>
 
@@ -423,7 +423,7 @@ export const SiswaStudio: React.FC = () => {
                 })}
               </div>
 
-              <div className="p-3 rounded-2xl bg-sky-100 border-2 border-slate-950 text-center text-xs font-bold text-slate-900">
+              <div className="p-3 rounded-2xl bg-sky-100 dark:bg-sky-950/60 border-2 border-slate-950 dark:border-slate-700 text-center text-xs font-bold text-slate-900 dark:text-slate-100">
                 Sebanyak <span className="font-black font-mono">{safeNum} blok</span> terarsir dari total <span className="font-black font-mono">{safeDen} blok</span>.
               </div>
             </div>
@@ -433,8 +433,8 @@ export const SiswaStudio: React.FC = () => {
             <div className="w-full space-y-6 max-w-lg">
               <div className="grid grid-cols-2 gap-4 text-center">
                 {/* Visual 1 */}
-                <div className="p-4 rounded-2xl bg-[#fffdf5] border-3 border-slate-950 space-y-3">
-                  <div className="font-mono font-black text-lg text-slate-950">
+                <div className="p-4 rounded-2xl bg-[#fffdf5] dark:bg-slate-800/90 border-3 border-slate-950 dark:border-slate-700 space-y-3">
+                  <div className="font-mono font-black text-lg text-slate-950 dark:text-slate-100">
                     <Fraction num={safeNum} den={safeDen} size="md" />
                   </div>
                   <div className="w-28 h-28 mx-auto">
@@ -443,12 +443,12 @@ export const SiswaStudio: React.FC = () => {
                       {generatePieSlices(safeDen, Math.min(safeNum, safeDen))}
                     </svg>
                   </div>
-                  <div className="font-mono font-black text-xs text-slate-950">{decimalVal}</div>
+                  <div className="font-mono font-black text-xs text-slate-950 dark:text-slate-100">{decimalVal}</div>
                 </div>
 
                 {/* Visual 2 */}
-                <div className="p-4 rounded-2xl bg-[#f0fdf4] border-3 border-slate-950 space-y-3">
-                  <div className="font-mono font-black text-lg text-slate-950">
+                <div className="p-4 rounded-2xl bg-[#f0fdf4] dark:bg-slate-800/90 border-3 border-slate-950 dark:border-slate-700 space-y-3">
+                  <div className="font-mono font-black text-lg text-slate-950 dark:text-slate-100">
                     <Fraction num={num2} den={den2} size="md" />
                   </div>
                   <div className="w-28 h-28 mx-auto">
@@ -457,7 +457,7 @@ export const SiswaStudio: React.FC = () => {
                       {generatePieSlices(den2, Math.min(num2, den2))}
                     </svg>
                   </div>
-                  <div className="font-mono font-black text-xs text-slate-950">
+                  <div className="font-mono font-black text-xs text-slate-950 dark:text-slate-100">
                     {(num2 / den2).toFixed(3).replace(/\.?0+$/, '') || '0'}
                   </div>
                 </div>

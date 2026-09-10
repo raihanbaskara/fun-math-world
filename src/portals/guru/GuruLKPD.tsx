@@ -257,7 +257,7 @@ export const GuruLKPD: React.FC<{
     <div className="space-y-8 max-w-6xl mx-auto font-sans pb-12">
       
       {/* 1. Header Banner Pure Neobrutalism V3 */}
-      <div className="relative rounded-3xl bg-[#ffe600] border-4 border-slate-950 p-6 sm:p-8 shadow-[8px_8px_0px_0px_#0f172a] overflow-hidden text-slate-950">
+      <div className="relative rounded-3xl bg-[#ffe600] border-4 border-slate-950 dark:border-slate-700 p-6 sm:p-8 shadow-[8px_8px_0px_0px_#0f172a] dark:shadow-[8px_8px_0px_0px_#000000] overflow-hidden text-slate-950">
         <div className="absolute right-4 bottom-0 text-slate-950/10 font-mono text-8xl font-black pointer-events-none select-none">
           LKPD AI
         </div>
@@ -290,7 +290,7 @@ export const GuruLKPD: React.FC<{
 
       {/* 2. Neobrutalist Tab Switcher */}
       <div className="flex items-center justify-between flex-wrap gap-4">
-        <div className="flex items-center gap-2 p-1.5 bg-white border-3 border-slate-950 rounded-2xl shadow-[4px_4px_0px_0px_#0f172a]">
+        <div className="flex items-center gap-2 p-1.5 bg-white dark:bg-[#111827] border-3 border-slate-950 dark:border-slate-700 rounded-2xl shadow-[4px_4px_0px_0px_#0f172a] dark:shadow-[4px_4px_0px_0px_#000000]">
           <button
             type="button"
             onClick={() => {
@@ -300,7 +300,7 @@ export const GuruLKPD: React.FC<{
             className={`px-4 sm:px-5 py-2 rounded-xl text-xs font-mono font-black transition-all cursor-pointer border-2 ${
               activeTab === 'submissions'
                 ? 'bg-[#ffe600] text-slate-950 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a]'
-                : 'border-transparent text-slate-700 hover:text-slate-950'
+                : 'border-transparent text-slate-700 dark:text-slate-300 hover:text-slate-950 dark:hover:text-white'
             }`}
           >
             Pengumpulan Siswa ({submissions.length})
@@ -314,7 +314,7 @@ export const GuruLKPD: React.FC<{
             className={`px-4 sm:px-5 py-2 rounded-xl text-xs font-mono font-black transition-all cursor-pointer border-2 ${
               activeTab === 'manage'
                 ? 'bg-[#38bdf8] text-slate-950 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a]'
-                : 'border-transparent text-slate-700 hover:text-slate-950'
+                : 'border-transparent text-slate-700 dark:text-slate-300 hover:text-slate-950 dark:hover:text-white'
             }`}
           >
             Kelola & Upload LKPD ({lkpdList.length})
@@ -335,9 +335,9 @@ export const GuruLKPD: React.FC<{
 
       {/* 3. Submissions Table Tab */}
       {activeTab === 'submissions' ? (
-        <div className="rounded-3xl bg-white border-4 border-slate-950 p-6 shadow-[7px_7px_0px_0px_#0f172a] space-y-5">
+        <div className="rounded-3xl bg-white dark:bg-[#111827] border-4 border-slate-950 dark:border-slate-700 p-6 shadow-[7px_7px_0px_0px_#0f172a] dark:shadow-[7px_7px_0px_0px_#000000] space-y-5">
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-black text-slate-950 font-mono flex items-center gap-2">
+            <h2 className="text-xl font-black text-slate-950 dark:text-slate-100 font-mono flex items-center gap-2">
               <span>Daftar Pengumpulan Lembar Kerja Siswa</span>
             </h2>
           </div>
@@ -355,14 +355,14 @@ export const GuruLKPD: React.FC<{
                   <th className="p-4 text-center">Aksi</th>
                 </tr>
               </thead>
-              <tbody className="divide-y-2 divide-slate-200 bg-white">
+              <tbody className="divide-y-2 divide-slate-200 dark:divide-slate-800 bg-white dark:bg-[#111827]">
                 {submissions.map(s => {
                   const targetLkpd = lkpdList.find(item => item.id === s.lkpdId);
                   return (
-                    <tr key={s.id} className="hover:bg-amber-50/50 transition-colors">
+                    <tr key={s.id} className="hover:bg-amber-50/50 dark:hover:bg-slate-800/60 transition-colors">
                       <td className="p-4">
-                        <div className="font-black text-slate-950 text-sm">{s.studentName}</div>
-                        <div className="text-[10px] font-mono font-bold text-slate-500">ID: {s.id}</div>
+                        <div className="font-black text-slate-950 dark:text-slate-100 text-sm">{s.studentName}</div>
+                        <div className="text-[10px] font-mono font-bold text-slate-500 dark:text-slate-400">ID: {s.id}</div>
                       </td>
                       <td className="p-4">
                         <span className="inline-block whitespace-nowrap px-3 py-1 rounded-xl bg-sky-100 text-slate-950 border-2 border-slate-950 text-xs font-mono font-black shadow-[1.5px_1.5px_0px_0px_#0f172a]">
@@ -383,14 +383,14 @@ export const GuruLKPD: React.FC<{
                             const displayUrls = photos.map(p => getPhotoDisplayUrl(p));
                             setViewPhotoUrl({ urls: displayUrls, activeIdx: 0, studentName: s.studentName });
                           }}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white hover:bg-slate-100 text-slate-950 border-2 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a] font-mono font-black text-xs cursor-pointer active:translate-x-0.5 active:translate-y-0.5 transition-all"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-950 dark:text-slate-100 border-2 border-slate-950 dark:border-slate-700 shadow-[2px_2px_0px_0px_#0f172a] dark:shadow-[2px_2px_0px_0px_#000000] font-mono font-black text-xs cursor-pointer active:translate-x-0.5 active:translate-y-0.5 transition-all"
                         >
-                          <ImageIcon size={14} className="text-slate-950" />
+                          <ImageIcon size={14} className="text-slate-950 dark:text-slate-200" />
                           <span>Lihat Foto ({s.photoUrls?.length || 1})</span>
                         </button>
                       </td>
                       <td className="p-4 font-mono font-black">
-                        <span className="inline-block whitespace-nowrap px-2.5 py-1 rounded-xl bg-purple-100 text-purple-950 border-2 border-slate-950 shadow-[1.5px_1.5px_0px_0px_#0f172a]">
+                        <span className="inline-block whitespace-nowrap px-2.5 py-1 rounded-xl bg-purple-100 dark:bg-purple-900/60 text-purple-950 dark:text-purple-200 border-2 border-slate-950 dark:border-purple-700 shadow-[1.5px_1.5px_0px_0px_#0f172a] dark:shadow-[1.5px_1.5px_0px_0px_#000000]">
                           {s.aiScore}/100
                         </span>
                       </td>
@@ -400,7 +400,7 @@ export const GuruLKPD: React.FC<{
                             {s.teacherScore}/100
                           </span>
                         ) : (
-                          <span className="inline-block whitespace-nowrap px-2.5 py-1 rounded-xl bg-slate-100 text-slate-600 border-2 border-slate-950 text-xs font-mono font-black shadow-[1.5px_1.5px_0px_0px_#0f172a]">
+                          <span className="inline-block whitespace-nowrap px-2.5 py-1 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-2 border-slate-950 dark:border-slate-700 text-xs font-mono font-black shadow-[1.5px_1.5px_0px_0px_#0f172a]">
                             Belum Dinilai
                           </span>
                         )}
@@ -419,7 +419,7 @@ export const GuruLKPD: React.FC<{
                 })}
                 {submissions.length === 0 && (
                   <tr>
-                    <td colSpan={7} className="p-8 text-center text-slate-500 font-bold">
+                    <td colSpan={7} className="p-8 text-center text-slate-500 dark:text-slate-400 font-bold">
                       Belum ada pengumpulan LKPD dari siswa.
                     </td>
                   </tr>
@@ -433,13 +433,13 @@ export const GuruLKPD: React.FC<{
         <div className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {lkpdList.map((item, idx) => (
-              <div key={item.id} className="rounded-3xl bg-white border-4 border-slate-950 p-6 shadow-[6px_6px_0px_0px_#0f172a] space-y-4">
+              <div key={item.id} className="rounded-3xl bg-white dark:bg-[#111827] border-4 border-slate-950 dark:border-slate-700 p-6 shadow-[6px_6px_0px_0px_#0f172a] dark:shadow-[6px_6px_0px_0px_#000000] space-y-4">
                 <div className="flex items-start justify-between gap-3">
                   <div className="space-y-1">
                     <span className="px-2.5 py-0.5 rounded-lg bg-[#ffe600] text-slate-950 font-mono font-black text-xs border-2 border-slate-950 shadow-[1.5px_1.5px_0px_0px_#0f172a]">
                       LKPD #{idx + 1}
                     </span>
-                    <h3 className="font-black text-slate-950 text-base sm:text-lg">{item.title}</h3>
+                    <h3 className="font-black text-slate-950 dark:text-slate-100 text-base sm:text-lg">{item.title}</h3>
                   </div>
                   <div className="flex items-center gap-1.5 shrink-0">
                     <button
@@ -460,26 +460,26 @@ export const GuruLKPD: React.FC<{
                   </div>
                 </div>
 
-                <p className="text-xs text-slate-700 leading-relaxed font-bold line-clamp-2">
+                <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed font-bold line-clamp-2">
                   {item.description}
                 </p>
 
-                <div className="p-3 bg-amber-50 rounded-2xl border-2 border-slate-950 text-xs space-y-1">
-                  <span className="font-black text-slate-950 font-mono uppercase text-[10px]">Tujuan Pembelajaran:</span>
-                  <p className="text-slate-800 font-bold line-clamp-2">{item.objectives}</p>
+                <div className="p-3 bg-amber-50 dark:bg-slate-800/80 rounded-2xl border-2 border-slate-950 dark:border-slate-700 text-xs space-y-1">
+                  <span className="font-black text-slate-950 dark:text-amber-400 font-mono uppercase text-[10px]">Tujuan Pembelajaran:</span>
+                  <p className="text-slate-800 dark:text-slate-200 font-bold line-clamp-2">{item.objectives}</p>
                 </div>
 
                 {item.imageUrl && (
-                  <div className="rounded-2xl overflow-hidden max-h-36 border-2 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a]">
+                  <div className="rounded-2xl overflow-hidden max-h-36 border-2 border-slate-950 dark:border-slate-700 shadow-[2px_2px_0px_0px_#0f172a] dark:shadow-[2px_2px_0px_0px_#000000]">
                     <img src={item.imageUrl} alt={item.title} className="w-full h-36 object-cover" />
                   </div>
                 )}
 
-                <div className="pt-3 border-t-2 border-slate-950 flex items-center justify-between text-xs text-slate-700 font-mono font-bold gap-2">
+                <div className="pt-3 border-t-2 border-slate-950 dark:border-slate-700 flex items-center justify-between text-xs text-slate-700 dark:text-slate-300 font-mono font-bold gap-2">
                   <span className="truncate">File: {item.pdfFilename}</span>
                   <button
                     type="button"
-                    className="px-3 py-1.5 rounded-xl bg-white hover:bg-slate-100 text-slate-950 border-2 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a] text-xs font-black shrink-0 cursor-pointer active:translate-x-0.5 active:translate-y-0.5 transition-all"
+                    className="px-3 py-1.5 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-950 dark:text-slate-100 border-2 border-slate-950 dark:border-slate-700 shadow-[2px_2px_0px_0px_#0f172a] dark:shadow-[2px_2px_0px_0px_#000000] text-xs font-black shrink-0 cursor-pointer active:translate-x-0.5 active:translate-y-0.5 transition-all"
                     onClick={() => setPreviewLKPD(item)}
                   >
                     Pratinjau Dokumen
@@ -516,7 +516,7 @@ export const GuruLKPD: React.FC<{
             )}
 
             {previewLKPD.pdfUrl ? (
-              <div className="w-full h-[480px] rounded-2xl overflow-hidden border-3 border-slate-950 shadow-[4px_4px_0px_0px_#0f172a] bg-slate-900 relative">
+              <div className="w-full h-[480px] rounded-2xl overflow-hidden border-3 border-slate-950 dark:border-slate-700 shadow-[4px_4px_0px_0px_#0f172a] dark:shadow-[4px_4px_0px_0px_#000000] bg-slate-900 relative">
                 <object
                   data={getPdfDisplayUrl(previewLKPD.pdfUrl)}
                   type="application/pdf"
@@ -543,7 +543,7 @@ export const GuruLKPD: React.FC<{
                 </object>
               </div>
             ) : (
-              <div className="rounded-2xl overflow-hidden border-3 border-slate-950 shadow-[4px_4px_0px_0px_#0f172a] max-h-80 overflow-y-auto">
+              <div className="rounded-2xl overflow-hidden border-3 border-slate-950 dark:border-slate-700 shadow-[4px_4px_0px_0px_#0f172a] dark:shadow-[4px_4px_0px_0px_#000000] max-h-80 overflow-y-auto">
                 <img
                   src={previewLKPD.imageUrl}
                   alt="LKPD Preview"
@@ -552,9 +552,9 @@ export const GuruLKPD: React.FC<{
               </div>
             )}
 
-            <div className="p-4 bg-amber-50 rounded-2xl text-xs space-y-1.5 border-2 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a]">
-              <div className="font-black text-slate-950 font-mono uppercase">Tujuan Pembelajaran:</div>
-              <p className="text-slate-800 font-bold whitespace-pre-line leading-relaxed">
+            <div className="p-4 bg-amber-50 dark:bg-slate-800/80 rounded-2xl text-xs space-y-1.5 border-2 border-slate-950 dark:border-slate-700 shadow-[2px_2px_0px_0px_#0f172a] dark:shadow-[2px_2px_0px_0px_#000000]">
+              <div className="font-black text-slate-950 dark:text-amber-400 font-mono uppercase">Tujuan Pembelajaran:</div>
+              <p className="text-slate-800 dark:text-slate-200 font-bold whitespace-pre-line leading-relaxed">
                 {previewLKPD.objectives || previewLKPD.description}
               </p>
             </div>
@@ -577,17 +577,17 @@ export const GuruLKPD: React.FC<{
             return (
               <form onSubmit={handleSaveGrade} className="space-y-6 max-h-[75vh] overflow-y-auto pr-1">
                 {/* Student Info & Anti-Cheat Summary */}
-                <div className="p-4 rounded-2xl bg-amber-50 border-3 border-slate-950 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs shadow-[3px_3px_0px_0px_#0f172a]">
+                <div className="p-4 rounded-2xl bg-amber-50 dark:bg-slate-800/80 border-3 border-slate-950 dark:border-slate-700 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs shadow-[3px_3px_0px_0px_#0f172a] dark:shadow-[3px_3px_0px_0px_#000000]">
                   <div>
-                    <div className="font-black text-slate-950 text-sm font-mono">{selectedSub.studentName}</div>
-                    <div className="text-slate-700 font-bold">{selectedSub.studentClass} • {targetLkpd?.title}</div>
+                    <div className="font-black text-slate-950 dark:text-slate-100 text-sm font-mono">{selectedSub.studentName}</div>
+                    <div className="text-slate-700 dark:text-slate-300 font-bold">{selectedSub.studentClass} • {targetLkpd?.title}</div>
                   </div>
                   {selectedSub.antiCheat && selectedSub.antiCheat.switchCount > 0 ? (
-                    <span className="px-3 py-1 rounded-xl bg-rose-200 text-rose-950 border-2 border-slate-950 font-mono font-black w-fit shadow-[1.5px_1.5px_0px_0px_#0f172a]">
+                    <span className="px-3 py-1 rounded-xl bg-rose-200 dark:bg-rose-900/60 text-rose-950 dark:text-rose-200 border-2 border-slate-950 dark:border-rose-700 font-mono font-black w-fit shadow-[1.5px_1.5px_0px_0px_#0f172a]">
                       Anti-Cheat: {selectedSub.antiCheat.switchCount}x Pindah Tab ({selectedSub.antiCheat.totalLeaveSeconds}d)
                     </span>
                   ) : (
-                    <span className="px-3 py-1 rounded-xl bg-emerald-200 text-emerald-950 border-2 border-slate-950 font-mono font-black w-fit shadow-[1.5px_1.5px_0px_0px_#0f172a]">
+                    <span className="px-3 py-1 rounded-xl bg-emerald-200 dark:bg-emerald-900/60 text-emerald-950 dark:text-emerald-200 border-2 border-slate-950 dark:border-emerald-700 font-mono font-black w-fit shadow-[1.5px_1.5px_0px_0px_#0f172a]">
                       Anti-Cheat: Tertib (0x Pindah Tab)
                     </span>
                   )}
@@ -595,7 +595,7 @@ export const GuruLKPD: React.FC<{
 
                 {/* Per-Question Answers & AI Discussions */}
                 <div className="space-y-4">
-                  <div className="text-xs font-black uppercase tracking-wider text-slate-950 font-mono">
+                  <div className="text-xs font-black uppercase tracking-wider text-slate-950 dark:text-slate-200 font-mono">
                     // JAWABAN ESSAI SISWA PER SOAL:
                   </div>
 
@@ -604,24 +604,24 @@ export const GuruLKPD: React.FC<{
                     const photo = ans?.photoUrl || (idx === 0 ? selectedSub.photoUrl : undefined);
 
                     return (
-                      <div key={q.id} className="p-4 rounded-2xl bg-white border-3 border-slate-950 space-y-3 shadow-[4px_4px_0px_0px_#0f172a]">
+                      <div key={q.id} className="p-4 rounded-2xl bg-white dark:bg-slate-850 border-3 border-slate-950 dark:border-slate-700 space-y-3 shadow-[4px_4px_0px_0px_#0f172a] dark:shadow-[4px_4px_0px_0px_#000000]">
                         <div className="flex items-center justify-between">
                           <span className="px-2.5 py-0.5 rounded-lg bg-[#ffe600] text-slate-950 font-mono font-black text-xs border-2 border-slate-950 shadow-[1.5px_1.5px_0px_0px_#0f172a]">
                             Soal #{idx + 1}: {q.title}
                           </span>
-                          <span className="text-xs font-mono font-black text-slate-700">
+                          <span className="text-xs font-mono font-black text-slate-700 dark:text-slate-300">
                             Bobot: {q.weight} Poin
                           </span>
                         </div>
 
-                        <div className="text-xs sm:text-sm font-bold text-slate-900 leading-relaxed bg-slate-50 p-3 rounded-xl border-2 border-slate-950">
+                        <div className="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100 leading-relaxed bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-2 border-slate-950 dark:border-slate-700">
                           {q.prompt}
                         </div>
 
                         {/* Student typed answer */}
                         <div className="space-y-1">
-                          <label className="text-[11px] font-mono font-black uppercase text-slate-700">Jawaban Ketikan Siswa:</label>
-                          <div className="p-3 rounded-xl bg-amber-50 border-2 border-slate-950 text-xs sm:text-sm font-bold text-slate-950 whitespace-pre-line">
+                          <label className="text-[11px] font-mono font-black uppercase text-slate-700 dark:text-slate-300">Jawaban Ketikan Siswa:</label>
+                          <div className="p-3 rounded-xl bg-amber-50 dark:bg-slate-800/60 border-2 border-slate-950 dark:border-slate-700 text-xs sm:text-sm font-bold text-slate-950 dark:text-slate-100 whitespace-pre-line">
                             {ans?.textAnswer || '(Siswa tidak mengetikkan jawaban teks)'}
                           </div>
                         </div>
@@ -629,8 +629,8 @@ export const GuruLKPD: React.FC<{
                         {/* Student photo attachment */}
                         {photo && (
                           <div className="space-y-1">
-                            <label className="text-[11px] font-mono font-black uppercase text-slate-700">Lampiran Foto Bukti Cara:</label>
-                            <div className="relative rounded-xl border-3 border-slate-950 overflow-hidden max-w-sm max-h-48 group shadow-[2px_2px_0px_0px_#0f172a]">
+                            <label className="text-[11px] font-mono font-black uppercase text-slate-700 dark:text-slate-300">Lampiran Foto Bukti Cara:</label>
+                            <div className="relative rounded-xl border-3 border-slate-950 dark:border-slate-700 overflow-hidden max-w-sm max-h-48 group shadow-[2px_2px_0px_0px_#0f172a]">
                               <img
                                 src={getPhotoDisplayUrl(photo)}
                                 alt={`Foto Soal ${idx + 1}`}
@@ -649,12 +649,12 @@ export const GuruLKPD: React.FC<{
                         )}
 
                         {/* AI Step-by-Step Discussion */}
-                        <div className="p-3 bg-purple-50 rounded-xl border-2 border-slate-950 text-xs space-y-1 shadow-[2px_2px_0px_0px_#0f172a]">
-                          <div className="font-black text-purple-950 flex items-center gap-1.5 font-mono">
-                            <Bot size={14} className="text-purple-700" />
+                        <div className="p-3 bg-purple-50 dark:bg-purple-950/40 rounded-xl border-2 border-slate-950 dark:border-purple-800 text-xs space-y-1 shadow-[2px_2px_0px_0px_#0f172a]">
+                          <div className="font-black text-purple-950 dark:text-purple-300 flex items-center gap-1.5 font-mono">
+                            <Bot size={14} className="text-purple-700 dark:text-purple-400" />
                             <span>Pembahasan & Kunci Konsep AI:</span>
                           </div>
-                          <p className="text-slate-800 font-bold whitespace-pre-line leading-relaxed">
+                          <p className="text-slate-800 dark:text-purple-200 font-bold whitespace-pre-line leading-relaxed">
                             {q.discussion}
                           </p>
                         </div>
@@ -664,18 +664,18 @@ export const GuruLKPD: React.FC<{
                 </div>
 
                 {/* AI Score Recommendation Summary */}
-                <div className="p-4 bg-sky-50 rounded-2xl border-3 border-slate-950 text-xs space-y-1.5 shadow-[3px_3px_0px_0px_#0f172a]">
-                  <div className="font-black text-sky-950 flex items-center gap-1.5 font-mono">
-                    <Bot size={16} className="text-sky-700" />
+                <div className="p-4 bg-sky-50 dark:bg-sky-950/40 rounded-2xl border-3 border-slate-950 dark:border-sky-800 text-xs space-y-1.5 shadow-[3px_3px_0px_0px_#0f172a]">
+                  <div className="font-black text-sky-950 dark:text-sky-300 flex items-center gap-1.5 font-mono">
+                    <Bot size={16} className="text-sky-700 dark:text-sky-400" />
                     <span>Rekomendasi Skor AI: {selectedSub.aiScore} / 100</span>
                   </div>
-                  <p className="text-slate-800 font-bold">{selectedSub.aiFeedback}</p>
+                  <p className="text-slate-800 dark:text-sky-200 font-bold">{selectedSub.aiFeedback}</p>
                 </div>
 
                 {/* Teacher Grading Inputs */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2 border-t-3 border-slate-950">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2 border-t-3 border-slate-950 dark:border-slate-700">
                   <div>
-                    <label className="block text-xs font-mono font-black uppercase tracking-wider text-slate-950 mb-1.5">
+                    <label className="block text-xs font-mono font-black uppercase tracking-wider text-slate-950 dark:text-slate-200 mb-1.5">
                       Nilai Final Guru (0 - 100):
                     </label>
                     <input
@@ -685,12 +685,12 @@ export const GuruLKPD: React.FC<{
                       required
                       value={gradeScore}
                       onChange={e => setGradeScore(parseInt(e.target.value) || 0)}
-                      className="w-full p-3.5 rounded-2xl border-3 border-slate-950 bg-white text-slate-950 text-base font-black font-mono shadow-[3px_3px_0px_0px_#0f172a] outline-none"
+                      className="w-full p-3.5 rounded-2xl border-3 border-slate-950 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-950 dark:text-slate-100 text-base font-black font-mono shadow-[3px_3px_0px_0px_#0f172a] outline-none"
                     />
                   </div>
 
                   <div className="sm:col-span-2">
-                    <label className="block text-xs font-mono font-black uppercase tracking-wider text-slate-950 mb-1.5">
+                    <label className="block text-xs font-mono font-black uppercase tracking-wider text-slate-950 dark:text-slate-200 mb-1.5">
                       Catatan Bimbingan / Evaluasi Guru:
                     </label>
                     <textarea
@@ -699,7 +699,7 @@ export const GuruLKPD: React.FC<{
                       value={gradeFeedback}
                       onChange={e => setGradeFeedback(e.target.value)}
                       placeholder="Pekerjaan sangat rapi dan langkah penyelesaian tepat..."
-                      className="w-full p-3 rounded-2xl border-3 border-slate-950 bg-white text-slate-950 text-xs sm:text-sm font-bold shadow-[3px_3px_0px_0px_#0f172a] outline-none leading-relaxed"
+                      className="w-full p-3 rounded-2xl border-3 border-slate-950 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-950 dark:text-slate-100 text-xs sm:text-sm font-bold shadow-[3px_3px_0px_0px_#0f172a] outline-none leading-relaxed"
                     />
                   </div>
                 </div>
@@ -707,7 +707,7 @@ export const GuruLKPD: React.FC<{
                 <div className="flex justify-end gap-3 pt-2">
                   <button
                     type="button"
-                    className="px-5 py-2.5 rounded-xl font-mono font-bold text-xs bg-slate-200 border-2 border-slate-950 text-slate-950 cursor-pointer"
+                    className="px-5 py-2.5 rounded-xl font-mono font-bold text-xs bg-slate-200 dark:bg-slate-800 border-2 border-slate-950 dark:border-slate-700 text-slate-950 dark:text-slate-200 cursor-pointer"
                     onClick={() => setSelectedSub(null)}
                   >
                     Batal
@@ -735,7 +735,7 @@ export const GuruLKPD: React.FC<{
         >
           <form onSubmit={handleAddLKPD} className="space-y-4">
             <div>
-              <label className="block text-xs font-mono font-black uppercase tracking-wider text-slate-950 mb-1.5">
+              <label className="block text-xs font-mono font-black uppercase tracking-wider text-slate-950 dark:text-slate-200 mb-1.5">
                 Judul LKPD Digital:
               </label>
               <input
@@ -744,12 +744,12 @@ export const GuruLKPD: React.FC<{
                 value={newTitle}
                 onChange={e => setNewTitle(e.target.value)}
                 placeholder="Contoh: LKPD 3 — Operasi Hitung Perkalian & Pembagian Pecahan"
-                className="w-full p-3.5 rounded-2xl border-3 border-slate-950 bg-slate-50 text-slate-950 text-sm font-bold shadow-[3px_3px_0px_0px_#0f172a] focus:bg-white outline-none"
+                className="w-full p-3.5 rounded-2xl border-3 border-slate-950 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-950 dark:text-slate-100 text-sm font-bold shadow-[3px_3px_0px_0px_#0f172a] focus:bg-white dark:focus:bg-slate-700 outline-none"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-mono font-black uppercase tracking-wider text-slate-950 mb-1.5">
+              <label className="block text-xs font-mono font-black uppercase tracking-wider text-slate-950 dark:text-slate-200 mb-1.5">
                 Deskripsi Singkat LKPD:
               </label>
               <textarea
@@ -758,12 +758,12 @@ export const GuruLKPD: React.FC<{
                 value={newDesc}
                 onChange={e => setNewDesc(e.target.value)}
                 placeholder="Lembar kerja mandiri untuk menguji pemahaman konsep..."
-                className="w-full p-3.5 rounded-2xl border-3 border-slate-950 bg-slate-50 text-slate-950 text-xs sm:text-sm font-bold shadow-[3px_3px_0px_0px_#0f172a] focus:bg-white outline-none"
+                className="w-full p-3.5 rounded-2xl border-3 border-slate-950 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-950 dark:text-slate-100 text-xs sm:text-sm font-bold shadow-[3px_3px_0px_0px_#0f172a] focus:bg-white dark:focus:bg-slate-700 outline-none"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-mono font-black uppercase tracking-wider text-slate-950 mb-1.5">
+              <label className="block text-xs font-mono font-black uppercase tracking-wider text-slate-950 dark:text-slate-200 mb-1.5">
                 Tujuan Pembelajaran & Petunjuk Pengerjaan:
               </label>
               <textarea
@@ -771,26 +771,26 @@ export const GuruLKPD: React.FC<{
                 value={newObjectives}
                 onChange={e => setNewObjectives(e.target.value)}
                 placeholder="1. Memahami konsep perkalian pecahan...\n2. Kerjakan di buku tulis lalu unggah foto..."
-                className="w-full p-3.5 rounded-2xl border-3 border-slate-950 bg-slate-50 text-slate-950 text-xs sm:text-sm font-bold shadow-[3px_3px_0px_0px_#0f172a] focus:bg-white outline-none"
+                className="w-full p-3.5 rounded-2xl border-3 border-slate-950 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-950 dark:text-slate-100 text-xs sm:text-sm font-bold shadow-[3px_3px_0px_0px_#0f172a] focus:bg-white dark:focus:bg-slate-700 outline-none"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-mono font-black uppercase tracking-wider text-slate-950 mb-1.5">
+              <label className="block text-xs font-mono font-black uppercase tracking-wider text-slate-950 dark:text-slate-200 mb-1.5">
                 Unggah Berkas Dokumen PDF (.pdf):
               </label>
               <input
                 type="file"
                 accept=".pdf,application/pdf"
                 onChange={handlePdfFileChange}
-                className="w-full text-xs text-slate-600 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-2 file:border-slate-950 file:text-xs file:font-mono file:font-black file:bg-[#ffe600] file:text-slate-950 cursor-pointer mb-2"
+                className="w-full text-xs text-slate-600 dark:text-slate-300 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-2 file:border-slate-950 file:text-xs file:font-mono file:font-black file:bg-[#ffe600] file:text-slate-950 cursor-pointer mb-2"
               />
               <input
                 type="text"
                 value={newPdfFilename}
                 onChange={e => setNewPdfFilename(e.target.value)}
                 placeholder="Atau ubah nama file PDF (contoh: LKPD_3_Pecahan.pdf)"
-                className="w-full p-3 rounded-xl border-2 border-slate-950 bg-white text-slate-950 text-xs font-mono outline-none"
+                className="w-full p-3 rounded-xl border-2 border-slate-950 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-950 dark:text-slate-100 text-xs font-mono outline-none"
               />
               {newPdfUrl && (
                 <div className="mt-2 text-[11px] font-mono font-black text-slate-950 bg-[#ffe600] border-2 border-slate-950 px-3 py-1.5 rounded-xl flex items-center gap-1.5 shadow-[1.5px_1.5px_0px_0px_#0f172a]">
@@ -800,28 +800,28 @@ export const GuruLKPD: React.FC<{
             </div>
 
             <div>
-              <label className="block text-xs font-mono font-black uppercase tracking-wider text-slate-950 mb-1.5">
+              <label className="block text-xs font-mono font-black uppercase tracking-wider text-slate-950 dark:text-slate-200 mb-1.5">
                 Unggah Gambar Lembar Kerja (Opsional):
               </label>
               <input
                 type="file"
                 accept="image/*"
                 onChange={handleImageFileChange}
-                className="w-full text-xs text-slate-600 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-2 file:border-slate-950 file:text-xs file:font-mono file:font-black file:bg-sky-100 file:text-slate-950 cursor-pointer mb-2"
+                className="w-full text-xs text-slate-600 dark:text-slate-300 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-2 file:border-slate-950 file:text-xs file:font-mono file:font-black file:bg-sky-100 file:text-slate-950 cursor-pointer mb-2"
               />
               <input
                 type="url"
                 value={newImageUrl}
                 onChange={e => setNewImageUrl(e.target.value)}
                 placeholder="Atau tempelkan URL Gambar online (opsional)"
-                className="w-full p-3 rounded-xl border-2 border-slate-950 bg-white text-slate-950 text-xs outline-none"
+                className="w-full p-3 rounded-xl border-2 border-slate-950 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-950 dark:text-slate-100 text-xs outline-none"
               />
             </div>
 
             <div className="flex justify-end gap-3 pt-2">
               <button
                 type="button"
-                className="px-5 py-2.5 rounded-xl font-mono font-bold text-xs bg-slate-200 border-2 border-slate-950 text-slate-950 cursor-pointer"
+                className="px-5 py-2.5 rounded-xl font-mono font-bold text-xs bg-slate-200 dark:bg-slate-800 border-2 border-slate-950 dark:border-slate-700 text-slate-950 dark:text-slate-200 cursor-pointer"
                 onClick={() => setIsAddLKPDOpen(false)}
               >
                 Batal
@@ -847,7 +847,7 @@ export const GuruLKPD: React.FC<{
         >
           <form onSubmit={handleSaveEditLKPD} className="space-y-4">
             <div>
-              <label className="block text-xs font-mono font-black uppercase tracking-wider text-slate-950 mb-1.5">
+              <label className="block text-xs font-mono font-black uppercase tracking-wider text-slate-950 dark:text-slate-200 mb-1.5">
                 Judul Tugas LKPD:
               </label>
               <input
@@ -855,12 +855,12 @@ export const GuruLKPD: React.FC<{
                 value={editTitle}
                 onChange={e => setEditTitle(e.target.value)}
                 required
-                className="w-full p-3 rounded-xl border-2 border-slate-950 bg-white text-slate-950 text-xs font-bold outline-none"
+                className="w-full p-3 rounded-xl border-2 border-slate-950 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-950 dark:text-slate-100 text-xs font-bold outline-none"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-mono font-black uppercase tracking-wider text-slate-950 mb-1.5">
+              <label className="block text-xs font-mono font-black uppercase tracking-wider text-slate-950 dark:text-slate-200 mb-1.5">
                 Deskripsi Singkat:
               </label>
               <textarea
@@ -868,51 +868,51 @@ export const GuruLKPD: React.FC<{
                 onChange={e => setEditDesc(e.target.value)}
                 rows={2}
                 required
-                className="w-full p-3 rounded-xl border-2 border-slate-950 bg-white text-slate-950 text-xs font-bold outline-none"
+                className="w-full p-3 rounded-xl border-2 border-slate-950 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-950 dark:text-slate-100 text-xs font-bold outline-none"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-mono font-black uppercase tracking-wider text-slate-950 mb-1.5">
+              <label className="block text-xs font-mono font-black uppercase tracking-wider text-slate-950 dark:text-slate-200 mb-1.5">
                 Tujuan Pembelajaran & Petunjuk:
               </label>
               <textarea
                 value={editObjectives}
                 onChange={e => setEditObjectives(e.target.value)}
                 rows={3}
-                className="w-full p-3 rounded-xl border-2 border-slate-950 bg-white text-slate-950 text-xs font-bold outline-none"
+                className="w-full p-3 rounded-xl border-2 border-slate-950 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-950 dark:text-slate-100 text-xs font-bold outline-none"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-mono font-black uppercase tracking-wider text-slate-950 mb-1.5">
+              <label className="block text-xs font-mono font-black uppercase tracking-wider text-slate-950 dark:text-slate-200 mb-1.5">
                 Ganti Berkas PDF (Opsional):
               </label>
               <input
                 type="file"
                 accept="application/pdf"
                 onChange={handleEditPdfChange}
-                className="w-full text-xs text-slate-600 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-2 file:border-slate-950 file:text-xs file:font-mono file:font-black file:bg-[#ffe600] file:text-slate-950 cursor-pointer mb-1"
+                className="w-full text-xs text-slate-600 dark:text-slate-300 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-2 file:border-slate-950 file:text-xs file:font-mono file:font-black file:bg-[#ffe600] file:text-slate-950 cursor-pointer mb-1"
               />
-              <span className="text-[11px] text-slate-600 font-mono font-bold">File saat ini: {editPdfFilename}</span>
+              <span className="text-[11px] text-slate-600 dark:text-slate-400 font-mono font-bold">File saat ini: {editPdfFilename}</span>
             </div>
 
             <div>
-              <label className="block text-xs font-mono font-black uppercase tracking-wider text-slate-950 mb-1.5">
+              <label className="block text-xs font-mono font-black uppercase tracking-wider text-slate-950 dark:text-slate-200 mb-1.5">
                 Ganti Gambar Lembar Kerja (Opsional):
               </label>
               <input
                 type="file"
                 accept="image/*"
                 onChange={handleEditImageChange}
-                className="w-full text-xs text-slate-600 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-2 file:border-slate-950 file:text-xs file:font-mono file:font-black file:bg-sky-100 file:text-slate-950 cursor-pointer"
+                className="w-full text-xs text-slate-600 dark:text-slate-300 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-2 file:border-slate-950 file:text-xs file:font-mono file:font-black file:bg-sky-100 file:text-slate-950 cursor-pointer"
               />
             </div>
 
-            <div className="flex justify-end gap-3 pt-2 border-t-2 border-slate-950">
+            <div className="flex justify-end gap-3 pt-2 border-t-2 border-slate-950 dark:border-slate-700">
               <button
                 type="button"
-                className="px-5 py-2.5 rounded-xl font-mono font-bold text-xs bg-slate-200 border-2 border-slate-950 text-slate-950 cursor-pointer"
+                className="px-5 py-2.5 rounded-xl font-mono font-bold text-xs bg-slate-200 dark:bg-slate-800 border-2 border-slate-950 dark:border-slate-700 text-slate-950 dark:text-slate-200 cursor-pointer"
                 onClick={() => setEditingLKPD(null)}
               >
                 Batal
@@ -986,8 +986,8 @@ export const GuruLKPD: React.FC<{
               </div>
             )}
 
-            <div className="flex justify-between items-center bg-white p-3.5 rounded-2xl border-2 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a]">
-              <span className="text-xs font-mono font-bold text-slate-700">
+            <div className="flex justify-between items-center bg-white dark:bg-slate-800 p-3.5 rounded-2xl border-2 border-slate-950 dark:border-slate-700 shadow-[2px_2px_0px_0px_#0f172a] dark:shadow-[2px_2px_0px_0px_#000000]">
+              <span className="text-xs font-mono font-bold text-slate-700 dark:text-slate-300">
                 Halaman {viewPhotoUrl.activeIdx + 1} dari {viewPhotoUrl.urls.length} Halaman
               </span>
               <div className="flex items-center gap-2">
@@ -1003,7 +1003,7 @@ export const GuruLKPD: React.FC<{
                 <button
                   type="button"
                   onClick={() => setViewPhotoUrl(null)}
-                  className="px-3.5 py-1.5 bg-slate-200 border-2 border-slate-950 text-slate-950 font-mono font-bold text-xs rounded-xl cursor-pointer"
+                  className="px-3.5 py-1.5 bg-slate-200 dark:bg-slate-700 border-2 border-slate-950 dark:border-slate-600 text-slate-950 dark:text-slate-200 font-mono font-bold text-xs rounded-xl cursor-pointer"
                 >
                   Tutup
                 </button>
