@@ -136,20 +136,13 @@ export const GuruLanding: React.FC<GuruLandingProps> = ({ onNavigate }) => {
         </p>
 
         {/* Hero Action CTA */}
-        <div className="flex flex-wrap items-center justify-center gap-3.5 pt-2">
+        <div className="flex items-center justify-center pt-2">
           <button
             onClick={() => handlePortalNavigate('guru/login')}
-            className="px-6 py-3.5 sm:px-8 sm:py-4 rounded-2xl bg-slate-950 hover:bg-slate-900 text-white font-mono font-black text-xs sm:text-sm uppercase tracking-wider border-3 border-slate-950 shadow-[4px_4px_0px_0px_#ffe600] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[6px_6px_0px_0px_#ffe600] active:translate-x-0 active:translate-y-0 transition-all cursor-pointer flex items-center gap-3"
+            className="px-8 py-4 rounded-2xl bg-[#ffe600] hover:bg-yellow-400 text-slate-950 font-mono font-black text-sm uppercase tracking-wider border-3 border-slate-950 shadow-[4px_4px_0px_0px_#0f172a] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[6px_6px_0px_0px_#0f172a] active:translate-x-0 active:translate-y-0 transition-all cursor-pointer flex items-center gap-3"
           >
-            <span>Buka Dasbor Guru</span>
-            <ArrowRight size={16} className="text-[#ffe600]" />
-          </button>
-          
-          <button
-            onClick={() => handlePortalNavigate('siswa')}
-            className="px-6 py-3.5 sm:px-8 sm:py-4 rounded-2xl bg-white hover:bg-slate-100 text-slate-950 font-mono font-black text-xs sm:text-sm uppercase tracking-wider border-3 border-slate-950 shadow-[4px_4px_0px_0px_#0f172a] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[6px_6px_0px_0px_#0f172a] active:translate-x-0 active:translate-y-0 transition-all cursor-pointer flex items-center gap-2"
-          >
-            <span>Portal Siswa</span>
+            <span>Masuk Guru</span>
+            <ArrowRight size={16} className="text-slate-950" />
           </button>
         </div>
 

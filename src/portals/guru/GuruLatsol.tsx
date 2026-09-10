@@ -297,7 +297,7 @@ export const GuruLatsol: React.FC<{
                         <div className="text-[10px] font-mono font-bold text-slate-500">{sub.studentClass} • ID: {sub.studentId}</div>
                       </td>
                       <td className="p-3.5">
-                        <span className="px-2 py-0.5 rounded-lg bg-sky-100 text-slate-950 border border-slate-950 text-xs font-bold">
+                        <span className="inline-block px-3 py-1.5 rounded-xl bg-sky-100 text-slate-950 border-2 border-slate-950 text-xs font-bold leading-snug shadow-[1.5px_1.5px_0px_0px_#0f172a] max-w-[240px]">
                           {sub.roomTitle}
                         </span>
                       </td>

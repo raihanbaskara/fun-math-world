@@ -136,20 +136,13 @@ export const AdminLanding: React.FC<AdminLandingProps> = ({ onNavigate }) => {
         </p>
 
         {/* Hero Action CTA */}
-        <div className="flex flex-wrap items-center justify-center gap-3.5 pt-2">
+        <div className="flex items-center justify-center pt-2">
           <button
             onClick={() => handlePortalNavigate('admin/login')}
-            className="px-6 py-3.5 sm:px-8 sm:py-4 rounded-2xl bg-slate-950 hover:bg-slate-900 text-white font-mono font-black text-xs sm:text-sm uppercase tracking-wider border-3 border-slate-950 shadow-[4px_4px_0px_0px_#c084fc] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[6px_6px_0px_0px_#c084fc] active:translate-x-0 active:translate-y-0 transition-all cursor-pointer flex items-center gap-3"
+            className="px-8 py-4 rounded-2xl bg-[#c084fc] hover:bg-purple-400 text-slate-950 font-mono font-black text-sm uppercase tracking-wider border-3 border-slate-950 shadow-[4px_4px_0px_0px_#0f172a] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[6px_6px_0px_0px_#0f172a] active:translate-x-0 active:translate-y-0 transition-all cursor-pointer flex items-center gap-3"
           >
-            <span>Buka Dasbor Admin</span>
-            <ArrowRight size={16} className="text-[#c084fc]" />
-          </button>
-          
-          <button
-            onClick={() => handlePortalNavigate('landing')}
-            className="px-6 py-3.5 sm:px-8 sm:py-4 rounded-2xl bg-white hover:bg-slate-100 text-slate-950 font-mono font-black text-xs sm:text-sm uppercase tracking-wider border-3 border-slate-950 shadow-[4px_4px_0px_0px_#0f172a] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[6px_6px_0px_0px_#0f172a] active:translate-x-0 active:translate-y-0 transition-all cursor-pointer flex items-center gap-2"
-          >
-            <span>Halaman Utama</span>
+            <span>Masuk Admin</span>
+            <ArrowRight size={16} className="text-slate-950" />
           </button>
         </div>
 

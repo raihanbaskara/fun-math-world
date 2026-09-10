@@ -154,7 +154,7 @@ export const GuruDaftarSiswa: React.FC<{
                     </td>
 
                     <td className="p-4">
-                      <span className="px-2.5 py-1 rounded-xl bg-sky-100 text-slate-950 border-2 border-slate-950 text-xs font-mono font-black shadow-[1.5px_1.5px_0px_0px_#0f172a]">
+                      <span className="inline-block whitespace-nowrap px-3 py-1 rounded-xl bg-sky-100 text-slate-950 border-2 border-slate-950 text-xs font-mono font-black shadow-[1.5px_1.5px_0px_0px_#0f172a]">
                         {s.class || 'Kelas 7-A'}
                       </span>
                     </td>

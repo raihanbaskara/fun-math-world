@@ -1,13 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { DoubleBezelCard, Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowFillButton } from '@/components/ui/arrow-fill-button';
 import { Modal } from '@/components/ui/modal';
-import { Badge } from '@/components/ui/badge';
 import { storageService } from '@/services/storageService';
 import { soundService } from '@/services/soundService';
 import { LKPDSubmission, LKPDItem } from '@/types';
-import { FileText, Image as ImageIcon, CheckCircle2, Bot, MessageSquare, ExternalLink, Plus, Trash2, Upload, Layers, Pencil, ChevronLeft, ChevronRight } from 'lucide-react';
+import { FileText, Image as ImageIcon, Bot, ExternalLink, Plus, Trash2, Pencil, ChevronLeft, ChevronRight, CheckCircle2, Clock } from 'lucide-react';
 
 export const GuruLKPD: React.FC<{
   showToast: (msg: string, type?: 'info' | 'success' | 'error') => void;
@@ -21,8 +18,8 @@ export const GuruLKPD: React.FC<{
     });
   }, []);
 
-  const submissions = dbState.lkpdSubmissions;
-  const lkpdList = dbState.lkpdList;
+  const submissions = dbState.lkpdSubmissions || [];
+  const lkpdList = dbState.lkpdList || [];
 
   // Grade Modal State
   const [selectedSub, setSelectedSub] = useState<LKPDSubmission | null>(null);
@@ -149,11 +146,11 @@ export const GuruLKPD: React.FC<{
         {
           id: 'q2',
           title: 'Soal 2: Penerapan Kontekstual',
-          prompt: 'Berikan satu contoh penerapan konsep pecahan ini dalam kehidupan sehari-hari beserta perhitungannya.',
-          discussion: 'Penerapan dapat berupa pembagian porsi makanan, perhitungan resep kue, atau perbandingan diskon belanja.',
+          prompt: 'Terapkan konsep operasi hitung pecahan pada skenario masalah kontekstual yang diberikan.',
+          discussion: 'Identifikasi bagian utuh, kalikan dengan perbandingan, dan sederhanakan bentuk akhir pecahan.',
           weight: 50,
-        },
-      ],
+        }
+      ]
     };
 
     storageService.update(draft => {
@@ -168,17 +165,16 @@ export const GuruLKPD: React.FC<{
     setNewPdfFilename('');
     setNewPdfUrl('');
     soundService.success();
-    showToast('Tugas LKPD Digital baru berhasil ditambahkan dan disinkronkan ke Siswa!', 'success');
+    showToast('Tugas LKPD Digital baru berhasil diterbitkan!', 'success');
   };
 
   const handleDeleteLKPD = (id: string) => {
-    if (confirm('Hapus tugas LKPD ini?')) {
-      soundService.click();
-      storageService.update(draft => {
-        draft.lkpdList = draft.lkpdList.filter(item => item.id !== id);
-      });
-      showToast('Tugas LKPD berhasil dihapus.', 'info');
-    }
+    soundService.click();
+    storageService.update(draft => {
+      draft.lkpdList = draft.lkpdList.filter(l => l.id !== id);
+    });
+    soundService.success();
+    showToast('Tugas LKPD berhasil dihapus.', 'info');
   };
 
   const handleOpenEditLKPD = (item: LKPDItem) => {
@@ -237,7 +233,6 @@ export const GuruLKPD: React.FC<{
     showToast('Tugas LKPD Digital berhasil diperbarui & disinkronkan!', 'success');
   };
 
-  // Helper to convert Base64 PDF data URLs to browser Blob URLs for seamless iframe/object rendering on Vercel
   const getPdfDisplayUrl = (url?: string): string => {
     if (!url) return '';
     if (url.startsWith('data:application/pdf;base64,')) {
@@ -259,30 +254,53 @@ export const GuruLKPD: React.FC<{
   };
 
   return (
-    <div className="space-y-6 max-w-6xl mx-auto">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h2 className="text-2xl font-black text-slate-900 flex items-center gap-2.5">
-            <FileText className="text-amber-500" />
-            <span>Manajemen & Penilaian LKPD Digital</span>
-          </h2>
-          <p className="text-xs sm:text-sm text-slate-500 font-medium">
-            Unggah tugas LKPD baru untuk kelas siswa dan periksa verifikasi lembar kerja fisik dengan bantuan AI.
-          </p>
+    <div className="space-y-8 max-w-6xl mx-auto font-sans pb-12">
+      
+      {/* 1. Header Banner Pure Neobrutalism V3 */}
+      <div className="relative rounded-3xl bg-[#ffe600] border-4 border-slate-950 p-6 sm:p-8 shadow-[8px_8px_0px_0px_#0f172a] overflow-hidden text-slate-950">
+        <div className="absolute right-4 bottom-0 text-slate-950/10 font-mono text-8xl font-black pointer-events-none select-none">
+          LKPD AI
         </div>
 
-        {/* Tab Switcher */}
-        <div className="flex items-center gap-2 p-1 bg-slate-200/80 rounded-2xl">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 relative z-10">
+          <div className="space-y-3 max-w-2xl">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="px-3 py-1 bg-white text-slate-950 border-2 border-slate-950 rounded-xl text-xs font-mono font-black shadow-[2px_2px_0px_0px_#0f172a]">
+                KOREKSI DIGITAL & ASISTEN AI
+              </span>
+              <span className="px-3 py-1 bg-[#38bdf8] text-slate-950 border-2 border-slate-950 rounded-xl text-xs font-black font-mono shadow-[1.5px_1.5px_0px_0px_#0f172a]">
+                {lkpdList.length} Tugas LKPD
+              </span>
+            </div>
+
+            <h1 className="text-2xl sm:text-4xl font-black tracking-tight text-slate-950 font-mono leading-tight">
+              Manajemen & Penilaian LKPD Digital
+            </h1>
+
+            <p className="text-xs sm:text-sm text-slate-950 max-w-2xl leading-relaxed font-bold">
+              Terbitkan modul lembar kerja digital (PDF & Gambar), periksa foto tulisan tangan siswa dengan bantuan penilaian AI, dan beri nilai akhir guru secara akurat.
+            </p>
+          </div>
+
+          <div className="w-16 h-16 rounded-2xl bg-white border-3 border-slate-950 text-slate-950 flex items-center justify-center shrink-0 shadow-[4px_4px_0px_0px_#0f172a]">
+            <FileText size={36} />
+          </div>
+        </div>
+      </div>
+
+      {/* 2. Neobrutalist Tab Switcher */}
+      <div className="flex items-center justify-between flex-wrap gap-4">
+        <div className="flex items-center gap-2 p-1.5 bg-white border-3 border-slate-950 rounded-2xl shadow-[4px_4px_0px_0px_#0f172a]">
           <button
             type="button"
             onClick={() => {
               soundService.click();
               setActiveTab('submissions');
             }}
-            className={`px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
+            className={`px-4 sm:px-5 py-2 rounded-xl text-xs font-mono font-black transition-all cursor-pointer border-2 ${
               activeTab === 'submissions'
-                ? 'bg-white text-slate-950 shadow-sm'
-                : 'text-slate-600 hover:text-slate-900'
+                ? 'bg-[#ffe600] text-slate-950 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a]'
+                : 'border-transparent text-slate-700 hover:text-slate-950'
             }`}
           >
             Pengumpulan Siswa ({submissions.length})
@@ -293,22 +311,40 @@ export const GuruLKPD: React.FC<{
               soundService.click();
               setActiveTab('manage');
             }}
-            className={`px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
+            className={`px-4 sm:px-5 py-2 rounded-xl text-xs font-mono font-black transition-all cursor-pointer border-2 ${
               activeTab === 'manage'
-                ? 'bg-white text-slate-950 shadow-sm'
-                : 'text-slate-600 hover:text-slate-900'
+                ? 'bg-[#38bdf8] text-slate-950 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a]'
+                : 'border-transparent text-slate-700 hover:text-slate-950'
             }`}
           >
             Kelola & Upload LKPD ({lkpdList.length})
           </button>
         </div>
+
+        {activeTab === 'manage' && (
+          <button
+            type="button"
+            onClick={() => setIsAddLKPDOpen(true)}
+            className="px-5 py-2.5 rounded-2xl bg-[#ffe600] hover:bg-yellow-400 text-slate-950 font-mono font-black text-xs uppercase tracking-wider border-3 border-slate-950 shadow-[3px_3px_0px_0px_#0f172a] active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer flex items-center gap-2"
+          >
+            <Plus size={16} />
+            <span>Upload / Tambah LKPD Baru</span>
+          </button>
+        )}
       </div>
 
+      {/* 3. Submissions Table Tab */}
       {activeTab === 'submissions' ? (
-        <DoubleBezelCard className="bg-slate-50 border-slate-200/80 p-1.5 overflow-hidden">
+        <div className="rounded-3xl bg-white border-4 border-slate-950 p-6 shadow-[7px_7px_0px_0px_#0f172a] space-y-5">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-black text-slate-950 font-mono flex items-center gap-2">
+              <span>Daftar Pengumpulan Lembar Kerja Siswa</span>
+            </h2>
+          </div>
+
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs sm:text-sm">
-              <thead className="bg-slate-50/80 border-b border-slate-200 text-[11px] font-black uppercase tracking-wider text-slate-500">
+              <thead className="bg-[#ffe600] border-3 border-slate-950 text-slate-950 font-mono text-[11px] font-black uppercase tracking-wider">
                 <tr>
                   <th className="p-4">Nama Siswa</th>
                   <th className="p-4">Kelas</th>
@@ -316,21 +352,25 @@ export const GuruLKPD: React.FC<{
                   <th className="p-4">Foto Tugas</th>
                   <th className="p-4 font-mono">Skor AI</th>
                   <th className="p-4 font-mono">Nilai Guru</th>
-                  <th className="p-4">Aksi</th>
+                  <th className="p-4 text-center">Aksi</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 bg-white">
+              <tbody className="divide-y-2 divide-slate-200 bg-white">
                 {submissions.map(s => {
                   const targetLkpd = lkpdList.find(item => item.id === s.lkpdId);
                   return (
-                    <tr key={s.id} className="hover:bg-slate-50/80 transition-colors">
+                    <tr key={s.id} className="hover:bg-amber-50/50 transition-colors">
                       <td className="p-4">
-                        <div className="font-bold text-slate-900">{s.studentName}</div>
-                        <div className="text-[10px] font-mono text-slate-400">ID: {s.id}</div>
+                        <div className="font-black text-slate-950 text-sm">{s.studentName}</div>
+                        <div className="text-[10px] font-mono font-bold text-slate-500">ID: {s.id}</div>
                       </td>
-                      <td className="p-4 font-medium text-slate-600">{s.studentClass}</td>
-                      <td className="p-4 font-bold text-slate-800 text-xs">
-                        <span className="px-2.5 py-1 bg-indigo-50 text-indigo-700 rounded-lg border border-indigo-200/80 inline-block max-w-[200px] truncate">
+                      <td className="p-4">
+                        <span className="inline-block whitespace-nowrap px-3 py-1 rounded-xl bg-sky-100 text-slate-950 border-2 border-slate-950 text-xs font-mono font-black shadow-[1.5px_1.5px_0px_0px_#0f172a]">
+                          {s.studentClass || 'Kelas 7-A'}
+                        </span>
+                      </td>
+                      <td className="p-4">
+                        <span className="inline-block max-w-[220px] whitespace-normal break-words px-3 py-1 bg-amber-100 text-slate-950 rounded-xl border-2 border-slate-950 text-xs font-bold leading-snug shadow-[1.5px_1.5px_0px_0px_#0f172a]">
                           {targetLkpd ? targetLkpd.title : 'LKPD 1'}
                         </span>
                       </td>
@@ -343,42 +383,43 @@ export const GuruLKPD: React.FC<{
                             const displayUrls = photos.map(p => getPhotoDisplayUrl(p));
                             setViewPhotoUrl({ urls: displayUrls, activeIdx: 0, studentName: s.studentName });
                           }}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-brand-700 font-bold hover:bg-brand-50 hover:border-brand-300 transition-all text-xs cursor-pointer"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white hover:bg-slate-100 text-slate-950 border-2 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a] font-mono font-black text-xs cursor-pointer active:translate-x-0.5 active:translate-y-0.5 transition-all"
                         >
-                          <ImageIcon size={14} className="text-brand-600" />
+                          <ImageIcon size={14} className="text-slate-950" />
                           <span>Lihat Foto ({s.photoUrls?.length || 1})</span>
                         </button>
                       </td>
-                      <td className="p-4 font-mono font-black text-indigo-700">
-                        <span className="px-2 py-0.5 rounded-md bg-indigo-50 border border-indigo-200/60">
+                      <td className="p-4 font-mono font-black">
+                        <span className="px-2.5 py-1 rounded-xl bg-purple-100 text-purple-950 border-2 border-slate-950 shadow-[1.5px_1.5px_0px_0px_#0f172a]">
                           {s.aiScore}/100
                         </span>
                       </td>
-                      <td className="p-4 font-mono font-black text-amber-700">
+                      <td className="p-4 font-mono font-black">
                         {s.teacherScore ? (
-                          <span className="px-2 py-0.5 rounded-md bg-amber-100 border border-amber-300">
+                          <span className="px-2.5 py-1 rounded-xl bg-[#ffe600] text-slate-950 border-2 border-slate-950 shadow-[1.5px_1.5px_0px_0px_#0f172a]">
                             {s.teacherScore}/100
                           </span>
                         ) : (
-                          <span className="text-xs font-bold text-slate-400">Belum Dinilai</span>
+                          <span className="px-2 py-0.5 rounded-lg bg-slate-100 text-slate-500 border border-slate-300 text-xs font-bold">
+                            Belum Dinilai
+                          </span>
                         )}
                       </td>
-                      <td className="p-4">
-                        <ArrowFillButton
-                          variant="primary"
-                          size="sm"
-                          className="h-8.5 font-bold text-xs bg-[#ffe600] text-slate-950 border-2 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a] hover:bg-yellow-400"
+                      <td className="p-4 text-center">
+                        <button
+                          type="button"
                           onClick={() => handleOpenGrade(s)}
+                          className="px-4 py-2 rounded-xl bg-[#ffe600] hover:bg-yellow-400 text-slate-950 font-mono font-black text-xs border-2 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a] active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
                         >
-                          <span>Beri Nilai</span>
-                        </ArrowFillButton>
+                          Beri Nilai
+                        </button>
                       </td>
                     </tr>
                   );
                 })}
                 {submissions.length === 0 && (
                   <tr>
-                    <td colSpan={6} className="p-8 text-center text-slate-400 font-medium">
+                    <td colSpan={7} className="p-8 text-center text-slate-500 font-bold">
                       Belum ada pengumpulan LKPD dari siswa.
                     </td>
                   </tr>
@@ -386,86 +427,65 @@ export const GuruLKPD: React.FC<{
               </tbody>
             </table>
           </div>
-        </DoubleBezelCard>
+        </div>
       ) : (
-        /* Tab Manage LKPD */
+        /* 4. Manage LKPD Grid Tab */
         <div className="space-y-6">
-          <div className="flex justify-between items-center bg-yellow-50 p-4 rounded-2xl border-2 border-slate-950 shadow-[4px_4px_0px_0px_#0f172a]">
-            <div>
-              <h3 className="font-black text-slate-950 text-sm sm:text-base">Daftar Tugas LKPD Aktif</h3>
-              <p className="text-xs text-slate-700 font-medium">
-                Tugas LKPD di bawah ini secara otomatis tersedia di portal Siswa (`/siswa/lkpd`).
-              </p>
-            </div>
-            <ArrowFillButton
-              variant="primary"
-              size="md"
-              className="bg-[#ffe600] text-slate-950 font-black border-2 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a] hover:bg-yellow-400"
-              onClick={() => setIsAddLKPDOpen(true)}
-            >
-              <Plus size={16} />
-              <span>Upload / Tambah LKPD Baru</span>
-            </ArrowFillButton>
-          </div>
-
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {lkpdList.map((item, idx) => (
-              <DoubleBezelCard key={item.id} className="bg-white border-slate-200/80">
-                <div className="space-y-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <span className="px-2.5 py-1 rounded-md bg-yellow-200 border border-slate-900 font-mono font-bold text-slate-950 text-xs">
-                        LKPD #{idx + 1}
-                      </span>
-                      <h3 className="font-black text-slate-900 text-base mt-2">{item.title}</h3>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <button
-                        onClick={() => handleOpenEditLKPD(item)}
-                        className="text-indigo-600 hover:text-indigo-800 font-bold p-1.5 rounded-lg hover:bg-indigo-50 transition-colors cursor-pointer flex items-center gap-1 text-xs"
-                        title="Edit LKPD"
-                      >
-                        <Pencil size={15} />
-                        <span>Edit</span>
-                      </button>
-                      <button
-                        onClick={() => handleDeleteLKPD(item.id)}
-                        className="text-red-500 hover:text-red-700 font-bold p-1.5 rounded-lg hover:bg-red-50 transition-colors cursor-pointer"
-                        title="Hapus LKPD"
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
+              <div key={item.id} className="rounded-3xl bg-white border-4 border-slate-950 p-6 shadow-[6px_6px_0px_0px_#0f172a] space-y-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="space-y-1">
+                    <span className="px-2.5 py-0.5 rounded-lg bg-[#ffe600] text-slate-950 font-mono font-black text-xs border-2 border-slate-950 shadow-[1.5px_1.5px_0px_0px_#0f172a]">
+                      LKPD #{idx + 1}
+                    </span>
+                    <h3 className="font-black text-slate-950 text-base sm:text-lg">{item.title}</h3>
                   </div>
-
-                  <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed font-medium">
-                    {item.description}
-                  </p>
-
-                  <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/70 text-xs space-y-1">
-                    <span className="font-bold text-slate-700">Tujuan & Instruksi:</span>
-                    <p className="text-slate-500 line-clamp-2">{item.objectives}</p>
-                  </div>
-
-                  {item.imageUrl && (
-                    <div className="rounded-xl overflow-hidden max-h-36 border border-slate-200 shadow-2xs">
-                      <img src={item.imageUrl} alt={item.title} className="w-full h-36 object-cover" />
-                    </div>
-                  )}
-
-                  <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500 font-mono gap-2">
-                    <span className="truncate">Berkas: {item.pdfFilename}</span>
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      className="h-8 text-xs font-bold shrink-0"
-                      onClick={() => setPreviewLKPD(item)}
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <button
+                      onClick={() => handleOpenEditLKPD(item)}
+                      className="p-2 rounded-xl bg-sky-100 hover:bg-sky-200 text-slate-950 border-2 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a] font-black text-xs flex items-center gap-1 cursor-pointer active:translate-x-0.5 active:translate-y-0.5 transition-all"
+                      title="Edit LKPD"
                     >
-                      <span>Pratinjau PDF & Gambar</span>
-                    </Button>
+                      <Pencil size={14} />
+                      <span>Edit</span>
+                    </button>
+                    <button
+                      onClick={() => handleDeleteLKPD(item.id)}
+                      className="p-2 rounded-xl bg-rose-100 hover:bg-rose-200 text-rose-950 border-2 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a] font-black text-xs cursor-pointer active:translate-x-0.5 active:translate-y-0.5 transition-all"
+                      title="Hapus LKPD"
+                    >
+                      <Trash2 size={14} className="text-rose-700" />
+                    </button>
                   </div>
                 </div>
-              </DoubleBezelCard>
+
+                <p className="text-xs text-slate-700 leading-relaxed font-bold line-clamp-2">
+                  {item.description}
+                </p>
+
+                <div className="p-3 bg-amber-50 rounded-2xl border-2 border-slate-950 text-xs space-y-1">
+                  <span className="font-black text-slate-950 font-mono uppercase text-[10px]">Tujuan Pembelajaran:</span>
+                  <p className="text-slate-800 font-bold line-clamp-2">{item.objectives}</p>
+                </div>
+
+                {item.imageUrl && (
+                  <div className="rounded-2xl overflow-hidden max-h-36 border-2 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a]">
+                    <img src={item.imageUrl} alt={item.title} className="w-full h-36 object-cover" />
+                  </div>
+                )}
+
+                <div className="pt-3 border-t-2 border-slate-950 flex items-center justify-between text-xs text-slate-700 font-mono font-bold gap-2">
+                  <span className="truncate">File: {item.pdfFilename}</span>
+                  <button
+                    type="button"
+                    className="px-3 py-1.5 rounded-xl bg-white hover:bg-slate-100 text-slate-950 border-2 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a] text-xs font-black shrink-0 cursor-pointer active:translate-x-0.5 active:translate-y-0.5 transition-all"
+                    onClick={() => setPreviewLKPD(item)}
+                  >
+                    Pratinjau Dokumen
+                  </button>
+                </div>
+              </div>
             ))}
           </div>
         </div>
@@ -481,8 +501,8 @@ export const GuruLKPD: React.FC<{
         >
           <div className="space-y-4">
             {previewLKPD.pdfUrl && (
-              <div className="flex items-center justify-between p-2 bg-yellow-100 rounded-2xl border-2 border-slate-950 text-xs font-mono text-slate-950 font-bold">
-                <span>Dokumen PDF Terverifikasi: {previewLKPD.pdfFilename}</span>
+              <div className="flex items-center justify-between p-3 bg-[#ffe600] rounded-2xl border-2 border-slate-950 text-xs font-mono text-slate-950 font-black shadow-[2px_2px_0px_0px_#0f172a]">
+                <span>Dokumen PDF: {previewLKPD.pdfFilename}</span>
                 <a
                   href={getPdfDisplayUrl(previewLKPD.pdfUrl)}
                   target="_blank"
@@ -496,7 +516,7 @@ export const GuruLKPD: React.FC<{
             )}
 
             {previewLKPD.pdfUrl ? (
-              <div className="w-full h-[480px] rounded-2xl overflow-hidden border-2 border-slate-300 shadow-md bg-slate-900 relative">
+              <div className="w-full h-[480px] rounded-2xl overflow-hidden border-3 border-slate-950 shadow-[4px_4px_0px_0px_#0f172a] bg-slate-900 relative">
                 <object
                   data={getPdfDisplayUrl(previewLKPD.pdfUrl)}
                   type="application/pdf"
@@ -523,7 +543,7 @@ export const GuruLKPD: React.FC<{
                 </object>
               </div>
             ) : (
-              <div className="rounded-2xl overflow-hidden border border-slate-200 shadow-inner max-h-80 overflow-y-auto">
+              <div className="rounded-2xl overflow-hidden border-3 border-slate-950 shadow-[4px_4px_0px_0px_#0f172a] max-h-80 overflow-y-auto">
                 <img
                   src={previewLKPD.imageUrl}
                   alt="LKPD Preview"
@@ -532,9 +552,9 @@ export const GuruLKPD: React.FC<{
               </div>
             )}
 
-            <div className="p-3.5 bg-slate-50 rounded-2xl text-xs space-y-1.5 border border-slate-200">
-              <div className="font-black text-slate-800">Tujuan Pembelajaran & Petunjuk:</div>
-              <p className="text-slate-600 font-medium whitespace-pre-line leading-relaxed">
+            <div className="p-4 bg-amber-50 rounded-2xl text-xs space-y-1.5 border-2 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a]">
+              <div className="font-black text-slate-950 font-mono uppercase">Tujuan Pembelajaran:</div>
+              <p className="text-slate-800 font-bold whitespace-pre-line leading-relaxed">
                 {previewLKPD.objectives || previewLKPD.description}
               </p>
             </div>
@@ -557,17 +577,17 @@ export const GuruLKPD: React.FC<{
             return (
               <form onSubmit={handleSaveGrade} className="space-y-6 max-h-[75vh] overflow-y-auto pr-1">
                 {/* Student Info & Anti-Cheat Summary */}
-                <div className="p-4 rounded-2xl bg-amber-50 border-2 border-slate-950 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                <div className="p-4 rounded-2xl bg-amber-50 border-3 border-slate-950 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs shadow-[3px_3px_0px_0px_#0f172a]">
                   <div>
-                    <div className="font-black text-slate-950 text-sm">{selectedSub.studentName}</div>
-                    <div className="text-slate-600 font-bold">{selectedSub.studentClass} • {targetLkpd?.title}</div>
+                    <div className="font-black text-slate-950 text-sm font-mono">{selectedSub.studentName}</div>
+                    <div className="text-slate-700 font-bold">{selectedSub.studentClass} • {targetLkpd?.title}</div>
                   </div>
                   {selectedSub.antiCheat && selectedSub.antiCheat.switchCount > 0 ? (
-                    <span className="px-3 py-1 rounded-xl bg-rose-200 text-rose-950 border border-slate-950 font-mono font-black w-fit">
+                    <span className="px-3 py-1 rounded-xl bg-rose-200 text-rose-950 border-2 border-slate-950 font-mono font-black w-fit shadow-[1.5px_1.5px_0px_0px_#0f172a]">
                       Anti-Cheat: {selectedSub.antiCheat.switchCount}x Pindah Tab ({selectedSub.antiCheat.totalLeaveSeconds}d)
                     </span>
                   ) : (
-                    <span className="px-3 py-1 rounded-xl bg-emerald-200 text-emerald-950 border border-slate-950 font-mono font-black w-fit">
+                    <span className="px-3 py-1 rounded-xl bg-emerald-200 text-emerald-950 border-2 border-slate-950 font-mono font-black w-fit shadow-[1.5px_1.5px_0px_0px_#0f172a]">
                       Anti-Cheat: Tertib (0x Pindah Tab)
                     </span>
                   )}
@@ -575,7 +595,7 @@ export const GuruLKPD: React.FC<{
 
                 {/* Per-Question Answers & AI Discussions */}
                 <div className="space-y-4">
-                  <div className="text-xs font-black uppercase tracking-wider text-slate-900 font-mono">
+                  <div className="text-xs font-black uppercase tracking-wider text-slate-950 font-mono">
                     // JAWABAN ESSAI SISWA PER SOAL:
                   </div>
 
@@ -584,24 +604,24 @@ export const GuruLKPD: React.FC<{
                     const photo = ans?.photoUrl || (idx === 0 ? selectedSub.photoUrl : undefined);
 
                     return (
-                      <div key={q.id} className="p-4 rounded-2xl bg-white border-2 border-slate-950 space-y-3 shadow-[3px_3px_0px_0px_#0f172a]">
+                      <div key={q.id} className="p-4 rounded-2xl bg-white border-3 border-slate-950 space-y-3 shadow-[4px_4px_0px_0px_#0f172a]">
                         <div className="flex items-center justify-between">
-                          <span className="px-2.5 py-0.5 rounded-lg bg-[#ffe600] text-slate-950 font-mono font-black text-xs border border-slate-950">
+                          <span className="px-2.5 py-0.5 rounded-lg bg-[#ffe600] text-slate-950 font-mono font-black text-xs border-2 border-slate-950 shadow-[1.5px_1.5px_0px_0px_#0f172a]">
                             Soal #{idx + 1}: {q.title}
                           </span>
-                          <span className="text-xs font-mono font-bold text-slate-600">
+                          <span className="text-xs font-mono font-black text-slate-700">
                             Bobot: {q.weight} Poin
                           </span>
                         </div>
 
-                        <div className="text-xs sm:text-sm font-bold text-slate-900 leading-relaxed bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+                        <div className="text-xs sm:text-sm font-bold text-slate-900 leading-relaxed bg-slate-50 p-3 rounded-xl border-2 border-slate-950">
                           {q.prompt}
                         </div>
 
                         {/* Student typed answer */}
                         <div className="space-y-1">
-                          <label className="text-[11px] font-black uppercase text-slate-600">Jawaban Ketikan Siswa:</label>
-                          <div className="p-3 rounded-xl bg-amber-50/60 border border-slate-300 text-xs sm:text-sm font-medium text-slate-900 whitespace-pre-line">
+                          <label className="text-[11px] font-mono font-black uppercase text-slate-700">Jawaban Ketikan Siswa:</label>
+                          <div className="p-3 rounded-xl bg-amber-50 border-2 border-slate-950 text-xs sm:text-sm font-bold text-slate-950 whitespace-pre-line">
                             {ans?.textAnswer || '(Siswa tidak mengetikkan jawaban teks)'}
                           </div>
                         </div>
@@ -609,8 +629,8 @@ export const GuruLKPD: React.FC<{
                         {/* Student photo attachment */}
                         {photo && (
                           <div className="space-y-1">
-                            <label className="text-[11px] font-black uppercase text-slate-600">Lampiran Foto Bukti Cara:</label>
-                            <div className="relative rounded-xl border-2 border-slate-950 overflow-hidden max-w-sm max-h-48 group">
+                            <label className="text-[11px] font-mono font-black uppercase text-slate-700">Lampiran Foto Bukti Cara:</label>
+                            <div className="relative rounded-xl border-3 border-slate-950 overflow-hidden max-w-sm max-h-48 group shadow-[2px_2px_0px_0px_#0f172a]">
                               <img
                                 src={getPhotoDisplayUrl(photo)}
                                 alt={`Foto Soal ${idx + 1}`}
@@ -620,7 +640,7 @@ export const GuruLKPD: React.FC<{
                               <button
                                 type="button"
                                 onClick={() => setViewPhotoUrl({ urls: [getPhotoDisplayUrl(photo)], activeIdx: 0, studentName: selectedSub.studentName })}
-                                className="absolute bottom-2 right-2 px-2.5 py-1 rounded-lg bg-[#ffe600] text-slate-950 text-xs font-black border border-slate-950 shadow-[1px_1px_0px_0px_#0f172a]"
+                                className="absolute bottom-2 right-2 px-2.5 py-1 rounded-lg bg-[#ffe600] text-slate-950 text-xs font-mono font-black border-2 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a]"
                               >
                                 Perbesar Foto
                               </button>
@@ -629,12 +649,12 @@ export const GuruLKPD: React.FC<{
                         )}
 
                         {/* AI Step-by-Step Discussion */}
-                        <div className="p-3 bg-purple-50 rounded-xl border border-purple-200 text-xs space-y-1">
-                          <div className="font-black text-purple-900 flex items-center gap-1.5">
-                            <Bot size={14} className="text-purple-600" />
+                        <div className="p-3 bg-purple-50 rounded-xl border-2 border-slate-950 text-xs space-y-1 shadow-[2px_2px_0px_0px_#0f172a]">
+                          <div className="font-black text-purple-950 flex items-center gap-1.5 font-mono">
+                            <Bot size={14} className="text-purple-700" />
                             <span>Pembahasan & Kunci Konsep AI:</span>
                           </div>
-                          <p className="text-slate-700 font-medium whitespace-pre-line leading-relaxed">
+                          <p className="text-slate-800 font-bold whitespace-pre-line leading-relaxed">
                             {q.discussion}
                           </p>
                         </div>
@@ -644,18 +664,18 @@ export const GuruLKPD: React.FC<{
                 </div>
 
                 {/* AI Score Recommendation Summary */}
-                <div className="p-3.5 bg-indigo-50 rounded-2xl border-2 border-slate-950 text-xs space-y-1.5">
-                  <div className="font-black text-indigo-950 flex items-center gap-1.5">
-                    <Bot size={16} className="text-indigo-600" />
+                <div className="p-4 bg-sky-50 rounded-2xl border-3 border-slate-950 text-xs space-y-1.5 shadow-[3px_3px_0px_0px_#0f172a]">
+                  <div className="font-black text-sky-950 flex items-center gap-1.5 font-mono">
+                    <Bot size={16} className="text-sky-700" />
                     <span>Rekomendasi Skor AI: {selectedSub.aiScore} / 100</span>
                   </div>
-                  <p className="text-slate-700 font-medium">{selectedSub.aiFeedback}</p>
+                  <p className="text-slate-800 font-bold">{selectedSub.aiFeedback}</p>
                 </div>
 
                 {/* Teacher Grading Inputs */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2 border-t-2 border-slate-950">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2 border-t-3 border-slate-950">
                   <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                    <label className="block text-xs font-mono font-black uppercase tracking-wider text-slate-950 mb-1.5">
                       Nilai Final Guru (0 - 100):
                     </label>
                     <input
@@ -665,12 +685,12 @@ export const GuruLKPD: React.FC<{
                       required
                       value={gradeScore}
                       onChange={e => setGradeScore(parseInt(e.target.value) || 0)}
-                      className="w-full p-3.5 rounded-2xl border-2 border-slate-950 bg-white text-slate-950 text-base font-black focus:ring-4 focus:ring-amber-300 outline-none font-mono shadow-[2px_2px_0px_0px_#0f172a]"
+                      className="w-full p-3.5 rounded-2xl border-3 border-slate-950 bg-white text-slate-950 text-base font-black font-mono shadow-[3px_3px_0px_0px_#0f172a] outline-none"
                     />
                   </div>
 
                   <div className="sm:col-span-2">
-                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                    <label className="block text-xs font-mono font-black uppercase tracking-wider text-slate-950 mb-1.5">
                       Catatan Bimbingan / Evaluasi Guru:
                     </label>
                     <textarea
@@ -679,24 +699,25 @@ export const GuruLKPD: React.FC<{
                       value={gradeFeedback}
                       onChange={e => setGradeFeedback(e.target.value)}
                       placeholder="Pekerjaan sangat rapi dan langkah penyelesaian tepat..."
-                      className="w-full p-3 rounded-2xl border-2 border-slate-950 bg-white text-slate-950 text-xs sm:text-sm font-medium focus:ring-4 focus:ring-amber-300 outline-none leading-relaxed shadow-[2px_2px_0px_0px_#0f172a]"
+                      className="w-full p-3 rounded-2xl border-3 border-slate-950 bg-white text-slate-950 text-xs sm:text-sm font-bold shadow-[3px_3px_0px_0px_#0f172a] outline-none leading-relaxed"
                     />
                   </div>
                 </div>
 
-                <div className="flex justify-end gap-2 pt-2">
-                  <Button
+                <div className="flex justify-end gap-3 pt-2">
+                  <button
                     type="button"
-                    variant="secondary"
-                    size="sm"
-                    className="rounded-xl font-bold"
+                    className="px-5 py-2.5 rounded-xl font-mono font-bold text-xs bg-slate-200 border-2 border-slate-950 text-slate-950 cursor-pointer"
                     onClick={() => setSelectedSub(null)}
                   >
                     Batal
-                  </Button>
-                  <Button type="submit" variant="primary" size="sm" className="rounded-xl font-black bg-[#ffe600] text-slate-950 border-2 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a] hover:bg-yellow-400">
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-6 py-2.5 rounded-xl font-mono font-black text-xs uppercase bg-[#ffe600] text-slate-950 border-3 border-slate-950 shadow-[3px_3px_0px_0px_#0f172a] hover:bg-yellow-400 cursor-pointer active:translate-x-0.5 active:translate-y-0.5 transition-all"
+                  >
                     Simpan & Konfirmasi Nilai LKPD
-                  </Button>
+                  </button>
                 </div>
               </form>
             );
@@ -714,7 +735,7 @@ export const GuruLKPD: React.FC<{
         >
           <form onSubmit={handleAddLKPD} className="space-y-4">
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">
+              <label className="block text-xs font-mono font-black uppercase tracking-wider text-slate-950 mb-1.5">
                 Judul LKPD Digital:
               </label>
               <input
@@ -723,12 +744,12 @@ export const GuruLKPD: React.FC<{
                 value={newTitle}
                 onChange={e => setNewTitle(e.target.value)}
                 placeholder="Contoh: LKPD 3 — Operasi Hitung Perkalian & Pembagian Pecahan"
-                className="w-full p-3.5 rounded-2xl border-2 border-slate-300 bg-white text-slate-900 text-sm font-bold focus:border-amber-500 focus:ring-4 focus:ring-amber-500/15 outline-none"
+                className="w-full p-3.5 rounded-2xl border-3 border-slate-950 bg-slate-50 text-slate-950 text-sm font-bold shadow-[3px_3px_0px_0px_#0f172a] focus:bg-white outline-none"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">
+              <label className="block text-xs font-mono font-black uppercase tracking-wider text-slate-950 mb-1.5">
                 Deskripsi Singkat LKPD:
               </label>
               <textarea
@@ -737,12 +758,12 @@ export const GuruLKPD: React.FC<{
                 value={newDesc}
                 onChange={e => setNewDesc(e.target.value)}
                 placeholder="Lembar kerja mandiri untuk menguji pemahaman konsep..."
-                className="w-full p-3.5 rounded-2xl border-2 border-slate-300 bg-white text-slate-900 text-xs sm:text-sm font-medium focus:border-amber-500 focus:ring-4 focus:ring-amber-500/15 outline-none"
+                className="w-full p-3.5 rounded-2xl border-3 border-slate-950 bg-slate-50 text-slate-950 text-xs sm:text-sm font-bold shadow-[3px_3px_0px_0px_#0f172a] focus:bg-white outline-none"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">
+              <label className="block text-xs font-mono font-black uppercase tracking-wider text-slate-950 mb-1.5">
                 Tujuan Pembelajaran & Petunjuk Pengerjaan:
               </label>
               <textarea
@@ -750,66 +771,67 @@ export const GuruLKPD: React.FC<{
                 value={newObjectives}
                 onChange={e => setNewObjectives(e.target.value)}
                 placeholder="1. Memahami konsep perkalian pecahan...\n2. Kerjakan di buku tulis lalu unggah foto..."
-                className="w-full p-3.5 rounded-2xl border-2 border-slate-300 bg-white text-slate-900 text-xs sm:text-sm font-medium focus:border-amber-500 focus:ring-4 focus:ring-amber-500/15 outline-none"
+                className="w-full p-3.5 rounded-2xl border-3 border-slate-950 bg-slate-50 text-slate-950 text-xs sm:text-sm font-bold shadow-[3px_3px_0px_0px_#0f172a] focus:bg-white outline-none"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">
+              <label className="block text-xs font-mono font-black uppercase tracking-wider text-slate-950 mb-1.5">
                 Unggah Berkas Dokumen PDF (.pdf):
               </label>
               <input
                 type="file"
                 accept=".pdf,application/pdf"
                 onChange={handlePdfFileChange}
-                className="w-full text-xs text-slate-600 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100 cursor-pointer mb-2"
+                className="w-full text-xs text-slate-600 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-2 file:border-slate-950 file:text-xs file:font-mono file:font-black file:bg-[#ffe600] file:text-slate-950 cursor-pointer mb-2"
               />
               <input
                 type="text"
                 value={newPdfFilename}
                 onChange={e => setNewPdfFilename(e.target.value)}
                 placeholder="Atau ubah nama file PDF (contoh: LKPD_3_Pecahan.pdf)"
-                className="w-full p-3 rounded-xl border border-slate-300 bg-white text-slate-900 text-xs font-mono outline-none focus:border-amber-500"
+                className="w-full p-3 rounded-xl border-2 border-slate-950 bg-white text-slate-950 text-xs font-mono outline-none"
               />
               {newPdfUrl && (
-                <div className="mt-1 text-[11px] font-mono font-bold text-slate-950 bg-yellow-100 border border-slate-900 px-3 py-1.5 rounded-xl flex items-center gap-1.5">
+                <div className="mt-2 text-[11px] font-mono font-black text-slate-950 bg-[#ffe600] border-2 border-slate-950 px-3 py-1.5 rounded-xl flex items-center gap-1.5 shadow-[1.5px_1.5px_0px_0px_#0f172a]">
                   <span>✓ Berkas PDF Siap Terbit ({newPdfFilename || 'Dokumen.pdf'})</span>
                 </div>
               )}
             </div>
 
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">
-                Unggah Gambar Lembar Kerja (Opsional Preview):
+              <label className="block text-xs font-mono font-black uppercase tracking-wider text-slate-950 mb-1.5">
+                Unggah Gambar Lembar Kerja (Opsional):
               </label>
               <input
                 type="file"
                 accept="image/*"
                 onChange={handleImageFileChange}
-                className="w-full text-xs text-slate-600 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-yellow-100 file:text-slate-950 hover:file:bg-yellow-200 cursor-pointer mb-2"
+                className="w-full text-xs text-slate-600 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-2 file:border-slate-950 file:text-xs file:font-mono file:font-black file:bg-sky-100 file:text-slate-950 cursor-pointer mb-2"
               />
               <input
                 type="url"
                 value={newImageUrl}
                 onChange={e => setNewImageUrl(e.target.value)}
                 placeholder="Atau tempelkan URL Gambar online (opsional)"
-                className="w-full p-3 rounded-xl border border-slate-300 bg-white text-slate-900 text-xs outline-none focus:border-amber-500"
+                className="w-full p-3 rounded-xl border-2 border-slate-950 bg-white text-slate-950 text-xs outline-none"
               />
             </div>
 
-            <div className="flex justify-end gap-2 pt-2">
-              <Button
+            <div className="flex justify-end gap-3 pt-2">
+              <button
                 type="button"
-                variant="secondary"
-                size="sm"
-                className="rounded-xl font-bold"
+                className="px-5 py-2.5 rounded-xl font-mono font-bold text-xs bg-slate-200 border-2 border-slate-950 text-slate-950 cursor-pointer"
                 onClick={() => setIsAddLKPDOpen(false)}
               >
                 Batal
-              </Button>
-              <Button type="submit" variant="primary" size="sm" className="rounded-xl font-black bg-[#ffe600] text-slate-950 border-2 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a] hover:bg-yellow-400">
+              </button>
+              <button
+                type="submit"
+                className="px-6 py-2.5 rounded-xl font-mono font-black text-xs uppercase bg-[#ffe600] text-slate-950 border-3 border-slate-950 shadow-[3px_3px_0px_0px_#0f172a] hover:bg-yellow-400 cursor-pointer active:translate-x-0.5 active:translate-y-0.5 transition-all"
+              >
                 Simpan & Terbitkan LKPD
-              </Button>
+              </button>
             </div>
           </form>
         </Modal>
@@ -825,7 +847,7 @@ export const GuruLKPD: React.FC<{
         >
           <form onSubmit={handleSaveEditLKPD} className="space-y-4">
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">
+              <label className="block text-xs font-mono font-black uppercase tracking-wider text-slate-950 mb-1.5">
                 Judul Tugas LKPD:
               </label>
               <input
@@ -833,12 +855,12 @@ export const GuruLKPD: React.FC<{
                 value={editTitle}
                 onChange={e => setEditTitle(e.target.value)}
                 required
-                className="w-full p-3 rounded-xl border border-slate-300 bg-white text-slate-900 text-xs font-bold outline-none focus:border-amber-500"
+                className="w-full p-3 rounded-xl border-2 border-slate-950 bg-white text-slate-950 text-xs font-bold outline-none"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">
+              <label className="block text-xs font-mono font-black uppercase tracking-wider text-slate-950 mb-1.5">
                 Deskripsi Singkat:
               </label>
               <textarea
@@ -846,60 +868,61 @@ export const GuruLKPD: React.FC<{
                 onChange={e => setEditDesc(e.target.value)}
                 rows={2}
                 required
-                className="w-full p-3 rounded-xl border border-slate-300 bg-white text-slate-900 text-xs font-medium outline-none focus:border-amber-500"
+                className="w-full p-3 rounded-xl border-2 border-slate-950 bg-white text-slate-950 text-xs font-bold outline-none"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">
+              <label className="block text-xs font-mono font-black uppercase tracking-wider text-slate-950 mb-1.5">
                 Tujuan Pembelajaran & Petunjuk:
               </label>
               <textarea
                 value={editObjectives}
                 onChange={e => setEditObjectives(e.target.value)}
                 rows={3}
-                className="w-full p-3 rounded-xl border border-slate-300 bg-white text-slate-900 text-xs font-medium outline-none focus:border-amber-500"
+                className="w-full p-3 rounded-xl border-2 border-slate-950 bg-white text-slate-950 text-xs font-bold outline-none"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">
+              <label className="block text-xs font-mono font-black uppercase tracking-wider text-slate-950 mb-1.5">
                 Ganti Berkas PDF (Opsional):
               </label>
               <input
                 type="file"
                 accept="application/pdf"
                 onChange={handleEditPdfChange}
-                className="w-full text-xs text-slate-600 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-yellow-100 file:text-slate-950 hover:file:bg-yellow-200 cursor-pointer mb-1"
+                className="w-full text-xs text-slate-600 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-2 file:border-slate-950 file:text-xs file:font-mono file:font-black file:bg-[#ffe600] file:text-slate-950 cursor-pointer mb-1"
               />
-              <span className="text-[11px] text-slate-400 font-mono">File saat ini: {editPdfFilename}</span>
+              <span className="text-[11px] text-slate-600 font-mono font-bold">File saat ini: {editPdfFilename}</span>
             </div>
 
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">
+              <label className="block text-xs font-mono font-black uppercase tracking-wider text-slate-950 mb-1.5">
                 Ganti Gambar Lembar Kerja (Opsional):
               </label>
               <input
                 type="file"
                 accept="image/*"
                 onChange={handleEditImageChange}
-                className="w-full text-xs text-slate-600 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-yellow-100 file:text-slate-950 hover:file:bg-yellow-200 cursor-pointer"
+                className="w-full text-xs text-slate-600 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-2 file:border-slate-950 file:text-xs file:font-mono file:font-black file:bg-sky-100 file:text-slate-950 cursor-pointer"
               />
             </div>
 
-            <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
-              <Button
+            <div className="flex justify-end gap-3 pt-2 border-t-2 border-slate-950">
+              <button
                 type="button"
-                variant="secondary"
-                size="sm"
-                className="rounded-xl font-bold"
+                className="px-5 py-2.5 rounded-xl font-mono font-bold text-xs bg-slate-200 border-2 border-slate-950 text-slate-950 cursor-pointer"
                 onClick={() => setEditingLKPD(null)}
               >
                 Batal
-              </Button>
-              <Button type="submit" variant="primary" size="sm" className="rounded-xl font-black bg-indigo-600 hover:bg-indigo-700 text-white">
+              </button>
+              <button
+                type="submit"
+                className="px-6 py-2.5 rounded-xl font-mono font-black text-xs uppercase bg-[#38bdf8] text-slate-950 border-3 border-slate-950 shadow-[3px_3px_0px_0px_#0f172a] hover:bg-sky-400 cursor-pointer active:translate-x-0.5 active:translate-y-0.5 transition-all"
+              >
                 Simpan Perubahan LKPD
-              </Button>
+              </button>
             </div>
           </form>
         </Modal>
@@ -914,7 +937,7 @@ export const GuruLKPD: React.FC<{
           maxWidth="max-w-3xl"
         >
           <div className="space-y-4">
-            <div className="relative rounded-2xl overflow-hidden border border-slate-200 shadow-inner max-h-[70vh] overflow-y-auto bg-slate-900 flex items-center justify-center p-3">
+            <div className="relative rounded-2xl overflow-hidden border-3 border-slate-950 shadow-[4px_4px_0px_0px_#0f172a] max-h-[70vh] overflow-y-auto bg-slate-900 flex items-center justify-center p-3">
               <img
                 src={viewPhotoUrl.urls[viewPhotoUrl.activeIdx]}
                 alt={`Halaman ${viewPhotoUrl.activeIdx + 1}`}
@@ -927,7 +950,7 @@ export const GuruLKPD: React.FC<{
                     type="button"
                     disabled={viewPhotoUrl.activeIdx === 0}
                     onClick={() => setViewPhotoUrl(prev => prev ? { ...prev, activeIdx: prev.activeIdx - 1 } : null)}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-slate-900/80 text-white rounded-full flex items-center justify-center font-bold shadow-lg disabled:opacity-30 hover:bg-slate-900 cursor-pointer"
+                    className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-slate-900/90 text-white border-2 border-white rounded-full flex items-center justify-center font-bold shadow-lg disabled:opacity-30 hover:bg-slate-900 cursor-pointer"
                   >
                     <ChevronLeft size={20} />
                   </button>
@@ -935,7 +958,7 @@ export const GuruLKPD: React.FC<{
                     type="button"
                     disabled={viewPhotoUrl.activeIdx === viewPhotoUrl.urls.length - 1}
                     onClick={() => setViewPhotoUrl(prev => prev ? { ...prev, activeIdx: prev.activeIdx + 1 } : null)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-slate-900/80 text-white rounded-full flex items-center justify-center font-bold shadow-lg disabled:opacity-30 hover:bg-slate-900 cursor-pointer"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-slate-900/90 text-white border-2 border-white rounded-full flex items-center justify-center font-bold shadow-lg disabled:opacity-30 hover:bg-slate-900 cursor-pointer"
                   >
                     <ChevronRight size={20} />
                   </button>
@@ -951,11 +974,11 @@ export const GuruLKPD: React.FC<{
                     type="button"
                     onClick={() => setViewPhotoUrl(prev => prev ? { ...prev, activeIdx: i } : null)}
                     className={`relative w-14 h-14 rounded-xl overflow-hidden border-2 transition-all cursor-pointer ${
-                      viewPhotoUrl.activeIdx === i ? 'border-brand-500 scale-105 shadow-md' : 'border-slate-300 opacity-60 hover:opacity-100'
+                      viewPhotoUrl.activeIdx === i ? 'border-amber-400 scale-105 shadow-[2px_2px_0px_0px_#0f172a]' : 'border-slate-950 opacity-60 hover:opacity-100'
                     }`}
                   >
                     <img src={imgUrl} alt={`Page ${i+1}`} className="w-full h-full object-cover" />
-                    <span className="absolute bottom-0 right-0 px-1 bg-slate-900/80 text-white font-mono text-[9px] font-bold">
+                    <span className="absolute bottom-0 right-0 px-1 bg-slate-900 text-white font-mono text-[9px] font-black">
                       {i + 1}
                     </span>
                   </button>
@@ -963,23 +986,27 @@ export const GuruLKPD: React.FC<{
               </div>
             )}
 
-            <div className="flex justify-between items-center bg-slate-50 p-3 rounded-2xl border border-slate-200">
-              <span className="text-xs font-bold text-slate-600">
-                Halaman {viewPhotoUrl.activeIdx + 1} dari {viewPhotoUrl.urls.length} Halaman Terverifikasi
+            <div className="flex justify-between items-center bg-white p-3.5 rounded-2xl border-2 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a]">
+              <span className="text-xs font-mono font-bold text-slate-700">
+                Halaman {viewPhotoUrl.activeIdx + 1} dari {viewPhotoUrl.urls.length} Halaman
               </span>
               <div className="flex items-center gap-2">
                 <a
                   href={viewPhotoUrl.urls[viewPhotoUrl.activeIdx]}
                   target="_blank"
                   rel="noreferrer"
-                  className="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5"
+                  className="px-3.5 py-1.5 bg-[#ffe600] text-slate-950 rounded-xl text-xs font-mono font-black border-2 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a] transition flex items-center gap-1.5 hover:bg-yellow-400"
                 >
                   <ExternalLink size={14} />
                   <span>Buka Tab Baru</span>
                 </a>
-                <Button variant="primary" size="sm" onClick={() => setViewPhotoUrl(null)}>
+                <button
+                  type="button"
+                  onClick={() => setViewPhotoUrl(null)}
+                  className="px-3.5 py-1.5 bg-slate-200 border-2 border-slate-950 text-slate-950 font-mono font-bold text-xs rounded-xl cursor-pointer"
+                >
                   Tutup
-                </Button>
+                </button>
               </div>
             </div>
           </div>
