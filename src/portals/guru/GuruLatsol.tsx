@@ -402,39 +402,41 @@ export const GuruLatsol: React.FC<{
                 </div>
               </div>
 
-              {/* Card Footer Actions (Sejajar di Bawah dengan mt-5 pt-4 border-t-2) */}
-              <div className="mt-5 pt-4 border-t-2 border-slate-950 flex flex-wrap items-center justify-between gap-2">
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    className="font-black text-xs"
-                    onClick={() => setSelectedRoom(room)}
-                  >
-                    <Eye size={14} />
-                    <span>Lihat {room.questions.length} Soal</span>
-                  </Button>
-
-                  <button
-                    type="button"
-                    onClick={() => handleOpenEditRoom(room)}
-                    className="px-3 py-2 rounded-xl bg-sky-100 hover:bg-sky-200 text-slate-950 border-2 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a] font-mono font-black text-xs flex items-center gap-1.5 cursor-pointer active:translate-x-0.5 active:translate-y-0.5 transition-all"
-                    title="Edit Ruang & Soal"
-                  >
-                    <Pencil size={14} />
-                    <span>Edit Soal</span>
-                  </button>
-                </div>
-
-                <Button
-                  variant={isLocked ? 'lime' : 'danger'}
-                  size="sm"
-                  className="font-black text-xs"
-                  onClick={() => handleToggleRoomLock(room.id)}
+              {/* Card Footer Actions (1 Baris Rapi & Sejajar) */}
+              <div className="mt-5 pt-4 border-t-2 border-slate-950 grid grid-cols-3 gap-2 items-center">
+                <button
+                  type="button"
+                  onClick={() => setSelectedRoom(room)}
+                  className="w-full py-2 px-1.5 sm:px-2 rounded-xl bg-white hover:bg-slate-100 text-slate-950 border-2 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a] font-mono font-black text-xs flex items-center justify-center gap-1.5 cursor-pointer active:translate-x-0.5 active:translate-y-0.5 transition-all truncate"
+                  title={`Lihat ${room.questions.length} Butir Soal`}
                 >
-                  {isLocked ? <Unlock size={14} /> : <Lock size={14} />}
-                  <span>{isLocked ? 'Buka Kuis untuk Siswa' : 'Kunci Kuis'}</span>
-                </Button>
+                  <Eye size={14} className="shrink-0" />
+                  <span className="truncate">Lihat {room.questions.length} Soal</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleOpenEditRoom(room)}
+                  className="w-full py-2 px-1.5 sm:px-2 rounded-xl bg-sky-100 hover:bg-sky-200 text-slate-950 border-2 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a] font-mono font-black text-xs flex items-center justify-center gap-1.5 cursor-pointer active:translate-x-0.5 active:translate-y-0.5 transition-all truncate"
+                  title="Edit Ruang & Soal"
+                >
+                  <Pencil size={14} className="shrink-0" />
+                  <span className="truncate">Edit Soal</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleToggleRoomLock(room.id)}
+                  className={`w-full py-2 px-1.5 sm:px-2 rounded-xl font-mono font-black text-xs flex items-center justify-center gap-1.5 cursor-pointer border-2 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a] active:translate-x-0.5 active:translate-y-0.5 transition-all truncate ${
+                    isLocked
+                      ? 'bg-[#a3e635] hover:bg-lime-400 text-slate-950'
+                      : 'bg-rose-300 hover:bg-rose-400 text-slate-950'
+                  }`}
+                  title={isLocked ? 'Buka Akses Kuis untuk Siswa' : 'Kunci Akses Kuis'}
+                >
+                  {isLocked ? <Unlock size={14} className="shrink-0" /> : <Lock size={14} className="shrink-0" />}
+                  <span className="truncate">{isLocked ? 'Buka Kuis' : 'Kunci Kuis'}</span>
+                </button>
               </div>
             </div>
           );
