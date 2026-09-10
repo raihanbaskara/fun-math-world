@@ -1,14 +1,13 @@
 import React from 'react';
-import { DoubleBezelCard, Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { ArrowFillButton } from '@/components/ui/arrow-fill-button';
 import { storageService } from '@/services/storageService';
 import { soundService } from '@/services/soundService';
-import { Database, Download, Upload, AlertTriangle, RefreshCw, FileJson, HardDriveDownload } from 'lucide-react';
+import { Database, Download, Upload, AlertTriangle, RefreshCw, FileJson, HardDriveDownload, ShieldAlert } from 'lucide-react';
 
 export const AdminMaintenance: React.FC<{
   showToast: (msg: string, type?: 'info' | 'success' | 'error') => void;
 }> = ({ showToast }) => {
+  const db = storageService.getState();
+
   const handleExportJSON = () => {
     soundService.click();
     const data = storageService.getState();
@@ -20,7 +19,7 @@ export const AdminMaintenance: React.FC<{
     dlAnchor.click();
     dlAnchor.remove();
     soundService.success();
-    showToast("File backup JSON berhasil diekspor!", "success");
+    showToast("File backup database JSON berhasil diekspor & diunduh!", "success");
   };
 
   const handleImportJSON = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -36,17 +35,19 @@ export const AdminMaintenance: React.FC<{
           });
           soundService.success();
           showToast("Database berhasil dipulihkan dari cadangan JSON!", "success");
+          setTimeout(() => window.location.reload(), 1200);
         } else {
-          showToast("Format JSON tidak sesuai struktur aplikasi!", "error");
+          showToast("Format JSON tidak sesuai dengan skema aplikasi Fun Math World!", "error");
         }
       } catch {
-        showToast("Gagal membaca berkas JSON!", "error");
+        showToast("Gagal membaca berkas JSON! Pastikan berkas valid.", "error");
       }
     };
     reader.readAsText(file);
   };
 
   const handleFactoryReset = () => {
+    soundService.click();
     if (confirm("PERINGATAN SISTEM: Apakah Anda yakin ingin mengembalikan seluruh data pengguna, tugas, dan nilai ke setelan awal pabrik?")) {
       storageService.reset();
       sessionStorage.clear();
@@ -57,74 +58,151 @@ export const AdminMaintenance: React.FC<{
   };
 
   return (
-    <div className="space-y-6 max-w-xl mx-auto">
-      <div>
-        <h2 className="text-2xl font-black text-slate-900 flex items-center gap-2.5">
-          <Database className="text-purple-600" />
-          <span>Pemeliharaan Sistem & Database</span>
-        </h2>
-        <p className="text-xs sm:text-sm text-slate-500 font-medium">
-          Cadangkan seluruh berkas sistem, pulihkan rekaman data siswa, atau bersihkan basis data.
-        </p>
+    <div className="space-y-8 max-w-4xl mx-auto font-sans pb-12">
+      
+      {/* 1. Header Banner Pure Neobrutalism V3 */}
+      <div className="relative rounded-3xl bg-[#38bdf8] text-slate-950 border-4 border-slate-950 p-6 sm:p-8 shadow-[8px_8px_0px_0px_#0f172a] overflow-hidden">
+        <div className="absolute right-4 bottom-0 text-slate-950/10 font-mono text-8xl font-black pointer-events-none select-none tracking-tight">
+          DATABASE
+        </div>
+
+        <div className="relative z-10 space-y-3 max-w-3xl">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="px-3 py-1 bg-white text-slate-950 border-2 border-slate-950 rounded-xl text-xs font-mono font-black shadow-[2px_2px_0px_0px_#0f172a]">
+              PEMELIHARAAN SISTEM
+            </span>
+            <span className="px-3 py-1 bg-white/80 text-slate-900 border-2 border-slate-950 rounded-xl text-xs font-bold font-mono">
+              Engine: Local Storage Encrypted
+            </span>
+          </div>
+
+          <h1 className="text-2xl sm:text-4xl font-black tracking-tight text-slate-950 font-mono leading-tight">
+            Pemeliharaan Basis Data &amp; Cadangan Sistem
+          </h1>
+
+          <p className="text-xs sm:text-sm text-slate-950 max-w-2xl leading-relaxed font-bold">
+            Cadangkan seluruh rekaman akun, tugas LKPD, hasil kuis, dan materi pembelajaran ke berkas JSON atau pulihkan data cadangan kapan saja.
+          </p>
+        </div>
       </div>
 
-      <DoubleBezelCard className="bg-slate-50 border-slate-200/80">
-        <div className="space-y-6">
-          
-          {/* Backup */}
-          <div className="space-y-2.5">
-            <div className="flex items-center justify-between">
-              <label className="text-xs font-black uppercase tracking-wider text-slate-500 block">
-                1. Cadangkan Basis Data (Backup JSON)
-              </label>
-              <span className="text-[10px] font-mono text-purple-600 font-bold bg-purple-50 px-2 py-0.5 rounded-md">
-                Format .json
-              </span>
+      {/* 2. Maintenance Action Cards */}
+      <div className="space-y-6">
+        
+        {/* Card 1: Backup Database */}
+        <div className="rounded-3xl bg-white border-4 border-slate-950 p-6 sm:p-7 shadow-[6px_6px_0px_0px_#0f172a] space-y-4">
+          <div className="flex items-start justify-between gap-3">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <span className="px-2.5 py-0.5 rounded-lg bg-[#ffe600] text-slate-950 font-mono font-black text-xs border-2 border-slate-950 shadow-[1.5px_1.5px_0px_0px_#0f172a]">
+                  LANGKAH 1
+                </span>
+                <span className="px-2.5 py-0.5 rounded-lg bg-purple-100 text-purple-950 font-mono font-black text-xs border-2 border-slate-950">
+                  Format JSON
+                </span>
+              </div>
+              <h3 className="font-black text-slate-950 text-lg sm:text-xl font-mono">
+                Cadangkan Basis Data (Export JSON)
+              </h3>
             </div>
-            <ArrowFillButton
-              variant="purple"
-              size="md"
-              fullWidth
+
+            <div className="w-12 h-12 rounded-2xl bg-[#ffe600] border-3 border-slate-950 text-slate-950 flex items-center justify-center shrink-0 shadow-[3px_3px_0px_0px_#0f172a]">
+              <Download size={24} />
+            </div>
+          </div>
+
+          <p className="text-xs sm:text-sm font-bold text-slate-700 leading-relaxed">
+            Unduh seluruh berkas snapshot data (akun siswa, guru, materi, modul video, pengumuman, dan riwayat pengerjaan soal) ke komputer Anda.
+          </p>
+
+          <div className="pt-2">
+            <button
+              type="button"
               onClick={handleExportJSON}
+              className="w-full sm:w-auto px-6 py-3 rounded-2xl bg-[#ffe600] hover:bg-yellow-400 text-slate-950 font-mono font-black text-xs sm:text-sm uppercase tracking-wider border-3 border-slate-950 shadow-[4px_4px_0px_0px_#0f172a] active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer flex items-center justify-center gap-2.5"
             >
-              <Download size={16} />
-              <span>Ekspor File Cadangan Database</span>
-            </ArrowFillButton>
+              <HardDriveDownload size={18} />
+              <span>Ekspor &amp; Unduh Cadangan JSON</span>
+            </button>
           </div>
+        </div>
 
-          {/* Restore */}
-          <div className="space-y-2.5 pt-4 border-t border-slate-100">
-            <label className="text-xs font-black uppercase tracking-wider text-slate-500 block">
-              2. Pulihkan Database (Import JSON)
-            </label>
-            <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200/80">
-              <input
-                type="file"
-                accept=".json"
-                onChange={handleImportJSON}
-                className="w-full text-xs text-slate-600 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100 cursor-pointer"
-              />
+        {/* Card 2: Restore Database */}
+        <div className="rounded-3xl bg-white border-4 border-slate-950 p-6 sm:p-7 shadow-[6px_6px_0px_0px_#0f172a] space-y-4">
+          <div className="flex items-start justify-between gap-3">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <span className="px-2.5 py-0.5 rounded-lg bg-[#38bdf8] text-slate-950 font-mono font-black text-xs border-2 border-slate-950 shadow-[1.5px_1.5px_0px_0px_#0f172a]">
+                  LANGKAH 2
+                </span>
+                <span className="px-2.5 py-0.5 rounded-lg bg-sky-100 text-slate-950 font-mono font-black text-xs border-2 border-slate-950">
+                  Pemulihan Data
+                </span>
+              </div>
+              <h3 className="font-black text-slate-950 text-lg sm:text-xl font-mono">
+                Pulihkan Database dari Berkas (Import JSON)
+              </h3>
+            </div>
+
+            <div className="w-12 h-12 rounded-2xl bg-[#38bdf8] border-3 border-slate-950 text-slate-950 flex items-center justify-center shrink-0 shadow-[3px_3px_0px_0px_#0f172a]">
+              <Upload size={24} />
             </div>
           </div>
 
-          {/* Reset */}
-          <div className="pt-4 border-t border-slate-200 space-y-2.5">
-            <label className="text-xs font-black uppercase tracking-wider text-red-600 block">
-              3. Tindakan Berbahaya (Zona Kritis)
-            </label>
-            <Button
-              variant="danger"
-              size="md"
-              className="w-full h-11 font-bold text-xs rounded-2xl"
-              onClick={handleFactoryReset}
-            >
-              <AlertTriangle size={16} />
-              <span>Reset Semua Data ke Setelan Awal Pabrik</span>
-            </Button>
+          <p className="text-xs sm:text-sm font-bold text-slate-700 leading-relaxed">
+            Pilih berkas JSON cadangan yang valid untuk menimpa dan memulihkan seluruh struktur data aplikasi ke kondisi sebelumnya.
+          </p>
+
+          <div className="p-4 rounded-2xl bg-[#fffdf5] border-3 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a]">
+            <input
+              type="file"
+              accept=".json"
+              onChange={handleImportJSON}
+              className="w-full text-xs font-mono font-bold text-slate-700 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-2 file:border-slate-950 file:text-xs file:font-mono file:font-black file:bg-[#ffe600] file:text-slate-950 hover:file:bg-yellow-400 file:cursor-pointer cursor-pointer"
+            />
+          </div>
+        </div>
+
+        {/* Card 3: Critical Zone / Factory Reset */}
+        <div className="rounded-3xl bg-rose-50/70 border-4 border-slate-950 p-6 sm:p-7 shadow-[6px_6px_0px_0px_#0f172a] space-y-4">
+          <div className="flex items-start justify-between gap-3">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <span className="px-2.5 py-0.5 rounded-lg bg-rose-300 text-slate-950 font-mono font-black text-xs border-2 border-slate-950 shadow-[1.5px_1.5px_0px_0px_#0f172a]">
+                  ZONA KRITIS
+                </span>
+                <span className="px-2.5 py-0.5 rounded-lg bg-white text-rose-900 font-mono font-black text-xs border-2 border-slate-950">
+                  Tindakan Berbahaya
+                </span>
+              </div>
+              <h3 className="font-black text-rose-950 text-lg sm:text-xl font-mono">
+                Reset Semua Data ke Setelan Awal Pabrik
+              </h3>
+            </div>
+
+            <div className="w-12 h-12 rounded-2xl bg-rose-300 border-3 border-slate-950 text-slate-950 flex items-center justify-center shrink-0 shadow-[3px_3px_0px_0px_#0f172a]">
+              <AlertTriangle size={24} />
+            </div>
           </div>
 
+          <p className="text-xs sm:text-sm font-bold text-rose-900 leading-relaxed">
+            Tindakan ini akan menghapus semua pengguna tambahan, tugas LKPD yang dikumpulkan, nilai kuis siswa, dan mengembalikan seluruh database ke kondisi awal instalasi.
+          </p>
+
+          <div className="pt-2">
+            <button
+              type="button"
+              onClick={handleFactoryReset}
+              className="w-full sm:w-auto px-6 py-3 rounded-2xl bg-rose-400 hover:bg-rose-500 text-slate-950 font-mono font-black text-xs sm:text-sm uppercase tracking-wider border-3 border-slate-950 shadow-[4px_4px_0px_0px_#0f172a] active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer flex items-center justify-center gap-2.5"
+            >
+              <AlertTriangle size={18} />
+              <span>Reset Sistem ke Setelan Awal Pabrik</span>
+            </button>
+          </div>
         </div>
-      </DoubleBezelCard>
+
+      </div>
+
     </div>
   );
 };

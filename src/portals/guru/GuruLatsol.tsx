@@ -332,8 +332,8 @@ export const GuruLatsol: React.FC<{
             >
               {/* Card Body (Top Portion) */}
               <div className="space-y-4">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="space-y-1 min-h-[82px] flex flex-col justify-start">
+                <div className="flex items-start justify-between gap-3 min-h-[105px]">
+                  <div className="space-y-1.5 flex-1 min-w-0 flex flex-col justify-start">
                     <div className="flex items-center gap-2">
                       <span className="px-2.5 py-0.5 rounded-lg bg-[#ffe600] text-slate-950 font-mono font-black text-xs border-2 border-slate-950 shadow-[1.5px_1.5px_0px_0px_#0f172a]">
                         Ruang #{idx + 1}
@@ -372,13 +372,13 @@ export const GuruLatsol: React.FC<{
                 </div>
 
                 {/* Duration Configurator (Preset + Custom Duration) */}
-                <div className="p-3 bg-amber-50 rounded-2xl border-2 border-slate-950 space-y-2">
+                <div className="p-3.5 bg-amber-50 rounded-2xl border-2 border-slate-950 space-y-2.5">
                   <div className="flex items-center justify-between text-xs font-bold text-slate-900">
-                    <span className="flex items-center gap-1">
-                      <Clock size={14} className="text-slate-950" />
+                    <span className="flex items-center gap-1.5">
+                      <Clock size={15} className="text-slate-950" />
                       <span>Setel Durasi Pengerjaan:</span>
                     </span>
-                    <span className="font-mono font-black text-slate-950 bg-white px-2.5 py-0.5 rounded-md border border-slate-950 shadow-[1px_1px_0px_0px_#0f172a]">
+                    <span className="font-mono font-black text-slate-950 bg-white px-2.5 py-1 rounded-lg border-2 border-slate-950 shadow-[1.5px_1.5px_0px_0px_#0f172a]">
                       {durationMins} Menit
                     </span>
                   </div>
@@ -389,7 +389,7 @@ export const GuruLatsol: React.FC<{
                         key={mins}
                         type="button"
                         onClick={() => handleUpdateDuration(room.id, mins)}
-                        className={`px-3 py-1 rounded-xl text-xs font-mono font-black transition-all cursor-pointer border-2 border-slate-950 ${
+                        className={`px-3 py-1.5 rounded-xl text-xs font-mono font-black transition-all cursor-pointer border-2 border-slate-950 ${
                           durationMins === mins
                             ? 'bg-[#ffe600] text-slate-950 shadow-[2px_2px_0px_0px_#0f172a]'
                             : 'bg-white text-slate-800 hover:bg-yellow-100'
@@ -400,13 +400,13 @@ export const GuruLatsol: React.FC<{
                     ))}
 
                     {/* Custom Duration Input */}
-                    <div className="flex items-center gap-1 bg-white px-2 py-0.5 rounded-xl border-2 border-slate-950 shadow-[1.5px_1.5px_0px_0px_#0f172a]">
-                      <span className="text-[10px] font-mono font-black text-slate-600">Kustom:</span>
+                    <div className="flex items-center gap-1.5 bg-white px-2.5 py-1 rounded-xl border-2 border-slate-950 shadow-[1.5px_1.5px_0px_0px_#0f172a]">
+                      <span className="text-[11px] font-mono font-black text-slate-700">Custom:</span>
                       <input
                         type="number"
                         min="1"
                         max="180"
-                        placeholder="Menit"
+                        placeholder="0"
                         key={`${room.id}_${durationMins}`}
                         defaultValue={![5, 10, 15, 20, 30].includes(durationMins) ? durationMins : ''}
                         onKeyDown={(e) => {
@@ -419,9 +419,9 @@ export const GuruLatsol: React.FC<{
                           const val = parseInt(e.target.value);
                           if (val > 0 && val !== durationMins) handleUpdateDuration(room.id, val);
                         }}
-                        className="w-12 text-xs font-mono font-black text-slate-950 outline-none text-center bg-transparent"
+                        className="w-10 text-xs font-mono font-black text-slate-950 outline-none text-center bg-transparent border-b-2 border-slate-400 focus:border-slate-950 leading-normal"
                       />
-                      <span className="text-[10px] font-mono font-bold text-slate-500">m</span>
+                      <span className="text-[11px] font-mono font-bold text-slate-600">m</span>
                     </div>
                   </div>
                 </div>
