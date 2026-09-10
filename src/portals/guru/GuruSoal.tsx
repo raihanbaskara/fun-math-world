@@ -1,130 +1,268 @@
 import React, { useState } from 'react';
-import { DoubleBezelCard, Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowFillButton } from '@/components/ui/arrow-fill-button';
 import { Modal } from '@/components/ui/modal';
-import { Badge } from '@/components/ui/badge';
 import { storageService } from '@/services/storageService';
 import { soundService } from '@/services/soundService';
 import { renderFormattedMathText } from '@/components/ui/fraction';
-import { HelpCircle, Plus, Trash2, CheckCircle2, Sparkles } from 'lucide-react';
+import { EssayQuestion } from '@/types';
+import {
+  PenTool,
+  Plus,
+  Trash2,
+  CheckCircle2,
+  Pencil,
+  Sparkles,
+  HelpCircle,
+  BookOpen
+} from 'lucide-react';
 
 export const GuruSoal: React.FC<{
   showToast: (msg: string, type?: 'info' | 'success' | 'error') => void;
 }> = ({ showToast }) => {
-  const db = storageService.getState();
+  const [dbState, setDbState] = useState(storageService.getState());
   const [isAddOpen, setIsAddOpen] = useState(false);
+  const [editingQuestion, setEditingQuestion] = useState<EssayQuestion | null>(null);
+
+  // Form State for Add
   const [title, setTitle] = useState('');
   const [prompt, setPrompt] = useState('');
   const [discussion, setDiscussion] = useState('');
   const [weight, setWeight] = useState<number>(50);
+
+  // Form State for Edit
+  const [editTitle, setEditTitle] = useState('');
+  const [editPrompt, setEditPrompt] = useState('');
+  const [editDiscussion, setEditDiscussion] = useState('');
+  const [editWeight, setEditWeight] = useState<number>(50);
+
+  const questions = dbState.evaluationQuestions || [];
 
   const handleAddQuestion = (e: React.FormEvent) => {
     e.preventDefault();
     soundService.click();
 
     if (!title.trim() || !prompt.trim() || !discussion.trim()) {
-      showToast('Semua kolom soal essai wajib diisi!', 'error');
+      showToast('Semua kolom butir soal essai wajib diisi!', 'error');
       return;
     }
 
+    const newQuestion: EssayQuestion = {
+      id: 'eq_' + Date.now(),
+      title: title.trim(),
+      prompt: prompt.trim(),
+      discussion: discussion.trim(),
+      weight: weight || 50,
+    };
+
     storageService.update(draft => {
-      draft.evaluationQuestions.push({
-        id: 'eq_' + Date.now(),
-        title: title.trim(),
-        prompt: prompt.trim(),
-        discussion: discussion.trim(),
-        weight: weight,
-      });
+      draft.evaluationQuestions.push(newQuestion);
     });
 
+    setDbState(storageService.getState());
     setIsAddOpen(false);
     setTitle('');
     setPrompt('');
     setDiscussion('');
+    setWeight(50);
     soundService.success();
-    showToast('Soal essai baru berhasil disimpan!', 'success');
+    showToast('Soal essai baru berhasil ditambahkan ke Bank Soal!', 'success');
+  };
+
+  const handleOpenEdit = (q: EssayQuestion) => {
+    soundService.click();
+    setEditingQuestion(q);
+    setEditTitle(q.title);
+    setEditPrompt(q.prompt);
+    setEditDiscussion(q.discussion);
+    setEditWeight(q.weight || 50);
+  };
+
+  const handleSaveEdit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingQuestion) return;
+    soundService.click();
+
+    if (!editTitle.trim() || !editPrompt.trim() || !editDiscussion.trim()) {
+      showToast('Semua kolom butir soal essai wajib diisi!', 'error');
+      return;
+    }
+
+    storageService.update(draft => {
+      const target = draft.evaluationQuestions.find(q => q.id === editingQuestion.id);
+      if (target) {
+        target.title = editTitle.trim();
+        target.prompt = editPrompt.trim();
+        target.discussion = editDiscussion.trim();
+        target.weight = editWeight || 50;
+      }
+    });
+
+    setDbState(storageService.getState());
+    setEditingQuestion(null);
+    soundService.success();
+    showToast('Butir soal evaluasi berhasil diperbarui!', 'success');
   };
 
   const handleDelete = (id: string) => {
-    if (confirm('Hapus butir soal evaluasi ini?')) {
+    soundService.click();
+    if (confirm('Apakah Anda yakin ingin menghapus butir soal evaluasi ini?')) {
       storageService.update(draft => {
         draft.evaluationQuestions = draft.evaluationQuestions.filter(q => q.id !== id);
       });
-      soundService.click();
-      showToast('Soal dihapus.', 'info');
+      setDbState(storageService.getState());
+      soundService.success();
+      showToast('Soal evaluasi berhasil dihapus dari Bank Soal.', 'info');
     }
   };
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h2 className="text-2xl font-black text-slate-900 flex items-center gap-2.5">
-            <HelpCircle className="text-purple-600" />
-            <span>Bank Soal Evaluasi Essai HOTS</span>
-          </h2>
-          <p className="text-xs sm:text-sm text-slate-500 font-medium">
-            Kelola butir soal cerita pemecahan masalah pecahan dan kunci langkah pembahasan runtut.
-          </p>
+    <div className="space-y-8 max-w-6xl mx-auto font-sans pb-12">
+      
+      {/* 1. Header Banner Pure Neobrutalism V3 */}
+      <div className="relative rounded-3xl bg-[#ff9838] border-4 border-slate-950 p-6 sm:p-8 shadow-[8px_8px_0px_0px_#0f172a] overflow-hidden text-slate-950">
+        <div className="absolute right-4 bottom-0 text-slate-950/10 font-mono text-8xl font-black pointer-events-none select-none">
+          HOTS ESSAY
         </div>
 
-        <ArrowFillButton
-          variant="primary"
-          size="md"
-          className="bg-purple-600 hover:bg-purple-700 text-white font-bold"
-          onClick={() => setIsAddOpen(true)}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 relative z-10">
+          <div className="space-y-3 max-w-2xl">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="px-3 py-1 bg-white text-slate-950 border-2 border-slate-950 rounded-xl text-xs font-mono font-black shadow-[2px_2px_0px_0px_#0f172a]">
+                BANK SOAL ESSAI HOTS
+              </span>
+              <span className="px-3 py-1 bg-white/80 text-slate-900 border-2 border-slate-950 rounded-xl text-xs font-bold font-mono">
+                {questions.length} Butir Soal Tersedia
+              </span>
+            </div>
+
+            <h1 className="text-2xl sm:text-4xl font-black tracking-tight text-slate-950 font-mono leading-tight">
+              Kelola Bank Soal Evaluasi Essai HOTS
+            </h1>
+
+            <p className="text-xs sm:text-sm text-slate-950 max-w-2xl leading-relaxed font-bold">
+              Buat, sunting, dan kelola butir soal cerita pemecahan masalah pecahan tingkat lanjut serta kunci langkah pembahasan komprehensif.
+            </p>
+          </div>
+
+          <div className="w-16 h-16 rounded-2xl bg-[#ffe600] border-3 border-slate-950 text-slate-950 flex items-center justify-center shrink-0 shadow-[4px_4px_0px_0px_#0f172a]">
+            <PenTool size={36} />
+          </div>
+        </div>
+      </div>
+
+      {/* 2. Top Controls & Action Bar */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-2">
+          <h2 className="text-lg sm:text-xl font-black text-slate-950 font-mono">
+            Daftar Butir Soal Evaluasi
+          </h2>
+          <span className="px-2.5 py-0.5 rounded-lg bg-[#38bdf8] text-slate-950 font-mono font-black text-xs border-2 border-slate-950 shadow-[1.5px_1.5px_0px_0px_#0f172a]">
+            {questions.length} Soal
+          </span>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => {
+            soundService.click();
+            setIsAddOpen(true);
+          }}
+          className="px-5 py-2.5 rounded-2xl bg-[#ffe600] hover:bg-yellow-400 text-slate-950 font-mono font-black text-xs uppercase tracking-wider border-3 border-slate-950 shadow-[3px_3px_0px_0px_#0f172a] active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer flex items-center gap-2 w-fit"
         >
           <Plus size={16} />
-          <span>Tambah Soal Essai</span>
-        </ArrowFillButton>
+          <span>Tambah Soal Essai Baru</span>
+        </button>
       </div>
 
-      <div className="space-y-4">
-        {db.evaluationQuestions.map((q, idx) => (
-          <DoubleBezelCard key={q.id} className="bg-slate-50 border-slate-200/80">
-            <div className="space-y-4">
-              <div className="flex justify-between items-center text-xs">
-                <span className="px-2.5 py-1 rounded-md bg-purple-50 border border-purple-200/80 font-mono font-bold text-purple-700">
-                  Soal #{idx + 1} • Bobot: {q.weight} Poin
+      {/* 3. Question Cards List */}
+      <div className="space-y-6">
+        {questions.map((q, idx) => (
+          <div
+            key={q.id}
+            className="rounded-3xl bg-white border-4 border-slate-950 p-6 shadow-[6px_6px_0px_0px_#0f172a] space-y-5"
+          >
+            {/* Card Header */}
+            <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b-2 border-slate-950">
+              <div className="flex items-center gap-2">
+                <span className="px-3 py-1 rounded-xl bg-[#ffe600] text-slate-950 font-mono font-black text-xs border-2 border-slate-950 shadow-[1.5px_1.5px_0px_0px_#0f172a]">
+                  Soal #{idx + 1}
                 </span>
+                <span className="px-3 py-1 rounded-xl bg-purple-100 text-purple-950 font-mono font-black text-xs border-2 border-slate-950 shadow-[1.5px_1.5px_0px_0px_#0f172a]">
+                  Bobot: {q.weight || 50} Poin
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2">
                 <button
+                  type="button"
+                  onClick={() => handleOpenEdit(q)}
+                  className="px-3 py-1.5 rounded-xl bg-sky-100 hover:bg-sky-200 text-slate-950 border-2 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a] font-mono font-black text-xs flex items-center gap-1.5 cursor-pointer active:translate-x-0.5 active:translate-y-0.5 transition-all"
+                  title="Edit Butir Soal"
+                >
+                  <Pencil size={14} />
+                  <span>Edit</span>
+                </button>
+                <button
+                  type="button"
                   onClick={() => handleDelete(q.id)}
-                  className="text-red-500 hover:text-red-700 font-bold flex items-center gap-1.5 cursor-pointer px-2.5 py-1 rounded-lg hover:bg-red-50 transition-colors text-xs"
+                  className="px-3 py-1.5 rounded-xl bg-rose-100 hover:bg-rose-200 text-rose-900 border-2 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a] font-mono font-black text-xs flex items-center gap-1.5 cursor-pointer active:translate-x-0.5 active:translate-y-0.5 transition-all"
+                  title="Hapus Butir Soal"
                 >
                   <Trash2 size={14} />
-                  <span>Hapus Soal</span>
+                  <span>Hapus</span>
                 </button>
               </div>
+            </div>
 
-              <h3 className="text-base sm:text-lg font-black text-slate-900">{q.title}</h3>
-              
-              <div className="text-xs sm:text-sm text-slate-700 leading-relaxed bg-slate-50 p-4 rounded-2xl border border-slate-200/70 font-medium">
-                {renderFormattedMathText(q.prompt, 'xs')}
+            {/* Title */}
+            <div>
+              <h3 className="text-lg sm:text-xl font-black text-slate-950 font-mono">
+                {q.title}
+              </h3>
+            </div>
+
+            {/* Prompt Box */}
+            <div className="p-4 sm:p-5 rounded-2xl bg-[#fffdf5] border-2 border-slate-950 text-slate-950 text-xs sm:text-sm font-bold leading-relaxed space-y-1">
+              <div className="text-[11px] font-mono font-black text-amber-800 uppercase tracking-wider mb-1">
+                Teks Soal / Skenario Masalah:
               </div>
+              <div>{renderFormattedMathText(q.prompt, 'sm')}</div>
+            </div>
 
-              <div className="p-4 bg-purple-50/70 rounded-2xl border border-purple-200/70 text-xs sm:text-sm space-y-1.5">
-                <div className="font-black text-purple-900 flex items-center gap-1.5">
-                  <CheckCircle2 size={16} className="text-purple-600" />
-                  <span>Kunci Langkah Pembahasan:</span>
-                </div>
-                <div className="text-slate-700 leading-relaxed font-medium">
-                  {renderFormattedMathText(q.discussion, 'xs')}
-                </div>
+            {/* Discussion Box */}
+            <div className="p-4 sm:p-5 bg-purple-50 rounded-2xl border-2 border-slate-950 text-xs sm:text-sm space-y-2">
+              <div className="font-black text-purple-950 font-mono flex items-center gap-2">
+                <CheckCircle2 size={16} className="text-purple-700" />
+                <span>Kunci Langkah Pembahasan Runtut:</span>
+              </div>
+              <div className="text-slate-800 leading-relaxed font-bold">
+                {renderFormattedMathText(q.discussion, 'xs')}
               </div>
             </div>
-          </DoubleBezelCard>
+          </div>
         ))}
+
+        {questions.length === 0 && (
+          <div className="rounded-3xl bg-white border-4 border-slate-950 p-12 text-center shadow-[6px_6px_0px_0px_#0f172a] space-y-3">
+            <BookOpen size={48} className="mx-auto text-slate-400" />
+            <div className="text-lg font-black text-slate-950 font-mono">Bank Soal Essai Kosong</div>
+            <p className="text-xs font-bold text-slate-500">
+              Belum ada butir soal evaluasi essai yang dibuat. Klik tombol di atas untuk menambahkan soal baru.
+            </p>
+          </div>
+        )}
       </div>
 
+      {/* 4. Modal Tambah Soal Essai */}
       <Modal
         isOpen={isAddOpen}
         onClose={() => setIsAddOpen(false)}
-        title="Tambah Soal Essai Baru"
+        title="Tambah Soal Essai HOTS Baru"
+        maxWidth="max-w-2xl"
       >
         <form onSubmit={handleAddQuestion} className="space-y-4">
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">
+            <label className="block text-xs font-mono font-black uppercase tracking-wider text-slate-900 mb-1.5">
               Judul / Topik Soal:
             </label>
             <input
@@ -133,12 +271,12 @@ export const GuruSoal: React.FC<{
               value={title}
               onChange={e => setTitle(e.target.value)}
               placeholder="Contoh: Soal Cerita — Perbandingan Panjang Pita"
-              className="w-full p-3.5 rounded-2xl border-2 border-slate-300 bg-white text-slate-900 text-sm font-bold focus:border-brand-500 focus:ring-4 focus:ring-brand-500/15 outline-none"
+              className="w-full p-3 rounded-xl border-2 border-slate-950 bg-white text-slate-900 text-sm font-bold shadow-[2px_2px_0px_0px_#0f172a] outline-none focus:bg-amber-50"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">
+            <label className="block text-xs font-mono font-black uppercase tracking-wider text-slate-900 mb-1.5">
               Pertanyaan Cerita / Kasus HOTS:
             </label>
             <textarea
@@ -146,14 +284,14 @@ export const GuruSoal: React.FC<{
               rows={3}
               value={prompt}
               onChange={e => setPrompt(e.target.value)}
-              placeholder="Tuliskan teks soal cerita pecahan..."
-              className="w-full p-3.5 rounded-2xl border-2 border-slate-300 bg-white text-slate-900 text-xs sm:text-sm font-medium focus:border-brand-500 focus:ring-4 focus:ring-brand-500/15 outline-none leading-relaxed"
+              placeholder="Tuliskan narasi soal cerita pecahan..."
+              className="w-full p-3 rounded-xl border-2 border-slate-950 bg-white text-slate-900 text-xs sm:text-sm font-bold shadow-[2px_2px_0px_0px_#0f172a] outline-none focus:bg-amber-50 leading-relaxed"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">
-              Kunci & Pembahasan Runtut:
+            <label className="block text-xs font-mono font-black uppercase tracking-wider text-slate-900 mb-1.5">
+              Kunci & Langkah Pembahasan Runtut:
             </label>
             <textarea
               required
@@ -161,12 +299,12 @@ export const GuruSoal: React.FC<{
               value={discussion}
               onChange={e => setDiscussion(e.target.value)}
               placeholder="Langkah 1: Menentukan pecahan biasa... Langkah 2: Menyamakan penyebut..."
-              className="w-full p-3.5 rounded-2xl border-2 border-slate-300 bg-white text-slate-900 text-xs sm:text-sm font-medium focus:border-brand-500 focus:ring-4 focus:ring-brand-500/15 outline-none leading-relaxed"
+              className="w-full p-3 rounded-xl border-2 border-slate-950 bg-white text-slate-900 text-xs sm:text-sm font-bold shadow-[2px_2px_0px_0px_#0f172a] outline-none focus:bg-purple-50 leading-relaxed"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">
+            <label className="block text-xs font-mono font-black uppercase tracking-wider text-slate-900 mb-1.5">
               Bobot Nilai (Poin):
             </label>
             <input
@@ -176,26 +314,110 @@ export const GuruSoal: React.FC<{
               required
               value={weight}
               onChange={e => setWeight(parseInt(e.target.value) || 50)}
-              className="w-full p-3.5 rounded-2xl border-2 border-slate-300 bg-white text-slate-900 text-sm font-black focus:border-brand-500 focus:ring-4 focus:ring-brand-500/15 outline-none font-mono"
+              className="w-full p-3 rounded-xl border-2 border-slate-950 bg-white text-slate-900 text-sm font-black shadow-[2px_2px_0px_0px_#0f172a] outline-none font-mono"
             />
           </div>
 
-          <div className="flex justify-end gap-2 pt-2">
-            <Button
+          <div className="flex justify-end gap-2.5 pt-3 border-t-2 border-slate-950">
+            <button
               type="button"
-              variant="secondary"
-              size="sm"
-              className="rounded-xl font-bold"
               onClick={() => setIsAddOpen(false)}
+              className="px-4 py-2 rounded-xl bg-white hover:bg-slate-100 text-slate-950 font-mono font-black text-xs border-2 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a] active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
             >
               Batal
-            </Button>
-            <Button type="submit" variant="primary" size="sm" className="rounded-xl font-black bg-purple-600 hover:bg-purple-700 text-white">
+            </button>
+            <button
+              type="submit"
+              className="px-5 py-2 rounded-xl bg-[#ffe600] hover:bg-yellow-400 text-slate-950 font-mono font-black text-xs uppercase tracking-wider border-2 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a] active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
+            >
               Simpan Butir Soal
-            </Button>
+            </button>
           </div>
         </form>
       </Modal>
+
+      {/* 5. Modal Edit Soal Essai */}
+      {editingQuestion && (
+        <Modal
+          isOpen={!!editingQuestion}
+          onClose={() => setEditingQuestion(null)}
+          title="Edit Butir Soal Essai HOTS"
+          maxWidth="max-w-2xl"
+        >
+          <form onSubmit={handleSaveEdit} className="space-y-4">
+            <div>
+              <label className="block text-xs font-mono font-black uppercase tracking-wider text-slate-900 mb-1.5">
+                Judul / Topik Soal:
+              </label>
+              <input
+                type="text"
+                required
+                value={editTitle}
+                onChange={e => setEditTitle(e.target.value)}
+                className="w-full p-3 rounded-xl border-2 border-slate-950 bg-white text-slate-900 text-sm font-bold shadow-[2px_2px_0px_0px_#0f172a] outline-none focus:bg-amber-50"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-mono font-black uppercase tracking-wider text-slate-900 mb-1.5">
+                Pertanyaan Cerita / Kasus HOTS:
+              </label>
+              <textarea
+                required
+                rows={3}
+                value={editPrompt}
+                onChange={e => setEditPrompt(e.target.value)}
+                className="w-full p-3 rounded-xl border-2 border-slate-950 bg-white text-slate-900 text-xs sm:text-sm font-bold shadow-[2px_2px_0px_0px_#0f172a] outline-none focus:bg-amber-50 leading-relaxed"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-mono font-black uppercase tracking-wider text-slate-900 mb-1.5">
+                Kunci & Langkah Pembahasan Runtut:
+              </label>
+              <textarea
+                required
+                rows={3}
+                value={editDiscussion}
+                onChange={e => setEditDiscussion(e.target.value)}
+                className="w-full p-3 rounded-xl border-2 border-slate-950 bg-white text-slate-900 text-xs sm:text-sm font-bold shadow-[2px_2px_0px_0px_#0f172a] outline-none focus:bg-purple-50 leading-relaxed"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-mono font-black uppercase tracking-wider text-slate-900 mb-1.5">
+                Bobot Nilai (Poin):
+              </label>
+              <input
+                type="number"
+                min="10"
+                max="100"
+                required
+                value={editWeight}
+                onChange={e => setEditWeight(parseInt(e.target.value) || 50)}
+                className="w-full p-3 rounded-xl border-2 border-slate-950 bg-white text-slate-900 text-sm font-black shadow-[2px_2px_0px_0px_#0f172a] outline-none font-mono"
+              />
+            </div>
+
+            <div className="flex justify-end gap-2.5 pt-3 border-t-2 border-slate-950">
+              <button
+                type="button"
+                onClick={() => setEditingQuestion(null)}
+                className="px-4 py-2 rounded-xl bg-white hover:bg-slate-100 text-slate-950 font-mono font-black text-xs border-2 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a] active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
+              >
+                Batal
+              </button>
+              <button
+                type="submit"
+                className="px-5 py-2 rounded-xl bg-[#ffe600] hover:bg-yellow-400 text-slate-950 font-mono font-black text-xs uppercase tracking-wider border-2 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a] active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
+              >
+                Perbarui Soal
+              </button>
+            </div>
+          </form>
+        </Modal>
+      )}
+
     </div>
   );
 };

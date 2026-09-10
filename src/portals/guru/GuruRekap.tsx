@@ -180,7 +180,7 @@ export const GuruRekap: React.FC<{
                     {/* LKPD 1 */}
                     <td className="p-3 font-mono font-black text-center">
                       {lkpd1Score !== null ? (
-                        <span className="px-2 py-0.5 rounded-lg bg-lime-100 text-lime-900 border border-slate-950">
+                        <span className="inline-block whitespace-nowrap px-2.5 py-0.5 rounded-lg bg-lime-100 text-lime-900 border border-slate-950">
                           {lkpd1Score}
                         </span>
                       ) : (
@@ -191,7 +191,7 @@ export const GuruRekap: React.FC<{
                     {/* LKPD 2 */}
                     <td className="p-3 font-mono font-black text-center">
                       {lkpd2Score !== null ? (
-                        <span className="px-2 py-0.5 rounded-lg bg-lime-100 text-lime-900 border border-slate-950">
+                        <span className="inline-block whitespace-nowrap px-2.5 py-0.5 rounded-lg bg-lime-100 text-lime-900 border border-slate-950">
                           {lkpd2Score}
                         </span>
                       ) : (
@@ -202,7 +202,7 @@ export const GuruRekap: React.FC<{
                     {/* Latsol 1 */}
                     <td className="p-3 font-mono font-black text-center">
                       {latsol1Score !== null ? (
-                        <span className="px-2 py-0.5 rounded-lg bg-purple-100 text-purple-900 border border-slate-950">
+                        <span className="inline-block whitespace-nowrap px-2.5 py-0.5 rounded-lg bg-purple-100 text-purple-900 border border-slate-950">
                           {latsol1Score}
                         </span>
                       ) : (
@@ -213,7 +213,7 @@ export const GuruRekap: React.FC<{
                     {/* Latsol 2 */}
                     <td className="p-3 font-mono font-black text-center">
                       {latsol2Score !== null ? (
-                        <span className="px-2 py-0.5 rounded-lg bg-purple-100 text-purple-900 border border-slate-950">
+                        <span className="inline-block whitespace-nowrap px-2.5 py-0.5 rounded-lg bg-purple-100 text-purple-900 border border-slate-950">
                           {latsol2Score}
                         </span>
                       ) : (
@@ -224,7 +224,7 @@ export const GuruRekap: React.FC<{
                     {/* Evaluasi */}
                     <td className="p-3 font-mono font-black text-center">
                       {evalScore !== null ? (
-                        <span className="px-2 py-0.5 rounded-lg bg-amber-100 text-amber-900 border border-slate-950">
+                        <span className="inline-block whitespace-nowrap px-2.5 py-0.5 rounded-lg bg-amber-100 text-amber-900 border border-slate-950">
                           {evalScore}
                         </span>
                       ) : (
@@ -234,14 +234,14 @@ export const GuruRekap: React.FC<{
 
                     {/* Rata-rata */}
                     <td className="p-3 font-mono font-black text-center text-sm">
-                      <span className="px-2.5 py-1 rounded-xl bg-slate-950 text-[#ffe600] border border-slate-950 shadow-[1.5px_1.5px_0px_0px_#0f172a]">
+                      <span className="inline-block whitespace-nowrap px-2.5 py-1 rounded-xl bg-slate-950 text-[#ffe600] border border-slate-950 shadow-[1.5px_1.5px_0px_0px_#0f172a]">
                         {avg}/100
                       </span>
                     </td>
 
                     {/* Status Ketuntasan */}
                     <td className="p-3 text-center">
-                      <span className={`px-2.5 py-1 rounded-xl text-[10px] font-black uppercase tracking-wider font-mono inline-flex items-center gap-1 border-2 border-slate-950 ${
+                      <span className={`inline-flex whitespace-nowrap px-2.5 py-1 rounded-xl text-[10px] font-black uppercase tracking-wider font-mono items-center gap-1 border-2 border-slate-950 ${
                         isPassed
                           ? 'bg-[#a3e635] text-slate-950 shadow-[2px_2px_0px_0px_#0f172a]'
                           : 'bg-rose-200 text-rose-950'

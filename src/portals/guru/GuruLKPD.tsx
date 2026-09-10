@@ -390,17 +390,17 @@ export const GuruLKPD: React.FC<{
                         </button>
                       </td>
                       <td className="p-4 font-mono font-black">
-                        <span className="px-2.5 py-1 rounded-xl bg-purple-100 text-purple-950 border-2 border-slate-950 shadow-[1.5px_1.5px_0px_0px_#0f172a]">
+                        <span className="inline-block whitespace-nowrap px-2.5 py-1 rounded-xl bg-purple-100 text-purple-950 border-2 border-slate-950 shadow-[1.5px_1.5px_0px_0px_#0f172a]">
                           {s.aiScore}/100
                         </span>
                       </td>
                       <td className="p-4 font-mono font-black">
                         {s.teacherScore ? (
-                          <span className="px-2.5 py-1 rounded-xl bg-[#ffe600] text-slate-950 border-2 border-slate-950 shadow-[1.5px_1.5px_0px_0px_#0f172a]">
+                          <span className="inline-block whitespace-nowrap px-2.5 py-1 rounded-xl bg-[#ffe600] text-slate-950 border-2 border-slate-950 shadow-[1.5px_1.5px_0px_0px_#0f172a]">
                             {s.teacherScore}/100
                           </span>
                         ) : (
-                          <span className="px-2 py-0.5 rounded-lg bg-slate-100 text-slate-500 border border-slate-300 text-xs font-bold">
+                          <span className="inline-block whitespace-nowrap px-2.5 py-1 rounded-xl bg-slate-100 text-slate-600 border-2 border-slate-950 text-xs font-mono font-black shadow-[1.5px_1.5px_0px_0px_#0f172a]">
                             Belum Dinilai
                           </span>
                         )}
