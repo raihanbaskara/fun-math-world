@@ -33,125 +33,58 @@ export interface SidebarProps {
   onCloseMobile?: () => void;
 }
 
-type ColorVariant = 'sky' | 'emerald' | 'amber' | 'purple' | 'rose' | 'indigo' | 'teal' | 'pink' | 'orange' | 'cyan';
+type NeobrutalColor = 'yellow' | 'cyan' | 'pink' | 'lime' | 'purple' | 'orange';
 
 interface NavItemConfig {
   id: string;
   label: string;
   icon: React.ComponentType<{ size?: number; className?: string }>;
-  color: ColorVariant;
+  color: NeobrutalColor;
   badge?: number;
+  mathSymbol?: string;
 }
 
-const colorVariants: Record<ColorVariant, {
-  bgActive: string;
-  bgHover: string;
-  bar: string;
-  textActive: string;
-  textHover: string;
-  iconActive: string;
-  iconHover: string;
-  chevron: string;
+const colorStyles: Record<NeobrutalColor, {
+  activeBg: string;
+  activeText: string;
+  badgeBg: string;
+  stickerBg: string;
 }> = {
-  sky: {
-    bgActive: "bg-[#e8f7ff] border-y border-r border-sky-200/80 shadow-xs",
-    bgHover: "bg-[#e8f7ff]/75 border-y border-r border-sky-200/50",
-    bar: "bg-sky-500",
-    textActive: "text-sky-700",
-    textHover: "group-hover:text-sky-700",
-    iconActive: "text-sky-600",
-    iconHover: "group-hover:text-sky-600",
-    chevron: "text-sky-600",
-  },
-  emerald: {
-    bgActive: "bg-emerald-50 border-y border-r border-emerald-200/80 shadow-xs",
-    bgHover: "bg-emerald-50/75 border-y border-r border-emerald-200/50",
-    bar: "bg-emerald-500",
-    textActive: "text-emerald-800",
-    textHover: "group-hover:text-emerald-800",
-    iconActive: "text-emerald-600",
-    iconHover: "group-hover:text-emerald-600",
-    chevron: "text-emerald-600",
-  },
-  amber: {
-    bgActive: "bg-[#fff8ec] border-y border-r border-amber-200/80 shadow-xs",
-    bgHover: "bg-[#fff8ec]/80 border-y border-r border-amber-200/50",
-    bar: "bg-amber-500",
-    textActive: "text-amber-800",
-    textHover: "group-hover:text-amber-800",
-    iconActive: "text-amber-600",
-    iconHover: "group-hover:text-amber-600",
-    chevron: "text-amber-600",
-  },
-  purple: {
-    bgActive: "bg-[#f4f0ff] border-y border-r border-purple-200/80 shadow-xs",
-    bgHover: "bg-[#f4f0ff]/80 border-y border-r border-purple-200/50",
-    bar: "bg-purple-500",
-    textActive: "text-purple-800",
-    textHover: "group-hover:text-purple-800",
-    iconActive: "text-purple-600",
-    iconHover: "group-hover:text-purple-600",
-    chevron: "text-purple-600",
-  },
-  rose: {
-    bgActive: "bg-rose-50 border-y border-r border-rose-200/80 shadow-xs",
-    bgHover: "bg-rose-50/75 border-y border-r border-rose-200/50",
-    bar: "bg-rose-500",
-    textActive: "text-rose-800",
-    textHover: "group-hover:text-rose-800",
-    iconActive: "text-rose-600",
-    iconHover: "group-hover:text-rose-600",
-    chevron: "text-rose-600",
-  },
-  indigo: {
-    bgActive: "bg-indigo-50 border-y border-r border-indigo-200/80 shadow-xs",
-    bgHover: "bg-indigo-50/75 border-y border-r border-indigo-200/50",
-    bar: "bg-indigo-500",
-    textActive: "text-indigo-800",
-    textHover: "group-hover:text-indigo-800",
-    iconActive: "text-indigo-600",
-    iconHover: "group-hover:text-indigo-600",
-    chevron: "text-indigo-600",
-  },
-  teal: {
-    bgActive: "bg-teal-50 border-y border-r border-teal-200/80 shadow-xs",
-    bgHover: "bg-teal-50/75 border-y border-r border-teal-200/50",
-    bar: "bg-teal-500",
-    textActive: "text-teal-800",
-    textHover: "group-hover:text-teal-800",
-    iconActive: "text-teal-600",
-    iconHover: "group-hover:text-teal-600",
-    chevron: "text-teal-600",
-  },
-  pink: {
-    bgActive: "bg-pink-50 border-y border-r border-pink-200/80 shadow-xs",
-    bgHover: "bg-pink-50/75 border-y border-r border-pink-200/50",
-    bar: "bg-pink-500",
-    textActive: "text-pink-800",
-    textHover: "group-hover:text-pink-800",
-    iconActive: "text-pink-600",
-    iconHover: "group-hover:text-pink-600",
-    chevron: "text-pink-600",
-  },
-  orange: {
-    bgActive: "bg-orange-50 border-y border-r border-orange-200/80 shadow-xs",
-    bgHover: "bg-orange-50/75 border-y border-r border-orange-200/50",
-    bar: "bg-orange-500",
-    textActive: "text-orange-800",
-    textHover: "group-hover:text-orange-800",
-    iconActive: "text-orange-600",
-    iconHover: "group-hover:text-orange-600",
-    chevron: "text-orange-600",
+  yellow: {
+    activeBg: 'bg-[#ffe600] text-slate-950 font-black border-2 border-slate-900 shadow-[3px_3px_0px_0px_#0f172a]',
+    activeText: 'text-slate-950',
+    badgeBg: 'bg-amber-400 text-slate-950',
+    stickerBg: 'bg-amber-300',
   },
   cyan: {
-    bgActive: "bg-cyan-50 border-y border-r border-cyan-200/80 shadow-xs",
-    bgHover: "bg-cyan-50/75 border-y border-r border-cyan-200/50",
-    bar: "bg-cyan-500",
-    textActive: "text-cyan-800",
-    textHover: "group-hover:text-cyan-800",
-    iconActive: "text-cyan-600",
-    iconHover: "group-hover:text-cyan-600",
-    chevron: "text-cyan-600",
+    activeBg: 'bg-[#38bdf8] text-slate-950 font-black border-2 border-slate-900 shadow-[3px_3px_0px_0px_#0f172a]',
+    activeText: 'text-slate-950',
+    badgeBg: 'bg-sky-400 text-slate-950',
+    stickerBg: 'bg-sky-300',
+  },
+  pink: {
+    activeBg: 'bg-[#ff94e8] text-slate-950 font-black border-2 border-slate-900 shadow-[3px_3px_0px_0px_#0f172a]',
+    activeText: 'text-slate-950',
+    badgeBg: 'bg-pink-400 text-slate-950',
+    stickerBg: 'bg-pink-300',
+  },
+  lime: {
+    activeBg: 'bg-[#a3e635] text-slate-950 font-black border-2 border-slate-900 shadow-[3px_3px_0px_0px_#0f172a]',
+    activeText: 'text-slate-950',
+    badgeBg: 'bg-lime-400 text-slate-950',
+    stickerBg: 'bg-lime-300',
+  },
+  purple: {
+    activeBg: 'bg-[#c084fc] text-slate-950 font-black border-2 border-slate-900 shadow-[3px_3px_0px_0px_#0f172a]',
+    activeText: 'text-slate-950',
+    badgeBg: 'bg-purple-400 text-slate-950',
+    stickerBg: 'bg-purple-300',
+  },
+  orange: {
+    activeBg: 'bg-[#ff9838] text-slate-950 font-black border-2 border-slate-900 shadow-[3px_3px_0px_0px_#0f172a]',
+    activeText: 'text-slate-950',
+    badgeBg: 'bg-orange-400 text-slate-950',
+    stickerBg: 'bg-orange-300',
   },
 };
 
@@ -175,113 +108,96 @@ export const Sidebar: React.FC<SidebarProps> = ({
     }
   };
 
-  const renderItem = (item: NavItemConfig, showChevron = true) => {
+  const renderItem = (item: NavItemConfig) => {
     const isActive = currentRoute === item.id;
-    const variant = colorVariants[item.color];
+    const style = colorStyles[item.color];
     const IconComponent = item.icon;
 
     return (
       <button
         key={item.id}
         onClick={() => handleNav(item.id)}
-        className={`group relative w-full flex items-center justify-between pl-3.5 pr-3 py-2.5 rounded-r-2xl text-xs sm:text-sm transition-all duration-200 cursor-pointer select-none active:scale-[0.99] overflow-hidden ${
+        className={`group relative w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all duration-150 cursor-pointer select-none border-2 ${
           isActive
-            ? `font-black ${variant.textActive}`
-            : `text-slate-600 font-bold ${variant.textHover}`
+            ? style.activeBg
+            : 'bg-white border-transparent text-slate-700 hover:bg-amber-100/60 hover:border-slate-900 hover:shadow-[3px_3px_0px_0px_#0f172a] active:translate-x-0.5 active:translate-y-0.5 active:shadow-[1px_1px_0px_0px_#0f172a]'
         }`}
       >
-        {/* Left-to-right animated slide-in background pill */}
-        <div
-          className={`absolute inset-0 origin-left transition-transform duration-300 ease-out rounded-r-2xl pointer-events-none ${
-            isActive
-              ? `${variant.bgActive} scale-x-100`
-              : `${variant.bgHover} scale-x-0 group-hover:scale-x-100`
-          }`}
-        />
-
-        {/* Spike Left Active Bar */}
-        {isActive && (
-          <div
-            className={`absolute left-0 top-1.5 bottom-1.5 w-1 rounded-r-full ${variant.bar} shadow-xs`}
-          />
-        )}
-
-        {/* Foreground Content */}
-        <div className="relative z-10 flex items-center gap-3 min-w-0">
-          <IconComponent
-            size={18}
-            className={`transition-colors duration-200 shrink-0 ${
-              isActive ? variant.iconActive : `text-slate-400 ${variant.iconHover}`
-            }`}
-          />
+        <div className="flex items-center gap-3 min-w-0">
+          <div className={`p-1 rounded-lg ${isActive ? 'bg-slate-950 text-white' : 'bg-slate-100 text-slate-800 group-hover:bg-slate-950 group-hover:text-white'} transition-colors`}>
+            <IconComponent size={16} />
+          </div>
           <span className="truncate">{item.label}</span>
         </div>
 
-        <div className="relative z-10 flex items-center gap-1.5 shrink-0 ml-2">
+        <div className="flex items-center gap-1.5 shrink-0 ml-2">
+          {item.mathSymbol && (
+            <span className="hidden group-hover:inline-block font-mono text-[10px] font-black px-1.5 py-0.5 bg-slate-900 text-amber-300 rounded border border-slate-900">
+              {item.mathSymbol}
+            </span>
+          )}
           {item.badge !== undefined && item.badge > 0 && (
-            <span className="px-2 py-0.5 bg-red-500 text-white font-black text-[10px] rounded-full badge-pulse shadow-xs">
+            <span className="px-2 py-0.5 bg-rose-500 text-white font-black text-[10px] rounded-md border-2 border-slate-900 shadow-[1px_1px_0px_0px_#0f172a]">
               +{item.badge}
             </span>
           )}
-
-          {showChevron && (
-            <ChevronRight
-              size={15}
-              className={`transition-all duration-200 ${
-                isActive
-                  ? `${variant.chevron} translate-x-0.5 opacity-100`
-                  : `text-slate-300 opacity-40 group-hover:opacity-100 group-hover:translate-x-1 ${variant.iconHover}`
-              }`}
-            />
-          )}
+          <ChevronRight
+            size={14}
+            className={`transition-transform duration-150 ${
+              isActive ? 'translate-x-0.5 opacity-100 text-slate-950' : 'opacity-40 group-hover:opacity-100 group-hover:translate-x-1'
+            }`}
+          />
         </div>
       </button>
     );
   };
 
-  // SISWA MENU GROUPS (Vibrant Spike Multi-Color Palette)
+  // SISWA MENU GROUPS (Neobrutal High-Contrast Palette - Anti-Emoji Compliant)
   const siswaMenuUtama: NavItemConfig[] = [
-    { id: 'siswa/home', label: 'Beranda Utama', icon: Home, color: 'sky' },
-    { id: 'siswa/materi', label: 'Materi Pembelajaran', icon: BookOpen, color: 'emerald' },
-    { id: 'siswa/video', label: 'Video Belajar', icon: Video, color: 'amber' },
-    { id: 'siswa/studio', label: 'Studio Visual', icon: FlaskConical, color: 'purple' },
-    { id: 'siswa/kalkulator', label: 'Kalkulator Pecahan', icon: Calculator, color: 'rose' },
+    { id: 'siswa/home', label: 'Beranda Utama', icon: Home, color: 'yellow', mathSymbol: '[1]' },
+    { id: 'siswa/materi', label: 'Materi Pecahan', icon: BookOpen, color: 'cyan', mathSymbol: '½' },
+    { id: 'siswa/video', label: 'Video Belajar', icon: Video, color: 'lime', mathSymbol: '▶' },
+    { id: 'siswa/studio', label: 'Studio Visual', icon: FlaskConical, color: 'purple', mathSymbol: '÷' },
+    { id: 'siswa/kalkulator', label: 'Kalkulator Pecahan', icon: Calculator, color: 'pink', mathSymbol: '=' },
   ];
 
   const siswaTugasEvaluasi: NavItemConfig[] = [
-    { id: 'siswa/lkpd', label: 'LKPD Digital AI', icon: FileText, color: 'indigo' },
-    { id: 'siswa/evaluasi', label: 'Evaluasi Soal Essai', icon: PenTool, color: 'teal' },
+    { id: 'siswa/lkpd', label: 'LKPD Digital AI', icon: FileText, color: 'yellow', mathSymbol: 'LKPD' },
+    { id: 'siswa/latsol', label: 'Latihan Soal Kuis', icon: HelpCircle, color: 'pink', mathSymbol: 'QZ' },
+    { id: 'siswa/evaluasi', label: 'Evaluasi Soal Essai', icon: PenTool, color: 'orange', mathSymbol: '7.A' },
   ];
 
   const siswaInteraksiAkun: NavItemConfig[] = [
-    { id: 'siswa/refleksi', label: 'Refleksi Diri', icon: HeartHandshake, color: 'pink' },
-    { id: 'siswa/pengumuman', label: 'Pengumuman Kelas', icon: Bell, color: 'orange', badge: unreadCount },
-    { id: 'siswa/profil', label: 'Profil & Progress', icon: UserIcon, color: 'cyan' },
+    { id: 'siswa/refleksi', label: 'Refleksi Diri', icon: HeartHandshake, color: 'pink', mathSymbol: '★' },
+    { id: 'siswa/pengumuman', label: 'Pengumuman Kelas', icon: Bell, color: 'cyan', badge: unreadCount, mathSymbol: 'INFO' },
+    { id: 'siswa/profil', label: 'Profil & Progress', icon: UserIcon, color: 'lime', mathSymbol: '100%' },
   ];
 
-  // GURU MENU (Spike Color Palette)
+  // GURU MENU
   const guruMenu: NavItemConfig[] = [
-    { id: 'guru/dashboard', label: 'Dashboard Utama', icon: LayoutDashboard, color: 'sky' },
-    { id: 'guru/materi', label: 'Kelola Materi', icon: BookOpen, color: 'emerald' },
-    { id: 'guru/lkpd', label: 'Kelola & Nilai LKPD', icon: FileText, color: 'indigo' },
-    { id: 'guru/soal', label: 'Bank Soal Essai', icon: HelpCircle, color: 'amber' },
-    { id: 'guru/rekap', label: 'Rekap Nilai Excel', icon: BarChart3, color: 'purple' },
-    { id: 'guru/pengumuman', label: 'Buat Pengumuman', icon: Bell, color: 'orange' },
+    { id: 'guru/dashboard', label: 'Dashboard Utama', icon: LayoutDashboard, color: 'yellow' },
+    { id: 'guru/siswa', label: 'Daftar Siswa', icon: Users, color: 'lime' },
+    { id: 'guru/materi', label: 'Kelola Materi', icon: BookOpen, color: 'cyan' },
+    { id: 'guru/lkpd', label: 'Kelola & Nilai LKPD', icon: FileText, color: 'purple' },
+    { id: 'guru/latsol', label: 'Ruang Latihan Soal', icon: HelpCircle, color: 'pink' },
+    { id: 'guru/soal', label: 'Bank Soal Essai', icon: PenTool, color: 'orange' },
+    { id: 'guru/rekap', label: 'Rekap Nilai Excel', icon: BarChart3, color: 'yellow' },
+    { id: 'guru/pengumuman', label: 'Buat Pengumuman', icon: Bell, color: 'cyan' },
   ];
 
-  // ADMIN MENU (Spike Color Palette)
+  // ADMIN MENU
   const adminMenu: NavItemConfig[] = [
     { id: 'admin/dashboard', label: 'Status Sistem', icon: LayoutDashboard, color: 'purple' },
     { id: 'admin/users', label: 'Manajemen Akun', icon: Users, color: 'cyan' },
-    { id: 'admin/maintenance', label: 'Pemeliharaan DB', icon: Settings, color: 'rose' },
+    { id: 'admin/maintenance', label: 'Pemeliharaan DB', icon: Settings, color: 'pink' },
   ];
 
   return (
-    <aside className="w-full md:w-68 bg-white rounded-3xl border border-slate-200/90 p-4 shadow-xs h-fit sticky top-20 flex flex-col justify-between gap-6 select-none transition-colors">
+    <aside className="w-full md:w-68 bg-[#fffdf5] rounded-2xl border-3 border-slate-900 p-4 shadow-[6px_6px_0px_0px_#0f172a] h-fit sticky top-20 flex flex-col justify-between gap-5 select-none font-sans">
       
-      {/* SIDEBAR HEADER: SPIKE BRAND LOGO & MOBILE CLOSE */}
-      <div className="flex items-center justify-between px-2 pt-1 pb-1">
-        <Logo size="sm" />
+      {/* SIDEBAR HEADER: CLEAN LOGO & MOBILE CLOSE */}
+      <div className="flex items-center justify-between pb-3 border-b-3 border-slate-900">
+        <Logo size="sm" showSubtitle={true} />
 
         {onCloseMobile && (
           <button
@@ -289,10 +205,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
               soundService.click();
               onCloseMobile();
             }}
-            className="md:hidden p-1.5 rounded-xl hover:bg-slate-100 text-slate-500 transition cursor-pointer"
+            className="md:hidden p-1.5 rounded-lg bg-rose-400 text-slate-950 border-2 border-slate-900 shadow-[2px_2px_0px_0px_#0f172a] hover:bg-rose-500 transition cursor-pointer"
             title="Tutup Menu"
           >
-            <X size={18} />
+            <X size={16} />
           </button>
         )}
       </div>
@@ -306,24 +222,24 @@ export const Sidebar: React.FC<SidebarProps> = ({
             
             {/* Section 1: Home / Menu Utama */}
             <div className="space-y-1">
-              <div className="px-3 text-[10.5px] font-black text-slate-400 uppercase tracking-wider mb-1.5">
-                Home
+              <div className="px-2 text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-1.5 mb-1 font-mono">
+                <span>// MENU UTAMA</span>
               </div>
               {siswaMenuUtama.map(item => renderItem(item))}
             </div>
 
             {/* Section 2: Apps / Tugas & Evaluasi */}
             <div className="space-y-1 pt-1">
-              <div className="px-3 text-[10.5px] font-black text-slate-400 uppercase tracking-wider mb-1.5">
-                Apps
+              <div className="px-2 text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-1.5 mb-1 font-mono">
+                <span>// LKPD & EVALUASI</span>
               </div>
               {siswaTugasEvaluasi.map(item => renderItem(item))}
             </div>
 
             {/* Section 3: User / Interaksi & Akun */}
             <div className="space-y-1 pt-1">
-              <div className="px-3 text-[10.5px] font-black text-slate-400 uppercase tracking-wider mb-1.5">
-                User
+              <div className="px-2 text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-1.5 mb-1 font-mono">
+                <span>// AKUN SISWA</span>
               </div>
               {siswaInteraksiAkun.map(item => renderItem(item))}
             </div>
@@ -335,8 +251,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {isGuru && (
           <nav className="space-y-4">
             <div className="space-y-1">
-              <div className="px-3 text-[10.5px] font-black text-slate-400 uppercase tracking-wider mb-1.5">
-                Portal Guru
+              <div className="px-2 text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-1.5 mb-1 font-mono">
+                <span>// PORTAL GURU</span>
               </div>
               {guruMenu.map(item => renderItem(item))}
             </div>
@@ -347,8 +263,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {isAdmin && (
           <nav className="space-y-4">
             <div className="space-y-1">
-              <div className="px-3 text-[10.5px] font-black text-slate-400 uppercase tracking-wider mb-1.5">
-                Portal Administrator
+              <div className="px-2 text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-1.5 mb-1 font-mono">
+                <span>// ADMINISTRATOR</span>
               </div>
               {adminMenu.map(item => renderItem(item))}
             </div>
@@ -357,20 +273,20 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
       </div>
 
-      {/* SPIKE BOTTOM USER PROFILE CAPSULE */}
-      <div className="pt-2 border-t border-slate-100 mt-auto">
-        <div className="rounded-2xl p-3 bg-[#e8f7ff] border border-sky-100/90 flex items-center justify-between shadow-xs transition-all duration-200 hover:shadow-sm">
+      {/* USER PROFILE STICKER CARD */}
+      <div className="pt-3 border-t-3 border-slate-900 mt-auto">
+        <div className="rounded-xl p-3 bg-amber-200 border-2 border-slate-900 shadow-[3px_3px_0px_0px_#0f172a] flex items-center justify-between transition-all">
           <div className="flex items-center gap-2.5 min-w-0">
             <img
               src={currentUser.avatar}
               alt={currentUser.name}
-              className="w-10 h-10 rounded-full object-cover ring-2 ring-white shadow-xs shrink-0"
+              className="w-9 h-9 rounded-lg object-cover border-2 border-slate-900 shadow-[2px_2px_0px_0px_#0f172a] shrink-0"
             />
             <div className="min-w-0">
-              <div className="text-xs sm:text-sm font-black text-slate-900 leading-tight truncate">
+              <div className="text-xs font-black text-slate-950 leading-tight truncate">
                 {currentUser.name}
               </div>
-              <div className="text-[11px] font-semibold text-slate-500 truncate">
+              <div className="text-[10px] font-bold text-slate-700 truncate">
                 {currentUser.role === 'siswa'
                   ? (currentUser.class || 'Kelas 7-A')
                   : currentUser.role === 'guru'
@@ -385,10 +301,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
               soundService.click();
               onLogout();
             }}
-            className="w-8 h-8 rounded-full bg-white text-slate-700 hover:text-red-600 hover:bg-red-50 flex items-center justify-center transition-all shadow-xs cursor-pointer active:scale-95 shrink-0 ml-2"
+            className="w-8 h-8 rounded-lg bg-rose-400 text-slate-950 border-2 border-slate-900 shadow-[2px_2px_0px_0px_#0f172a] hover:bg-rose-500 flex items-center justify-center transition-all cursor-pointer active:translate-x-0.5 active:translate-y-0.5 active:shadow-none shrink-0 ml-1.5"
             title="Keluar Akun"
           >
-            <LogOut size={15} />
+            <LogOut size={14} />
           </button>
         </div>
       </div>

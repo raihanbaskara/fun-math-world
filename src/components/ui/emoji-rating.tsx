@@ -46,9 +46,9 @@ export const ratingOptions: RatingItem[] = [
     emoji: '😄',
     label: 'Sangat Paham',
     description: 'Lancar mengerjakan operasi hitung dan LKPD',
-    color: 'text-emerald-600',
-    bgLight: 'bg-emerald-50 border-emerald-200',
-    borderActive: 'ring-emerald-500/40 border-emerald-500 bg-emerald-50/80',
+    color: 'text-amber-600',
+    bgLight: 'bg-yellow-100 border-yellow-300',
+    borderActive: 'ring-amber-500/40 border-amber-500 bg-yellow-100/80',
   },
   {
     emoji: '🤩',

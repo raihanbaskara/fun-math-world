@@ -2,7 +2,7 @@ import React from 'react';
 import { soundService } from '@/services/soundService';
 
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'accent' | 'secondary' | 'outline' | 'ghost' | 'danger';
+  variant?: 'primary' | 'accent' | 'secondary' | 'outline' | 'ghost' | 'danger' | 'purple' | 'yellow' | 'lime' | 'cyan';
   size?: 'sm' | 'md' | 'lg';
   icon?: React.ReactNode;
 }
@@ -16,21 +16,25 @@ export const Button: React.FC<ButtonProps> = ({
   onClick,
   ...props
 }) => {
-  const baseStyle = "group relative inline-flex items-center justify-center font-bold tracking-tight rounded-xl transition-all duration-300 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed select-none active:scale-[0.98] whitespace-nowrap";
+  const baseStyle = "group relative inline-flex items-center justify-center font-black uppercase tracking-wider rounded-2xl border-3 border-slate-900 shadow-[4px_4px_0px_0px_#0f172a] transition-all duration-150 ease-out cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed select-none hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[6px_6px_0px_0px_#0f172a] active:translate-x-1 active:translate-y-1 active:shadow-[1px_1px_0px_0px_#0f172a] whitespace-nowrap";
 
   const sizeStyles = {
     sm: "px-3.5 py-2 text-xs gap-2",
-    md: "px-4.5 py-2.5 text-sm gap-2.5",
-    lg: "px-6 py-3.5 text-base gap-3 shadow-xl",
+    md: "px-5 py-3 text-sm gap-2.5",
+    lg: "px-6 py-4 text-base gap-3",
   };
 
   const variantStyles = {
-    primary: "bg-slate-900 dark:bg-white text-white dark:text-slate-950 hover:bg-slate-800 dark:hover:bg-slate-100 shadow-lg shadow-slate-900/10",
-    accent: "bg-[#00ffc6] hover:bg-[#00e5b2] text-slate-950 font-black shadow-[0_0_24px_rgba(0,255,198,0.4)]",
-    secondary: "bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-900 dark:text-slate-100 border border-slate-200/80 dark:border-slate-700",
-    outline: "border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200",
-    ghost: "hover:bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300",
-    danger: "bg-red-500 hover:bg-red-600 text-white shadow-md shadow-red-500/20",
+    primary: "bg-[#ffe600] hover:bg-[#fed700] text-slate-950",
+    yellow: "bg-[#ffe600] hover:bg-[#fed700] text-slate-950",
+    accent: "bg-[#a5f3fc] hover:bg-[#67e8f9] text-slate-950",
+    cyan: "bg-[#38bdf8] hover:bg-[#0284c7] hover:text-white text-slate-950",
+    secondary: "bg-white hover:bg-slate-100 text-slate-950",
+    purple: "bg-[#c084fc] hover:bg-[#a855f7] text-slate-950",
+    lime: "bg-[#bef264] hover:bg-[#a3e635] text-slate-950",
+    outline: "bg-slate-100 hover:bg-slate-200 text-slate-900 border-3 border-slate-900 shadow-[4px_4px_0px_0px_#0f172a]",
+    ghost: "bg-transparent border-transparent shadow-none hover:bg-slate-200/60 text-slate-900 hover:shadow-none hover:translate-x-0 hover:translate-y-0",
+    danger: "bg-[#f472b6] hover:bg-[#e879f9] text-slate-950",
   };
 
   const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -46,7 +50,7 @@ export const Button: React.FC<ButtonProps> = ({
     >
       <span className="inline-flex items-center justify-center gap-2">{children}</span>
       {icon && (
-        <span className="w-5 h-5 rounded-full bg-black/10 dark:bg-white/15 flex items-center justify-center transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 shrink-0">
+        <span className="w-6 h-6 rounded-full bg-slate-950 text-white flex items-center justify-center transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 shrink-0 text-xs shadow-xs">
           {icon}
         </span>
       )}

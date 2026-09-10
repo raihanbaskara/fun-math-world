@@ -25,6 +25,7 @@ import { SiswaVideo } from '@/portals/siswa/SiswaVideo';
 import { SiswaStudio } from '@/portals/siswa/SiswaStudio';
 import { SiswaKalkulator } from '@/portals/siswa/SiswaKalkulator';
 import { SiswaLKPD } from '@/portals/siswa/SiswaLKPD';
+import { SiswaLatsol } from '@/portals/siswa/SiswaLatsol';
 import { SiswaEvaluasi } from '@/portals/siswa/SiswaEvaluasi';
 import { SiswaRefleksi } from '@/portals/siswa/SiswaRefleksi';
 import { SiswaPengumuman } from '@/portals/siswa/SiswaPengumuman';
@@ -32,8 +33,10 @@ import { SiswaProfil } from '@/portals/siswa/SiswaProfil';
 
 // Guru Modules
 import { GuruDashboard } from '@/portals/guru/GuruDashboard';
+import { GuruDaftarSiswa } from '@/portals/guru/GuruDaftarSiswa';
 import { GuruMateri } from '@/portals/guru/GuruMateri';
 import { GuruLKPD } from '@/portals/guru/GuruLKPD';
+import { GuruLatsol } from '@/portals/guru/GuruLatsol';
 import { GuruSoal } from '@/portals/guru/GuruSoal';
 import { GuruRekap } from '@/portals/guru/GuruRekap';
 import { GuruPengumuman } from '@/portals/guru/GuruPengumuman';
@@ -236,8 +239,8 @@ export function App() {
         {toasts.map(t => (
           <div
             key={t.id}
-            className={`px-4 py-3 rounded-2xl shadow-2xl text-xs sm:text-sm font-bold text-white flex items-center justify-between gap-3 pointer-events-auto transform transition-all animate-in fade-in slide-in-from-top-2 ${
-              t.type === 'error' ? 'bg-red-500' : t.type === 'success' ? 'bg-emerald-500' : 'bg-slate-800 dark:bg-slate-700'
+            className={`px-4 py-3 rounded-2xl shadow-2xl text-xs sm:text-sm font-bold flex items-center justify-between gap-3 pointer-events-auto transform transition-all animate-in fade-in slide-in-from-top-2 ${
+              t.type === 'error' ? 'bg-red-500 text-white' : t.type === 'success' ? 'bg-[#ffe600] text-slate-950 border-2 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a]' : 'bg-slate-900 text-white'
             }`}
           >
             <span>{t.msg}</span>
@@ -409,15 +412,18 @@ export function App() {
               {currentRoute === 'siswa/studio' && <SiswaStudio />}
               {currentRoute === 'siswa/kalkulator' && <SiswaKalkulator showToast={showToast} />}
               {currentRoute === 'siswa/lkpd' && <SiswaLKPD currentUser={currentUser} showToast={showToast} />}
-              {currentRoute === 'siswa/evaluasi' && <SiswaEvaluasi currentUser={currentUser} showToast={showToast} />}
+              {currentRoute === 'siswa/latsol' && <SiswaLatsol currentUser={currentUser} onNavigate={navigateTo} showToast={showToast} />}
+              {currentRoute === 'siswa/evaluasi' && <SiswaEvaluasi currentUser={currentUser} onNavigate={navigateTo} showToast={showToast} />}
               {currentRoute === 'siswa/refleksi' && <SiswaRefleksi currentUser={currentUser} onNavigate={navigateTo} showToast={showToast} />}
               {currentRoute === 'siswa/pengumuman' && <SiswaPengumuman currentUser={currentUser} showToast={showToast} />}
               {currentRoute === 'siswa/profil' && <SiswaProfil currentUser={currentUser} onLogout={() => handleLogout('siswa')} showToast={showToast} />}
 
               {/* Guru Portals */}
               {currentRoute === 'guru/dashboard' && <GuruDashboard currentUser={currentUser} onNavigate={navigateTo} />}
+              {currentRoute === 'guru/siswa' && <GuruDaftarSiswa currentUser={currentUser} showToast={showToast} />}
               {currentRoute === 'guru/materi' && <GuruMateri showToast={showToast} />}
               {currentRoute === 'guru/lkpd' && <GuruLKPD showToast={showToast} />}
+              {currentRoute === 'guru/latsol' && <GuruLatsol currentUser={currentUser} showToast={showToast} />}
               {currentRoute === 'guru/soal' && <GuruSoal showToast={showToast} />}
               {currentRoute === 'guru/rekap' && <GuruRekap showToast={showToast} />}
               {currentRoute === 'guru/pengumuman' && <GuruPengumuman currentUser={currentUser} onNavigate={navigateTo} showToast={showToast} />}

@@ -3,6 +3,7 @@ import { DoubleBezelCard, Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowFillButton } from '@/components/ui/arrow-fill-button';
 import { storageService } from '@/services/storageService';
+import { soundService } from '@/services/soundService';
 import { User } from '@/types';
 import {
   Users,
@@ -13,7 +14,13 @@ import {
   GraduationCap,
   Sparkles,
   ArrowUpRight,
-  ShieldCheck
+  ShieldAlert,
+  ShieldCheck,
+  HelpCircle,
+  HeartHandshake,
+  Clock,
+  Unlock,
+  Lock
 } from 'lucide-react';
 
 export const GuruDashboard: React.FC<{
@@ -23,175 +30,290 @@ export const GuruDashboard: React.FC<{
   const db = storageService.getState();
   const studentCount = db.users.filter(u => u.role === 'siswa').length;
   const lkpdSubCount = db.lkpdSubmissions.length;
+  const latsolSubCount = db.latsolSubmissions?.length || 0;
   const examSubCount = db.evaluationSubmissions.length;
-  const questionCount = db.evaluationQuestions.length;
+  const reflections = db.reflections || [];
 
-  const stats = [
-    {
-      label: 'Siswa Terdaftar',
-      value: studentCount,
-      icon: Users,
-      color: 'text-brand-600',
-      bg: 'bg-brand-50',
-      border: 'border-brand-200/60'
-    },
-    {
-      label: 'LKPD Masuk',
-      value: lkpdSubCount,
-      icon: FileText,
-      color: 'text-emerald-600',
-      bg: 'bg-emerald-50',
-      border: 'border-emerald-200/60'
-    },
-    {
-      label: 'Ujian Essai Masuk',
-      value: examSubCount,
-      icon: PenTool,
-      color: 'text-purple-600',
-      bg: 'bg-purple-50',
-      border: 'border-purple-200/60'
-    },
-    {
-      label: 'Bank Soal HOTS',
-      value: questionCount,
-      icon: BookOpen,
-      color: 'text-amber-600',
-      bg: 'bg-amber-50',
-      border: 'border-amber-200/60'
+  // Find all anti-cheat incidents across all submissions
+  const allIncidents: { studentName: string; taskType: string; count: number; seconds: number; date?: string }[] = [];
+  db.evaluationSubmissions.forEach(s => {
+    if (s.antiCheat?.switchCount > 0) {
+      allIncidents.push({
+        studentName: s.studentName,
+        taskType: 'Evaluasi Sumatif',
+        count: s.antiCheat.switchCount,
+        seconds: s.antiCheat.totalLeaveSeconds,
+        date: s.date,
+      });
     }
-  ];
+  });
+  db.latsolSubmissions?.forEach(s => {
+    if (s.antiCheat && s.antiCheat.switchCount > 0) {
+      allIncidents.push({
+        studentName: s.studentName,
+        taskType: `Kuis ${s.roomTitle}`,
+        count: s.antiCheat.switchCount,
+        seconds: s.antiCheat.totalLeaveSeconds,
+        date: s.date,
+      });
+    }
+  });
 
   return (
-    <div className="space-y-8 max-w-6xl mx-auto">
+    <div className="space-y-8 max-w-6xl mx-auto font-sans pb-12">
       
-      {/* Editorial Luxury Header Banner */}
-      <DoubleBezelCard
-        className="bg-slate-950 border-slate-800 shadow-xl"
-        innerClassName="bg-slate-900 border-slate-800/80 text-white p-6 sm:p-8 space-y-4"
-      >
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <span className="px-3 py-1 bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 rounded-full text-[11px] font-black uppercase tracking-wider font-mono">
-                Portal Pengajar Matematika
-              </span>
-              <span className="text-xs text-slate-400 font-medium">
-                Kurikulum Merdeka Kelas 7 SMP
-              </span>
-            </div>
-
-            <h1 className="text-2xl sm:text-4xl font-black tracking-tight text-white">
-              Dasbor Manajemen & Penilaian Guru
-            </h1>
-
-            <p className="text-xs sm:text-sm text-slate-300 max-w-2xl leading-relaxed font-medium">
-              Kelola kurikulum materi pecahan, verifikasi pengerjaan LKPD digital siswa dengan validasi Asisten AI, susun bank soal uraian, dan ekspor rekapitulasi nilai format spreadsheet (.xlsx).
-            </p>
-          </div>
-
-          <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0 shadow-inner">
-            <GraduationCap size={32} />
-          </div>
+      {/* 1. STREAMLINED GURU HEADER BANNER */}
+      <div className="relative rounded-3xl bg-[#ffe600] border-4 border-slate-950 p-6 sm:p-8 shadow-[8px_8px_0px_0px_#0f172a] overflow-hidden text-slate-950">
+        <div className="absolute right-4 bottom-0 text-slate-950/10 font-mono text-8xl font-black pointer-events-none select-none tracking-tight">
+          TEACHER
         </div>
-      </DoubleBezelCard>
 
-      {/* 4-Column Stat Metrics */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {stats.map((item, idx) => {
-          const Icon = item.icon;
-          return (
-            <div
-              key={idx}
-              className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs flex flex-col justify-between space-y-3"
-            >
-              <div className="flex items-center justify-between">
-                <div className={`p-2.5 rounded-xl ${item.bg} border ${item.border}`}>
-                  <Icon size={18} className={item.color} />
-                </div>
-                <span className="text-2xl sm:text-3xl font-black font-mono text-slate-900">
-                  {item.value}
-                </span>
-              </div>
-              <div className="text-[11px] font-black uppercase tracking-wider text-slate-400">
-                {item.label}
-              </div>
-            </div>
-          );
-        })}
+        <div className="relative z-10 space-y-3 max-w-3xl">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="px-3 py-1 bg-white text-slate-950 border-2 border-slate-950 rounded-xl text-xs font-mono font-black shadow-[2px_2px_0px_0px_#0f172a]">
+              PORTAL GURU MATEMATIKA
+            </span>
+            <span className="px-3 py-1 bg-white/80 text-slate-900 border-2 border-slate-950 rounded-xl text-xs font-bold font-mono">
+              Kurikulum Merdeka Kelas 7 SMP
+            </span>
+          </div>
+
+          <h1 className="text-2xl sm:text-4xl font-black tracking-tight text-slate-950 font-mono leading-tight">
+            Dasbor Manajemen &amp; Penilaian Guru
+          </h1>
+
+          <p className="text-xs sm:text-sm text-slate-950 max-w-2xl leading-relaxed font-bold">
+            Kelola materi pecahan, verifikasi pengerjaan LKPD digital siswa dengan validasi Asisten AI, atur waktu ruang kuis Latsol, pantau refleksi diri, serta ekspor rekap nilai format Excel (.xlsx).
+          </p>
+        </div>
       </div>
 
-      {/* Management Action Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {/* 4-Column Stat Metrics (Neobrutalist Pop Tiles) */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+        
+        <div
+          onClick={() => onNavigate('guru/siswa')}
+          className="p-5 rounded-2xl bg-white border-3 border-slate-950 shadow-[5px_5px_0px_0px_#0f172a] space-y-2 hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[7px_7px_0px_0px_#0f172a] transition-all cursor-pointer"
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-black uppercase text-slate-600 tracking-wider">Siswa Terdaftar</span>
+            <div className="w-9 h-9 rounded-xl bg-[#38bdf8] text-slate-950 border-2 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a] flex items-center justify-center font-black">
+              <Users size={18} />
+            </div>
+          </div>
+          <div className="text-3xl font-black font-mono text-slate-950">
+            {studentCount}
+          </div>
+        </div>
+
+        <div
+          onClick={() => onNavigate('guru/lkpd')}
+          className="p-5 rounded-2xl bg-white border-3 border-slate-950 shadow-[5px_5px_0px_0px_#0f172a] space-y-2 hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[7px_7px_0px_0px_#0f172a] transition-all cursor-pointer"
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-black uppercase text-slate-600 tracking-wider">LKPD Masuk</span>
+            <div className="w-9 h-9 rounded-xl bg-[#a3e635] text-slate-950 border-2 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a] flex items-center justify-center font-black">
+              <FileText size={18} />
+            </div>
+          </div>
+          <div className="text-3xl font-black font-mono text-slate-950">
+            {lkpdSubCount}
+          </div>
+        </div>
+
+        <div
+          onClick={() => onNavigate('guru/latsol')}
+          className="p-5 rounded-2xl bg-white border-3 border-slate-950 shadow-[5px_5px_0px_0px_#0f172a] space-y-2 hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[7px_7px_0px_0px_#0f172a] transition-all cursor-pointer"
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-black uppercase text-slate-600 tracking-wider">Latihan Soal</span>
+            <div className="w-9 h-9 rounded-xl bg-[#ff94e8] text-slate-950 border-2 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a] flex items-center justify-center font-black">
+              <HelpCircle size={18} />
+            </div>
+          </div>
+          <div className="text-3xl font-black font-mono text-slate-950">
+            {latsolSubCount}
+          </div>
+        </div>
+
+        <div
+          onClick={() => onNavigate('guru/rekap')}
+          className="p-5 rounded-2xl bg-white border-3 border-slate-950 shadow-[5px_5px_0px_0px_#0f172a] space-y-2 hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[7px_7px_0px_0px_#0f172a] transition-all cursor-pointer"
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-black uppercase text-slate-600 tracking-wider">Evaluasi Essai</span>
+            <div className="w-9 h-9 rounded-xl bg-[#c084fc] text-slate-950 border-2 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a] flex items-center justify-center font-black">
+              <PenTool size={18} />
+            </div>
+          </div>
+          <div className="text-3xl font-black font-mono text-slate-950">
+            {examSubCount}
+          </div>
+        </div>
+
+      </div>
+
+      {/* Two-Column Feeds: 1. Refleksi Siswa & 2. Anti-Cheat Monitoring Log */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        
+        {/* Refleksi Siswa Masuk ke Guru */}
+        <div className="rounded-3xl bg-white border-4 border-slate-950 p-6 shadow-[7px_7px_0px_0px_#0f172a] space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-pink-100 border-2 border-slate-950 text-slate-950 flex items-center justify-center font-black shadow-[2px_2px_0px_0px_#0f172a]">
+                <HeartHandshake size={20} className="text-pink-600" />
+              </div>
+              <div>
+                <h3 className="font-black text-base text-slate-950">Refleksi Belajar Siswa</h3>
+                <p className="text-[11px] text-slate-600 font-bold">Catatan pemahaman & kendala siswa</p>
+              </div>
+            </div>
+            <span className="px-2 py-0.5 rounded-lg bg-pink-100 text-slate-950 font-mono text-xs font-black border border-slate-950">
+              {reflections.length} Catatan
+            </span>
+          </div>
+
+          <div className="space-y-3 max-h-72 overflow-y-auto pr-1">
+            {reflections.map(ref => (
+              <div key={ref.id} className="p-3.5 rounded-2xl bg-amber-50/70 border-2 border-slate-950 space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">{ref.emoji || '😊'}</span>
+                    <span className="font-black text-xs text-slate-950">{ref.studentName}</span>
+                  </div>
+                  <span className="text-[10px] font-mono font-bold text-slate-500">{ref.date}</span>
+                </div>
+
+                <div className="text-xs space-y-1">
+                  <div className="text-emerald-900 bg-emerald-50/80 p-2 rounded-xl border border-emerald-200">
+                    <span className="font-black text-emerald-950">Mudah dipahami: </span>
+                    <span className="font-medium">{ref.easy}</span>
+                  </div>
+                  <div className="text-rose-900 bg-rose-50/80 p-2 rounded-xl border border-rose-200">
+                    <span className="font-black text-rose-950">Tantangan: </span>
+                    <span className="font-medium">{ref.challenge}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+
+            {reflections.length === 0 && (
+              <div className="p-6 text-center text-slate-400 font-bold text-xs">
+                Belum ada catatan refleksi metakognisi dari siswa.
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Anti-Cheat Tab Monitor Activity */}
+        <div className="rounded-3xl bg-white border-4 border-slate-950 p-6 shadow-[7px_7px_0px_0px_#0f172a] space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-rose-100 border-2 border-slate-950 text-slate-950 flex items-center justify-center font-black shadow-[2px_2px_0px_0px_#0f172a]">
+                <ShieldAlert size={20} className="text-rose-600" />
+              </div>
+              <div>
+                <h3 className="font-black text-base text-slate-950">Audit Integritas Ujian (Anti-Cheat)</h3>
+                <p className="text-[11px] text-slate-600 font-bold">Deteksi perpindahan tab & jendela saat ujian</p>
+              </div>
+            </div>
+            <span className="px-2 py-0.5 rounded-lg bg-rose-100 text-rose-950 font-mono text-xs font-black border border-slate-950">
+              {allIncidents.length} Catatan
+            </span>
+          </div>
+
+          <div className="space-y-3 max-h-72 overflow-y-auto pr-1">
+            {allIncidents.map((inc, i) => (
+              <div key={i} className="p-3.5 rounded-2xl bg-rose-50 border-2 border-slate-950 space-y-1">
+                <div className="flex items-center justify-between">
+                  <span className="font-black text-xs text-slate-950">{inc.studentName}</span>
+                  <span className="px-2 py-0.5 rounded-md bg-rose-200 text-rose-950 font-mono text-[10px] font-black border border-slate-950">
+                    {inc.count}x Keluar Tab ({inc.seconds}d)
+                  </span>
+                </div>
+                <div className="text-[11px] font-bold text-slate-700 flex items-center justify-between">
+                  <span>Modul: {inc.taskType}</span>
+                  <span className="text-slate-400 font-mono text-[10px]">{inc.date}</span>
+                </div>
+              </div>
+            ))}
+
+            {allIncidents.length === 0 && (
+              <div className="p-6 text-center text-emerald-700 font-bold text-xs bg-emerald-50 rounded-2xl border-2 border-slate-950">
+                <ShieldCheck size={28} className="mx-auto mb-1 text-emerald-600" />
+                Semua siswa tertib selama pengerjaan LKPD, Kuis, dan Evaluasi.
+              </div>
+            )}
+          </div>
+        </div>
+
+      </div>
+
+      {/* Quick Action Navigation Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
         
         {/* Rekap Nilai Card */}
-        <DoubleBezelCard className="bg-slate-50 border-slate-200/80">
-          <div className="space-y-4">
-            <div className="flex items-center gap-3">
-              <div className="w-11 h-11 rounded-2xl bg-brand-50 border border-brand-200/80 text-brand-700 flex items-center justify-center shadow-xs">
-                <BarChart3 size={20} />
-              </div>
-              <div>
-                <h3 className="font-black text-base sm:text-lg text-slate-900">
-                  Rekapitulasi Nilai & Ekspor Excel
-                </h3>
-                <p className="text-xs text-slate-500 font-medium">
-                  Unduh lembar nilai LKPD, skor essai, dan catatan pelanggaran tab
-                </p>
-              </div>
+        <div className="rounded-3xl bg-white border-4 border-slate-950 p-5 shadow-[5px_5px_0px_0px_#0f172a] space-y-3 flex flex-col justify-between">
+          <div className="space-y-2">
+            <div className="w-10 h-10 rounded-xl bg-[#ffe600] border-2 border-slate-950 text-slate-950 flex items-center justify-center font-black shadow-[2px_2px_0px_0px_#0f172a]">
+              <BarChart3 size={20} />
             </div>
-
-            <p className="text-xs text-slate-600 leading-relaxed">
-              Sistem penilaian terintegrasi dengan audit ketuntasan KKM (75) dan log perpindahan jendela ujian untuk menjamin objektivitas evaluasi akademik.
+            <h3 className="font-black text-base text-slate-950">Rekap Nilai Excel (.xlsx)</h3>
+            <p className="text-xs text-slate-600 font-bold leading-relaxed">
+              Ekspor rekapitulasi nilai per LKPD 1, LKPD 2, Latsol 1, Latsol 2, dan Evaluasi Sumatif.
             </p>
-
-            <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
-              <span className="text-xs font-bold text-slate-400">Format Microsoft Excel (.xlsx)</span>
-              <ArrowFillButton
-                variant="primary"
-                size="sm"
-                className="h-9 font-bold text-xs"
-                onClick={() => onNavigate('guru/rekap')}
-              >
-                <span>Buka Rekap Nilai</span>
-              </ArrowFillButton>
-            </div>
           </div>
-        </DoubleBezelCard>
+          <Button
+            variant="cyan"
+            size="sm"
+            className="w-full font-black text-xs"
+            onClick={() => onNavigate('guru/rekap')}
+          >
+            Buka Rekap Excel
+          </Button>
+        </div>
 
-        {/* Verifikasi LKPD Card */}
-        <DoubleBezelCard className="bg-slate-50 border-slate-200/80">
-          <div className="space-y-4">
-            <div className="flex items-center gap-3">
-              <div className="w-11 h-11 rounded-2xl bg-emerald-50 border border-emerald-200/80 text-emerald-700 flex items-center justify-center shadow-xs">
-                <FileText size={20} />
-              </div>
-              <div>
-                <h3 className="font-black text-base sm:text-lg text-slate-900">
-                  Verifikasi & Penilaian LKPD Digital
-                </h3>
-                <p className="text-xs text-slate-500 font-medium">
-                  Validasi foto lembar kerja fisik siswa & rekomendasi Asisten AI
-                </p>
-              </div>
+        {/* Ruang Latsol Card */}
+        <div className="rounded-3xl bg-white border-4 border-slate-950 p-5 shadow-[5px_5px_0px_0px_#0f172a] space-y-3 flex flex-col justify-between">
+          <div className="space-y-2">
+            <div className="w-10 h-10 rounded-xl bg-[#ff94e8] border-2 border-slate-950 text-slate-950 flex items-center justify-center font-black shadow-[2px_2px_0px_0px_#0f172a]">
+              <HelpCircle size={20} />
             </div>
-
-            <p className="text-xs text-slate-600 leading-relaxed">
-              Periksa lampiran foto tugas siswa secara transparan, lakukan penyesuaian skor, dan berikan catatan bimbingan guru secara langsung ke dashboard siswa.
+            <h3 className="font-black text-base text-slate-950">Ruang Latihan Soal</h3>
+            <p className="text-xs text-slate-600 font-bold leading-relaxed">
+              Buka / kunci akses ruang kuis interaktif Quizizz dan atur batas waktu timer pengerjaan.
             </p>
-
-            <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
-              <span className="text-xs font-bold text-slate-400">Status Penugasan Terkini</span>
-              <ArrowFillButton
-                variant="secondary"
-                size="sm"
-                className="h-9 font-bold text-xs"
-                onClick={() => onNavigate('guru/lkpd')}
-              >
-                <span>Periksa Tugas LKPD</span>
-              </ArrowFillButton>
-            </div>
           </div>
-        </DoubleBezelCard>
+          <Button
+            variant="purple"
+            size="sm"
+            className="w-full font-black text-xs"
+            onClick={() => onNavigate('guru/latsol')}
+          >
+            Atur Ruang Kuis
+          </Button>
+        </div>
+
+        {/* Daftar Siswa Card */}
+        <div className="rounded-3xl bg-white border-4 border-slate-950 p-5 shadow-[5px_5px_0px_0px_#0f172a] space-y-3 flex flex-col justify-between">
+          <div className="space-y-2">
+            <div className="w-10 h-10 rounded-xl bg-[#a3e635] border-2 border-slate-950 text-slate-950 flex items-center justify-center font-black shadow-[2px_2px_0px_0px_#0f172a]">
+              <Users size={20} />
+            </div>
+            <h3 className="font-black text-base text-slate-950">Direktori Daftar Siswa</h3>
+            <p className="text-xs text-slate-600 font-bold leading-relaxed">
+              Daftar seluruh siswa terdaftar kelas 7 dengan status ketuntasan LKPD, Kuis, &amp; Evaluasi (Read-Only).
+            </p>
+          </div>
+          <Button
+            variant="lime"
+            size="sm"
+            className="w-full font-black text-xs"
+            onClick={() => onNavigate('guru/siswa')}
+          >
+            Lihat Daftar Siswa
+          </Button>
+        </div>
 
       </div>
 

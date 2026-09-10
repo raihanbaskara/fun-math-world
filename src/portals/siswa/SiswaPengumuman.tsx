@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Card, DoubleBezelCard } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { ArrowFillButton } from '@/components/ui/arrow-fill-button';
 import { storageService } from '@/services/storageService';
 import { soundService } from '@/services/soundService';
@@ -66,184 +66,139 @@ export const SiswaPengumuman: React.FC<{
   });
 
   return (
-    <div className="space-y-6 max-w-3xl mx-auto pb-12">
+    <div className="space-y-8 max-w-4xl mx-auto pb-12 font-sans">
       
-      {/* Top Header Card */}
-      <DoubleBezelCard className="bg-slate-100/80 border-slate-200/80 shadow-xs">
-        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-          <div className="space-y-1.5">
-            <div className="flex items-center gap-2">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-wider bg-slate-900 text-white dark:bg-white dark:text-slate-950">
-                <Megaphone size={13} className="text-[#00ffc6]" />
-                <span>Papan Buletin Kelas 7</span>
+      {/* Header Banner Pure Neobrutalism V3 */}
+      <div className="relative rounded-3xl bg-[#ffe600] border-4 border-slate-950 p-6 sm:p-8 shadow-[8px_8px_0px_0px_#0f172a] overflow-hidden text-slate-950">
+        <div className="absolute right-4 bottom-0 text-slate-950/10 font-mono text-8xl font-black pointer-events-none select-none">
+          INFO
+        </div>
+
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 relative z-10">
+          <div className="space-y-3 max-w-2xl">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="px-3 py-1 bg-white text-slate-950 border-2 border-slate-950 rounded-xl text-xs font-mono font-black shadow-[2px_2px_0px_0px_#0f172a]">
+                PAPAN PENGUMUMAN KELAS 7
               </span>
-              {unreadCount > 0 ? (
-                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-50 text-amber-800 border border-amber-200/80">
-                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
-                  <span>{unreadCount} Belum Dibaca</span>
-                </span>
-              ) : (
-                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200/70">
-                  <CheckCircle2 size={12} className="text-emerald-500" />
-                  <span>Semua Telah Dibaca</span>
-                </span>
-              )}
+              <span className="px-3 py-1 bg-white/80 text-slate-900 border-2 border-slate-950 rounded-xl text-xs font-bold font-mono">
+                {unreadCount > 0 ? `${unreadCount} Belum Dibaca` : 'Semua Sudah Dibaca'}
+              </span>
             </div>
-            <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
-              Informasi & Instruksi Guru
+
+            <h1 className="text-2xl sm:text-4xl font-black tracking-tight text-slate-950 font-mono leading-tight">
+              Informasi &amp; Instruksi Guru
             </h1>
-            <p className="text-xs text-slate-500 max-w-xl leading-relaxed">
-              Pemberitahuan resmi mengenai jadwal evaluasi sumatif, penugasan LKPD, dan petunjuk pembelajaran kurikulum matematika.
+
+            <p className="text-xs sm:text-sm text-slate-950 max-w-2xl leading-relaxed font-bold">
+              Pemberitahuan resmi mengenai jadwal evaluasi sumatif, penugasan LKPD digital, dan petunjuk kurikulum matematika dari guru pengampu.
             </p>
           </div>
 
-          <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
-            <ArrowFillButton
-              variant="secondary"
-              size="sm"
-              onClick={handleMarkAllAsRead}
-              disabled={unreadCount === 0}
-            >
-              Tandai Semua Dibaca
-            </ArrowFillButton>
+          <div className="w-16 h-16 rounded-2xl bg-white border-3 border-slate-950 text-slate-950 flex items-center justify-center shrink-0 shadow-[4px_4px_0px_0px_#0f172a]">
+            <Megaphone size={36} />
           </div>
         </div>
-      </DoubleBezelCard>
-
-      {/* Filter Tabs Segmented Bar */}
-      <div className="flex items-center justify-between gap-2 px-1">
-        <div className="inline-flex items-center p-1 rounded-2xl bg-slate-100/90 border border-slate-200/80 text-xs font-bold">
-          <button
-            type="button"
-            onClick={() => setActiveFilter('all')}
-            className={`px-3.5 py-1.5 rounded-xl transition-all cursor-pointer ${
-              activeFilter === 'all'
-                ? 'bg-white text-slate-900 shadow-2xs font-black'
-                : 'text-slate-500 hover:text-slate-900'
-            }`}
-          >
-            Semua ({announcements.length})
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveFilter('unread')}
-            className={`px-3.5 py-1.5 rounded-xl transition-all cursor-pointer ${
-              activeFilter === 'unread'
-                ? 'bg-white text-slate-900 shadow-2xs font-black'
-                : 'text-slate-500 hover:text-slate-900'
-            }`}
-          >
-            Belum Dibaca ({unreadCount})
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveFilter('important')}
-            className={`px-3.5 py-1.5 rounded-xl transition-all cursor-pointer ${
-              activeFilter === 'important'
-                ? 'bg-white text-slate-900 shadow-2xs font-black'
-                : 'text-slate-500 hover:text-slate-900'
-            }`}
-          >
-            Penting ({announcements.filter(a => a.isImportant).length})
-          </button>
-        </div>
-
-        <span className="text-[11px] font-mono font-bold text-slate-400 hidden sm:inline">
-          Menampilkan {filteredAnnouncements.length} pengumuman
-        </span>
       </div>
 
-      {/* Announcements List */}
+      {/* Filter Tabs & Quick Actions */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          {[
+            { id: 'all', label: `Semua (${announcements.length})` },
+            { id: 'unread', label: `Belum Dibaca (${unreadCount})` },
+            { id: 'important', label: 'Penting' },
+          ].map((f) => (
+            <button
+              key={f.id}
+              type="button"
+              onClick={() => {
+                soundService.click();
+                setActiveFilter(f.id as 'all' | 'unread' | 'important');
+              }}
+              className={`px-4 py-2 rounded-2xl border-2 border-slate-950 font-mono font-black text-xs transition-all cursor-pointer ${
+                activeFilter === f.id
+                  ? 'bg-slate-950 text-[#ffe600] shadow-[3px_3px_0px_0px_#0f172a] -translate-x-0.5 -translate-y-0.5'
+                  : 'bg-white text-slate-800 hover:bg-yellow-100 shadow-[1.5px_1.5px_0px_0px_#0f172a]'
+              }`}
+            >
+              {f.label}
+            </button>
+          ))}
+        </div>
+
+        {unreadCount > 0 && (
+          <button
+            type="button"
+            onClick={handleMarkAllAsRead}
+            className="px-4 py-2 rounded-2xl bg-[#a3e635] text-slate-950 border-2 border-slate-950 font-mono font-black text-xs shadow-[2px_2px_0px_0px_#0f172a] hover:bg-lime-400 cursor-pointer flex items-center gap-1.5 self-start sm:self-auto"
+          >
+            <CheckCheck size={16} />
+            <span>Tandai Semua Dibaca</span>
+          </button>
+        )}
+      </div>
+
+      {/* Announcements Stream */}
       <div className="space-y-4">
-        {filteredAnnouncements.length === 0 ? (
-          <div className="p-12 text-center bg-white rounded-3xl border border-slate-200/80 space-y-2">
-            <CheckCircle2 size={32} className="mx-auto text-emerald-500 opacity-60" />
-            <h3 className="text-sm font-black text-slate-900">Tidak Ada Pengumuman</h3>
-            <p className="text-xs text-slate-500">
-              {activeFilter === 'unread'
-                ? 'Luar biasa! Kamu sudah membaca seluruh pengumuman kelas.'
-                : 'Belum ada pengumuman dengan kriteria filter yang dipilih.'}
-            </p>
-          </div>
-        ) : (
-          filteredAnnouncements.map((a) => {
-            const isRead = readList.includes(a.id);
-            const titleText = cleanTitle(a.title);
+        {filteredAnnouncements.map((item) => {
+          const isRead = readList.includes(item.id);
 
-            return (
-              <DoubleBezelCard
-                key={a.id}
-                className={`transition-all duration-300 ${
-                  !isRead
-                    ? 'bg-amber-50/40 border-amber-200/80 ring-2 ring-amber-400/20'
-                    : 'bg-slate-100/60 border-slate-200/80'
-                }`}
-              >
-                <div className="space-y-3.5">
-                  
-                  {/* Top Metadata Row */}
-                  <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
-                    <div className="flex items-center gap-2 text-slate-500 font-bold">
-                      <span className="inline-flex items-center gap-1 text-[11px] font-mono text-slate-500 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-md">
-                        <Clock size={12} />
-                        <span>{a.date}</span>
-                      </span>
-                      <span>•</span>
-                      <span className="inline-flex items-center gap-1 text-slate-700">
-                        <UserCheck size={13} className="text-brand-600" />
-                        <span>{a.author}</span>
-                      </span>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      {a.isImportant && (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-rose-50 text-rose-700 border border-rose-200">
-                          <Pin size={11} className="text-rose-600" />
-                          <span>Instruksi Prioritas</span>
-                        </span>
-                      )}
-
-                      {!isRead ? (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-100 text-amber-900 border border-amber-300">
-                          <span className="w-1.5 h-1.5 rounded-full bg-amber-600 animate-ping" />
-                          <span>Baru</span>
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200/70">
-                          <CheckCircle2 size={11} className="text-emerald-600" />
-                          <span>Sudah Dibaca</span>
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Title & Body Content */}
-                  <div className="space-y-1.5">
-                    <h3 className="text-base sm:text-lg font-black text-slate-900 tracking-tight flex items-center gap-2">
-                      <span>{titleText}</span>
-                    </h3>
-                    <p className="text-xs sm:text-sm text-slate-700 font-medium leading-relaxed whitespace-pre-line bg-white/80 p-4 rounded-2xl border border-slate-200/80">
-                      {a.content}
-                    </p>
-                  </div>
-
-                  {/* Bottom Action if Unread */}
-                  {!isRead && (
-                    <div className="pt-1 flex justify-end">
-                      <ArrowFillButton
-                        variant="mint"
-                        size="sm"
-                        onClick={() => handleMarkAsRead(a.id)}
-                      >
-                        Tandai Selesai Membaca
-                      </ArrowFillButton>
-                    </div>
+          return (
+            <div
+              key={item.id}
+              className={`rounded-3xl border-4 border-slate-950 p-6 transition-all space-y-3 ${
+                isRead
+                  ? 'bg-white shadow-[5px_5px_0px_0px_#0f172a]'
+                  : 'bg-[#fffdf5] shadow-[8px_8px_0px_0px_#0f172a] border-slate-950 ring-2 ring-amber-300'
+              }`}
+            >
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b-2 border-slate-200">
+                <div className="flex items-center gap-2 flex-wrap">
+                  {item.isImportant && (
+                    <span className="px-2.5 py-0.5 rounded-lg bg-rose-200 text-rose-950 border border-slate-950 font-mono text-[10px] font-black flex items-center gap-1">
+                      <Pin size={11} />
+                      <span>PENTING</span>
+                    </span>
                   )}
-
+                  <span className="px-2.5 py-0.5 rounded-lg bg-sky-100 text-slate-950 border border-slate-950 font-mono text-[10px] font-bold">
+                    Oleh: {item.author}
+                  </span>
+                  <span className="text-[11px] font-mono text-slate-500 font-bold">
+                    {item.date}
+                  </span>
                 </div>
-              </DoubleBezelCard>
-            );
-          })
+
+                {!isRead ? (
+                  <button
+                    type="button"
+                    onClick={() => handleMarkAsRead(item.id)}
+                    className="px-3 py-1 bg-[#ffe600] text-slate-950 font-mono font-black text-[11px] rounded-xl border-2 border-slate-950 shadow-[1.5px_1.5px_0px_0px_#0f172a] hover:bg-yellow-400 cursor-pointer self-start sm:self-auto"
+                  >
+                    Tandai Dibaca
+                  </button>
+                ) : (
+                  <span className="text-[11px] font-mono font-black text-emerald-700 flex items-center gap-1">
+                    <CheckCircle2 size={13} />
+                    <span>Sudah Dibaca</span>
+                  </span>
+                )}
+              </div>
+
+              <h3 className="text-base sm:text-lg font-black font-mono text-slate-950">
+                {cleanTitle(item.title)}
+              </h3>
+
+              <p className="text-xs sm:text-sm font-bold text-slate-700 leading-relaxed whitespace-pre-line">
+                {item.content}
+              </p>
+            </div>
+          );
+        })}
+
+        {filteredAnnouncements.length === 0 && (
+          <div className="rounded-3xl bg-white border-4 border-slate-950 p-8 text-center text-slate-500 font-bold shadow-[6px_6px_0px_0px_#0f172a]">
+            Tidak ada pengumuman pada kategori ini.
+          </div>
         )}
       </div>
 

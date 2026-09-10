@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { storageService } from '@/services/storageService';
 import { soundService } from '@/services/soundService';
 import { renderFormattedMathText } from '@/components/ui/fraction';
-import { BookOpen, Video, Plus, Trash2, Clock, ExternalLink, Play } from 'lucide-react';
+import { BookOpen, Video, Plus, Trash2, Clock, ExternalLink, Play, FileText } from 'lucide-react';
 
 function formatYouTubeEmbedUrl(url: string): string {
   if (!url) return '';
@@ -32,6 +32,7 @@ export const GuruMateri: React.FC<{
   const [materialTitle, setMaterialTitle] = useState('');
   const [materialBadge, setMaterialBadge] = useState('Operasi Hitung');
   const [materialContent, setMaterialContent] = useState('');
+  const [materialFile, setMaterialFile] = useState<{ name: string; url: string; type: string } | null>(null);
 
   // Video state
   const [isAddVideoOpen, setIsAddVideoOpen] = useState(false);
@@ -40,12 +41,29 @@ export const GuruMateri: React.FC<{
   const [videoDuration, setVideoDuration] = useState('12');
   const [videoDesc, setVideoDesc] = useState('');
 
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const dataUrl = event.target?.result as string;
+      setMaterialFile({
+        name: file.name,
+        url: dataUrl,
+        type: file.type || 'application/octet-stream',
+      });
+      showToast(`Berkas "${file.name}" berhasil diunggah!`, 'success');
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleAddMaterial = (e: React.FormEvent) => {
     e.preventDefault();
     soundService.click();
 
-    if (!materialTitle.trim() || !materialContent.trim()) {
-      showToast('Judul dan isi materi wajib diisi!', 'error');
+    if (!materialTitle.trim()) {
+      showToast('Judul materi wajib diisi!', 'error');
       return;
     }
 
@@ -54,16 +72,20 @@ export const GuruMateri: React.FC<{
         id: 'm_' + Date.now(),
         title: materialTitle.trim(),
         badge: materialBadge.trim(),
-        content: materialContent.trim(),
+        content: materialContent.trim() || `Modul berkas lampiran materi: ${materialFile?.name || 'Dokumen Pelengkap'}`,
         fraction: [1, 2],
+        fileName: materialFile?.name,
+        fileUrl: materialFile?.url,
+        fileType: materialFile?.type,
       });
     });
 
     setIsAddMaterialOpen(false);
     setMaterialTitle('');
     setMaterialContent('');
+    setMaterialFile(null);
     soundService.success();
-    showToast('Subbab materi baru berhasil ditambahkan!', 'success');
+    showToast('Subbab materi / berkas baru berhasil ditambahkan!', 'success');
   };
 
   const handleDeleteMaterial = (id: string) => {
@@ -122,7 +144,7 @@ export const GuruMateri: React.FC<{
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h2 className="text-2xl font-black text-slate-900 flex items-center gap-2.5">
-            <BookOpen className="text-emerald-600" />
+            <BookOpen className="text-amber-500" />
             <span>Kelola Materi & Video Pembelajaran</span>
           </h2>
           <p className="text-xs sm:text-sm text-slate-500 font-medium">
@@ -165,7 +187,7 @@ export const GuruMateri: React.FC<{
             <ArrowFillButton
               variant="primary"
               size="sm"
-              className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold h-9"
+              className="bg-[#ffe600] text-slate-950 font-black border-2 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a] hover:bg-yellow-400 h-9"
               onClick={() => setIsAddMaterialOpen(true)}
             >
               <Plus size={15} />
@@ -179,7 +201,7 @@ export const GuruMateri: React.FC<{
                 <div className="space-y-3 flex flex-col justify-between h-full">
                   <div className="space-y-2">
                     <div className="flex justify-between items-center text-xs">
-                      <span className="px-2.5 py-0.5 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-200 font-bold font-mono text-[10px]">
+                      <span className="px-2.5 py-0.5 rounded-md bg-yellow-100 text-slate-950 border border-slate-950 font-bold font-mono text-[10px]">
                         {m.badge}
                       </span>
                       <button
@@ -195,6 +217,21 @@ export const GuruMateri: React.FC<{
                     <div className="text-xs text-slate-600 leading-relaxed font-medium">
                       {renderFormattedMathText(m.content, 'xs')}
                     </div>
+
+                    {m.fileName && (
+                      <div className="pt-2">
+                        <a
+                          href={m.fileUrl || '#'}
+                          download={m.fileName}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-sky-50 text-sky-900 border-2 border-slate-950 font-mono text-xs font-black shadow-[2px_2px_0px_0px_#0f172a] hover:bg-sky-100 transition"
+                        >
+                          <FileText size={14} className="text-sky-600" />
+                          <span>Unduh Berkas: {m.fileName}</span>
+                        </a>
+                      </div>
+                    )}
                   </div>
                 </div>
               </DoubleBezelCard>
@@ -304,16 +341,32 @@ export const GuruMateri: React.FC<{
 
           <div>
             <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">
-              Isi Penjelasan Materi:
+              Isi Penjelasan Singkat Materi:
             </label>
             <textarea
-              required
-              rows={4}
+              rows={3}
               value={materialContent}
               onChange={e => setMaterialContent(e.target.value)}
-              placeholder="Tuliskan materi konsep pecahan..."
+              placeholder="Tuliskan ringkasan materi atau biarkan kosong jika hanya upload berkas dokumen..."
               className="w-full p-3.5 rounded-2xl border-2 border-slate-300 bg-white text-slate-900 text-xs sm:text-sm font-medium focus:border-brand-500 focus:ring-4 focus:ring-brand-500/15 outline-none leading-relaxed"
             />
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">
+              Unggah Dokumen Berkas Materi (PDF / PPT / DOCX / Gambar):
+            </label>
+            <input
+              type="file"
+              accept=".pdf,.ppt,.pptx,.doc,.docx,.png,.jpg,.jpeg"
+              onChange={handleFileUpload}
+              className="w-full text-xs text-slate-600 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-2 file:border-slate-950 file:text-xs file:font-black file:bg-[#ffe600] file:text-slate-950 hover:file:bg-yellow-400 cursor-pointer"
+            />
+            {materialFile && (
+              <span className="text-xs font-mono font-bold text-emerald-700 mt-1.5 block">
+                ✓ Berkas terpilih: {materialFile.name}
+              </span>
+            )}
           </div>
 
           <div className="flex justify-end gap-2 pt-2">
@@ -326,8 +379,8 @@ export const GuruMateri: React.FC<{
             >
               Batal
             </Button>
-            <Button type="submit" variant="primary" size="sm" className="rounded-xl font-black bg-emerald-600 hover:bg-emerald-700 text-white">
-              Simpan Subbab Materi
+            <Button type="submit" variant="primary" size="sm" className="rounded-xl font-black bg-[#ffe600] text-slate-950 border-2 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a] hover:bg-yellow-400">
+              Simpan Subbab Materi / Berkas
             </Button>
           </div>
         </form>

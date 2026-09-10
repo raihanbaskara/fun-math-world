@@ -32,7 +32,7 @@ export const Modal: React.FC<ModalProps> = ({
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -41,25 +41,25 @@ export const Modal: React.FC<ModalProps> = ({
               soundService.click();
               onClose();
             }}
-            className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm"
+            className="fixed inset-0 bg-slate-950/70 backdrop-blur-xs"
           />
 
           <motion.div
-            initial={{ scale: 0.95, opacity: 0, y: 10 }}
+            initial={{ scale: 0.9, opacity: 0, y: 15 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
-            exit={{ scale: 0.95, opacity: 0, y: 10 }}
-            transition={{ type: 'spring', stiffness: 350, damping: 25 }}
-            className={`relative w-full ${maxWidth} bg-white dark:bg-slate-800 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-2xl p-6 z-10 max-h-[90vh] overflow-y-auto`}
+            exit={{ scale: 0.9, opacity: 0, y: 15 }}
+            transition={{ type: 'spring', stiffness: 350, damping: 22 }}
+            className={`relative w-full ${maxWidth} bg-white rounded-2xl border-4 border-slate-900 shadow-[10px_10px_0px_0px_#0f172a] p-6 z-10 max-h-[90vh] overflow-y-auto`}
           >
             {title && (
-              <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-700/80 mb-4">
-                <h3 className="text-lg font-black text-slate-900 dark:text-slate-100">{title}</h3>
+              <div className="flex items-center justify-between pb-4 border-b-3 border-slate-900 mb-5 bg-amber-200 -mx-6 -mt-6 p-4 rounded-t-[calc(1rem-4px)]">
+                <h3 className="text-lg font-black text-slate-950 uppercase tracking-wide">{title}</h3>
                 <button
                   onClick={() => {
                     soundService.click();
                     onClose();
                   }}
-                  className="p-1.5 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition"
+                  className="w-8 h-8 rounded-xl bg-white border-2 border-slate-900 shadow-[2px_2px_0px_0px_#0f172a] text-slate-950 hover:bg-pink-300 transition flex items-center justify-center font-black cursor-pointer"
                 >
                   <X size={18} />
                 </button>

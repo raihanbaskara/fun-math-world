@@ -7,7 +7,7 @@ export interface CardProps {
   onClick?: () => void;
 }
 
-// Double-Bezel (Doppelrand) Hardware Architecture
+// Neobrutalist Double-Bezel Hardware Architecture
 export const DoubleBezelCard: React.FC<CardProps> = ({
   children,
   className = '',
@@ -18,14 +18,14 @@ export const DoubleBezelCard: React.FC<CardProps> = ({
   return (
     <div
       onClick={onClick}
-      className={`group relative rounded-[2rem] p-1.5 bg-slate-100/90 border border-slate-200/90 shadow-xs transition-all duration-300 ${
-        onClick ? 'cursor-pointer hover:shadow-lg hover:border-brand-500/40' : ''
+      className={`group relative rounded-2xl p-1.5 bg-amber-300 border-3 border-slate-900 shadow-[5px_5px_0px_0px_#0f172a] transition-all duration-200 ${
+        onClick ? 'cursor-pointer hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[7px_7px_0px_0px_#0f172a] active:translate-x-1 active:translate-y-1 active:shadow-[2px_2px_0px_0px_#0f172a]' : ''
       } ${className}`}
     >
       <div
-        className={`relative w-full h-full rounded-[calc(2rem-0.375rem)] ${
+        className={`relative w-full h-full rounded-[calc(1rem-0.15rem)] ${
           hasCustomBg ? '' : 'bg-white'
-        } p-6 shadow-[inset_0_1px_1px_rgba(255,255,255,0.08)] border border-slate-100/20 transition-all duration-300 ${innerClassName}`}
+        } p-6 border-2 border-slate-900/80 transition-all duration-200 ${innerClassName}`}
       >
         {children}
       </div>
@@ -33,27 +33,26 @@ export const DoubleBezelCard: React.FC<CardProps> = ({
   );
 };
 
-// High-End Glassmorphic Card
+// Neobrutalist Glassmorphic / Pop Card
 export const GlassCard: React.FC<CardProps> = ({ children, className = '', onClick }) => (
   <div
     onClick={onClick}
-    className={`relative rounded-[2rem] p-6 bg-white/95 backdrop-blur-2xl border border-slate-200/80 shadow-lg shadow-slate-900/5 transition-all duration-300 ${
-      onClick ? 'cursor-pointer hover:scale-[1.01]' : ''
+    className={`relative rounded-2xl p-6 bg-white border-3 border-slate-900 shadow-[6px_6px_0px_0px_#0f172a] transition-all duration-200 ${
+      onClick ? 'cursor-pointer hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[8px_8px_0px_0px_#0f172a] active:translate-x-1 active:translate-y-1 active:shadow-[2px_2px_0px_0px_#0f172a]' : ''
     } ${className}`}
   >
     {children}
   </div>
 );
 
-// Standard Card
+// Standard Neobrutalist Card
 export const Card: React.FC<CardProps> = ({ children, className = '', onClick }) => (
   <div
     onClick={onClick}
-    className={`rounded-3xl bg-white border border-slate-200/90 p-6 shadow-xs transition-all duration-200 ${
-      onClick ? 'cursor-pointer hover:border-slate-300 hover:shadow-md' : ''
+    className={`rounded-2xl bg-white border-3 border-slate-900 p-6 shadow-[5px_5px_0px_0px_#0f172a] transition-all duration-200 ${
+      onClick ? 'cursor-pointer hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[7px_7px_0px_0px_#0f172a] active:translate-x-1 active:translate-y-1 active:shadow-[2px_2px_0px_0px_#0f172a]' : ''
     } ${className}`}
   >
     {children}
   </div>
 );
-

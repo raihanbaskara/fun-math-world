@@ -1,14 +1,12 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Card, DoubleBezelCard } from '@/components/ui/card';
+import React, { useState, useEffect } from 'react';
+import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { GlassmorphismCTA } from '@/components/ui/glass-cta';
-import { ArrowFillButton } from '@/components/ui/arrow-fill-button';
-import { Fraction, renderFormattedMathText } from '@/components/ui/fraction';
 import { storageService } from '@/services/storageService';
 import { soundService } from '@/services/soundService';
 import { User, AntiCheatReport, EvaluationSubmission } from '@/types';
 import { compressImage } from '@/lib/utils';
+import { useAntiCheat } from '@/lib/useAntiCheat';
 import {
   PenTool,
   ShieldAlert,
@@ -16,411 +14,475 @@ import {
   CheckCircle2,
   Camera,
   AlertTriangle,
-  RotateCcw,
   Sparkles,
-  Layers,
+  Lock,
+  Clock,
+  ArrowRight,
   FileCheck,
-  Clock
+  Send,
+  Trash2,
+  Upload
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
 export const SiswaEvaluasi: React.FC<{
   currentUser: User;
+  onNavigate: (route: string) => void;
   showToast: (msg: string, type?: 'info' | 'success' | 'error') => void;
-}> = ({ currentUser, showToast }) => {
-  const db = storageService.getState();
-  const previousSubmission = db.evaluationSubmissions.find(s => s.studentId === currentUser.id);
-
-  const [isReExam, setIsReExam] = useState<boolean>(false);
-  const [activeQuestionIdx, setActiveQuestionIdx] = useState<number>(0);
-  const [answers, setAnswers] = useState<Record<string, string>>({});
-  const [photoProof, setPhotoProof] = useState<string | null>(null);
-
-  // Anti-Cheat Tab Monitor State
-  const [switchCount, setSwitchCount] = useState<number>(0);
-  const [totalLeaveSeconds, setTotalLeaveSeconds] = useState<number>(0);
-  const [cheatAlertInfo, setCheatAlertInfo] = useState<{ count: number; duration: number } | null>(null);
-
-  const leaveTimeRef = useRef<number | null>(null);
-  const logRef = useRef<Array<{ timestamp: string; incident: string; durationSeconds: number }>>([]);
-  const isMonitoringRef = useRef<boolean>(true);
-
-  const questions = db.evaluationQuestions || [];
+}> = ({ currentUser, onNavigate, showToast }) => {
+  const [db, setDb] = useState(storageService.getState());
 
   useEffect(() => {
-    if (previousSubmission && !isReExam) return;
+    return storageService.subscribe(newState => {
+      setDb(newState);
+    });
+  }, []);
 
-    isMonitoringRef.current = true;
+  const hasCompletedLKPD = db.lkpdSubmissions.some(s => s.studentId === currentUser.id) || (currentUser.progress?.lkpd || 0) >= 100;
+  const hasCompletedLatsol = (db.latsolSubmissions && db.latsolSubmissions.some(s => s.studentId === currentUser.id)) || (currentUser.progress?.latsol || 0) > 0;
+  const isPrerequisiteMet = hasCompletedLKPD && hasCompletedLatsol;
 
-    const handleVisibilityChange = () => {
-      if (!isMonitoringRef.current) return;
+  const previousSubmission = db.evaluationSubmissions.find(s => s.studentId === currentUser.id);
 
-      if (document.hidden) {
-        leaveTimeRef.current = Date.now();
-        setSwitchCount(prev => prev + 1);
-        soundService.alert();
-      } else {
-        let dur = 0;
-        if (leaveTimeRef.current) {
-          dur = Math.round((Date.now() - leaveTimeRef.current) / 1000);
-          setTotalLeaveSeconds(prev => prev + dur);
-          leaveTimeRef.current = null;
-        }
+  const questions = db.evaluationQuestions || [];
+  const [activeQuestionIdx, setActiveQuestionIdx] = useState<number>(0);
+  const [textAnswers, setTextAnswers] = useState<Record<string, string>>({});
+  const [photoProof, setPhotoProof] = useState<string | null>(null);
+  const [timeLeft, setTimeLeft] = useState<number>(1200); // 20 minutes
 
-        const countNow = switchCount + 1;
-        logRef.current.push({
-          timestamp: new Date().toLocaleTimeString(),
-          incident: `Keluar Tab ke-${countNow}`,
-          durationSeconds: dur
-        });
+  // Anti-Cheat Tab Monitor Active while taking exam
+  const { switchCount, getReport } = useAntiCheat({
+    active: isPrerequisiteMet && !previousSubmission,
+    onViolation: (msg) => {
+      showToast(msg, 'error');
+    }
+  });
 
-        setCheatAlertInfo({ count: countNow, duration: dur });
-      }
-    };
+  // Countdown timer
+  useEffect(() => {
+    if (!isPrerequisiteMet || previousSubmission) return;
 
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => {
-      isMonitoringRef.current = false;
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-    };
-  }, [previousSubmission, isReExam, switchCount]);
+    if (timeLeft <= 0) {
+      soundService.alert();
+      showToast("Waktu evaluasi habis! Mengumpulkan jawaban otomatis...", "info");
+      handleAutoSubmitOnTimeout();
+      return;
+    }
 
-  const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const timer = setInterval(() => {
+      setTimeLeft(prev => prev - 1);
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [isPrerequisiteMet, previousSubmission, timeLeft]);
+
+  const handleTextChange = (qId: string, text: string) => {
+    setTextAnswers(prev => ({
+      ...prev,
+      [qId]: text
+    }));
+  };
+
+  const handlePhotoSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    showToast("Mengompresi foto lembar coretan...", "info");
     const reader = new FileReader();
-    reader.onload = async (event) => {
-      const dataUrl = event.target?.result as string;
+    reader.onload = async (evt) => {
+      const dataUrl = evt.target?.result as string;
       const compressed = await compressImage(dataUrl);
       setPhotoProof(compressed);
-      showToast("Foto lembar coretan berhasil dimuat.", "info");
+      soundService.click();
+      showToast("Foto lembar coretan berhasil dilampirkan (opsional).", "success");
     };
     reader.readAsDataURL(file);
   };
 
-  const handleAnswerChange = (qId: string, val: string) => {
-    setAnswers(prev => ({ ...prev, [qId]: val }));
+  const handleAutoSubmitOnTimeout = () => {
+    handleSubmitExam();
   };
 
-  const handleSubmitExam = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmitExam = () => {
     soundService.click();
-    isMonitoringRef.current = false;
 
-    if (!photoProof) {
+    // Check if at least one question has text
+    const answeredCount = Object.values(textAnswers).filter(t => t.trim().length > 0).length;
+    if (answeredCount === 0) {
       soundService.alert();
-      showToast("Harap lampirkan foto lembar coretan pengerjaan!", "error");
+      showToast("Ketik jawaban uraian untuk soal evaluasi terlebih dahulu!", "error");
       return;
     }
 
-    const cheatReport: AntiCheatReport = {
-      switchCount,
-      totalLeaveSeconds,
-      log: logRef.current
-    };
+    const cheatReport: AntiCheatReport = getReport();
 
-    const baseScore = 95;
-    const penalty = Math.min(25, switchCount * 5);
-    const finalScore = Math.max(70, baseScore - penalty);
-
-    const submissionData: EvaluationSubmission = {
-      id: "eval_" + currentUser.id + "_" + Date.now(),
+    const newSubmission: EvaluationSubmission = {
+      id: `eval_${currentUser.id}_${Date.now()}`,
       studentId: currentUser.id,
       studentName: currentUser.name,
-      studentClass: currentUser.class || "Kelas 7-A",
-      date: new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }),
-      score: finalScore,
-      textAnswers: answers,
-      photoProof: photoProof,
+      studentClass: currentUser.class || "Kelas 7",
+      date: new Date().toLocaleString('id-ID'),
+      score: 95,
+      textAnswers: textAnswers,
+      photoProof: photoProof || "",
       antiCheat: cheatReport,
       status: "Selesai"
     };
 
     storageService.update(draft => {
-      const idx = draft.evaluationSubmissions.findIndex(s => s.studentId === currentUser.id);
-      if (idx >= 0) draft.evaluationSubmissions[idx] = submissionData;
-      else draft.evaluationSubmissions.push(submissionData);
+      draft.evaluationSubmissions = draft.evaluationSubmissions.filter(
+        s => s.studentId !== currentUser.id
+      );
+      draft.evaluationSubmissions.push(newSubmission);
 
+      // Update progress
       const user = draft.users.find(u => u.id === currentUser.id);
-      if (user && user.progress) {
-        user.progress.evaluasi = finalScore;
+      if (user) {
+        if (!user.progress) user.progress = { materi: 100, video: 100, lkpd: 100, latsol: 100, evaluasi: 0 };
+        user.progress.evaluasi = 95;
       }
     });
 
-    setIsReExam(false);
     soundService.success();
-    confetti({ particleCount: 70, spread: 80 });
-    showToast("Evaluasi soal uraian berhasil dikumpulkan!", "success");
+    confetti({ particleCount: 120, spread: 80 });
+    showToast("Evaluasi Uraian Berhasil Dikumpulkan!", "success");
   };
 
-  // View Mode: Already Submitted Exam Results & Key Solution
-  if (previousSubmission && !isReExam) {
+  // 1. PREREQUISITE LOCK SCREEN
+  if (!isPrerequisiteMet) {
     return (
-      <div className="space-y-6 max-w-3xl mx-auto pb-12">
-        
-        {/* Score Header Double-Bezel Card with High-Contrast Dark Luxury Architecture */}
-        <DoubleBezelCard
-          className="bg-slate-950 border-slate-800 shadow-xl"
-          innerClassName="bg-slate-900 border-slate-800 text-white shadow-[inset_0_1px_1px_rgba(255,255,255,0.08)] p-6 sm:p-7"
-        >
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
-            <div className="space-y-3">
-              <div className="flex items-center gap-2.5">
-                <span className="px-3 py-1 bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 rounded-full text-[11px] font-black uppercase tracking-wider font-mono shadow-xs">
-                  Hasil Evaluasi Terverifikasi
-                </span>
-                <span className="text-xs text-slate-300 font-mono font-bold">
-                  {previousSubmission.date}
-                </span>
-              </div>
-              <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white flex items-baseline gap-2">
-                <span>Skor Evaluasi:</span>
-                <span className="text-emerald-400 font-mono text-3xl sm:text-4xl font-black">{previousSubmission.score}</span>
-                <span className="text-slate-400 font-bold text-lg font-mono">/ 100</span>
-              </h1>
-              <p className="text-xs sm:text-sm text-slate-200 font-medium leading-relaxed max-w-xl">
-                Pengerjaan soal uraian telah dianalisis oleh guru matematika dan diverifikasi sistem integritas.
-              </p>
+      <div className="space-y-6 max-w-4xl mx-auto font-sans pb-12">
+        <div className="rounded-3xl bg-amber-100 border-4 border-slate-950 p-8 shadow-[8px_8px_0px_0px_#0f172a] text-slate-950 space-y-4">
+          <div className="flex items-center gap-3">
+            <div className="p-3 bg-[#ffe600] border-3 border-slate-950 rounded-2xl shadow-[3px_3px_0px_0px_#0f172a]">
+              <Lock size={28} />
             </div>
-
-            <div className="w-16 h-16 rounded-2xl bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 flex items-center justify-center shadow-inner shrink-0">
-              <Trophy size={32} />
+            <div>
+              <span className="text-xs font-mono font-black uppercase tracking-wider bg-red-400 px-3 py-1 rounded-xl border-2 border-slate-950">
+                ALUR BERURUTAN (STEP 3 TERKUNCI)
+              </span>
+              <h2 className="text-2xl font-black font-mono mt-1">
+                Evaluasi Sumatif Belum Terbuka
+              </h2>
             </div>
           </div>
-        </DoubleBezelCard>
 
-        {/* Anti-cheat audit card */}
-        <Card className="p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 text-xs font-bold border border-slate-200/90 shadow-2xs">
-          <div className="flex items-center gap-2 text-slate-800">
-            <ShieldAlert size={16} className={previousSubmission.antiCheat.switchCount > 0 ? "text-amber-600" : "text-emerald-600"} />
-            <span>
-              Integritas Ujian: <b>{previousSubmission.antiCheat.switchCount}x pindah tab</b> ({previousSubmission.antiCheat.totalLeaveSeconds} detik)
+          <p className="text-sm font-bold text-slate-800 leading-relaxed max-w-2xl">
+            Sesuai urutan alur belajar matematika: Kamu harus menyelesaikan <b>LKPD Digital (Tahap 1)</b> dan <b>Latihan Soal Quizizz (Tahap 2)</b> terlebih dahulu sebelum dapat mengerjakan Evaluasi Sumatif.
+          </p>
+
+          <div className="flex flex-wrap gap-3 pt-2">
+            {!hasCompletedLKPD && (
+              <button
+                onClick={() => onNavigate('siswa/lkpd')}
+                className="px-6 py-3.5 bg-[#ffe600] hover:bg-yellow-400 text-slate-950 font-mono font-black text-xs uppercase tracking-wider border-3 border-slate-950 rounded-2xl shadow-[4px_4px_0px_0px_#0f172a] transition-all cursor-pointer flex items-center gap-2"
+              >
+                <span>Buka LKPD Digital (Tahap 1)</span>
+                <ArrowRight size={16} />
+              </button>
+            )}
+            {hasCompletedLKPD && !hasCompletedLatsol && (
+              <button
+                onClick={() => onNavigate('siswa/latsol')}
+                className="px-6 py-3.5 bg-[#a5f3fc] hover:bg-cyan-300 text-slate-950 font-mono font-black text-xs uppercase tracking-wider border-3 border-slate-950 rounded-2xl shadow-[4px_4px_0px_0px_#0f172a] transition-all cursor-pointer flex items-center gap-2"
+              >
+                <span>Buka Latihan Soal Quizizz (Tahap 2)</span>
+                <ArrowRight size={16} />
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // 2. COMPLETED EVALUATION SCREEN (NO RETAKE, SHOWS FULL STEP DISCUSSION)
+  if (previousSubmission) {
+    return (
+      <div className="space-y-6 max-w-4xl mx-auto font-sans pb-12 animate-in fade-in">
+        
+        {/* Celebration Banner */}
+        <div className="rounded-3xl bg-[#ffe600] border-4 border-slate-950 p-8 shadow-[8px_8px_0px_0px_#0f172a] text-slate-950 space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b-3 border-slate-950 pb-4">
+            <div className="flex items-center gap-3">
+              <div className="p-3 bg-white border-3 border-slate-950 rounded-2xl shadow-[3px_3px_0px_0px_#0f172a]">
+                <Trophy size={32} className="text-amber-500" />
+              </div>
+              <div>
+                <span className="text-xs font-mono font-black uppercase bg-white px-3 py-1 rounded-xl border-2 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a]">
+                  EVALUASI TELAH SELESAI
+                </span>
+                <h2 className="text-2xl font-black font-mono mt-1">
+                  Hasil Evaluasi Uraian HOTS
+                </h2>
+              </div>
+            </div>
+
+            <div className="text-right">
+              <span className="font-mono text-xs font-black text-slate-700 block">NILAI AKHIR:</span>
+              <span className="text-4xl sm:text-5xl font-mono font-black text-slate-950">
+                {previousSubmission.score}/100
+              </span>
+            </div>
+          </div>
+
+          <p className="text-xs sm:text-sm font-bold text-slate-900 leading-relaxed">
+            Evaluasi sumatif telah dikumpulkan secara final. Di bawah ini adalah langkah pembahasan lengkap untuk memperdalam pemahaman konsep pecahanmu.
+          </p>
+
+          {/* Anti cheat record summary */}
+          <div className="flex flex-wrap items-center gap-3 text-xs font-mono font-bold pt-1">
+            <span className="px-3 py-1.5 bg-white rounded-xl border-2 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a]">
+              📅 Tanggal Pengumpulan: {previousSubmission.date}
+            </span>
+            <span className="px-3 py-1.5 bg-emerald-200 rounded-xl border-2 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a]">
+              🛡 Status Tab Integrity: {previousSubmission.antiCheat?.switchCount || 0}x Pindah Tab
             </span>
           </div>
-          <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase ${
-            previousSubmission.antiCheat.switchCount > 0
-              ? 'bg-amber-50 text-amber-800 border border-amber-200'
-              : 'bg-emerald-50 text-emerald-800 border border-emerald-200'
-          }`}>
-            {previousSubmission.antiCheat.switchCount > 0 ? "Tercatat Pindah Jendela" : "Integritas Sempurna"}
-          </span>
-        </Card>
-
-        {/* Step-by-Step Formal Discussion */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-base sm:text-lg font-black text-slate-900 flex items-center gap-2">
-              <Layers size={18} className="text-brand-600" />
-              <span>Kunci Jawaban & Pembahasan Lengkap</span>
-            </h3>
-            <span className="text-xs text-slate-500 font-bold">{questions.length} Soal Uraian</span>
-          </div>
-
-          {questions.map((q, idx) => (
-            <DoubleBezelCard key={q.id} className="bg-white border-slate-200/90 shadow-xs">
-              <div className="space-y-3">
-                <div className="flex justify-between items-center text-xs">
-                  <span className="font-mono font-black text-brand-700 bg-brand-50 border border-brand-200/70 px-2.5 py-0.5 rounded-md">
-                    Soal #{idx + 1}
-                  </span>
-                  <span className="font-bold text-slate-500">Bobot: {q.weight} Poin</span>
-                </div>
-
-                <h4 className="font-black text-sm sm:text-base text-slate-900">{q.title}</h4>
-                <p className="text-xs sm:text-sm text-slate-700 bg-slate-50 p-4 rounded-2xl border border-slate-200/80 font-medium leading-relaxed">
-                  {renderFormattedMathText(q.prompt, 'xs')}
-                </p>
-
-                <div className="p-4 bg-emerald-50/70 rounded-2xl border border-emerald-200/70 text-xs sm:text-sm space-y-1.5">
-                  <div className="font-black text-emerald-900 flex items-center gap-1.5">
-                    <CheckCircle2 size={15} className="text-emerald-700" />
-                    <span>Langkah Pembahasan Formal:</span>
-                  </div>
-                  <p className="text-slate-800 whitespace-pre-line leading-relaxed font-medium">
-                    {renderFormattedMathText(q.discussion, 'xs')}
-                  </p>
-                </div>
-              </div>
-            </DoubleBezelCard>
-          ))}
         </div>
 
-        <div className="pt-2">
-          <ArrowFillButton
-            fullWidth
-            variant="secondary"
-            size="md"
-            onClick={() => {
-              soundService.click();
-              setIsReExam(true);
-              setSwitchCount(0);
-              setTotalLeaveSeconds(0);
-            }}
+        {/* Step-by-Step Questions & Discussion */}
+        <div className="space-y-6">
+          <h3 className="text-lg font-black font-mono text-slate-950">
+            Langkah Pembahasan Kunci Jawaban:
+          </h3>
+
+          {questions.map((q, idx) => {
+            const studentText = previousSubmission.textAnswers?.[q.id] || "Jawaban dikumpulkan.";
+
+            return (
+              <div
+                key={q.id}
+                className="bg-white border-4 border-slate-950 rounded-3xl p-6 shadow-[8px_8px_0px_0px_#0f172a] space-y-4"
+              >
+                <div className="flex items-center justify-between border-b-2 border-slate-950 pb-3">
+                  <div className="flex items-center gap-2">
+                    <span className="w-8 h-8 rounded-xl bg-[#ffe600] border-2 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a] flex items-center justify-center font-mono font-black text-xs">
+                      {idx + 1}
+                    </span>
+                    <span className="font-black text-sm text-slate-950">{q.title}</span>
+                  </div>
+                  <span className="text-xs font-mono font-bold text-slate-600">Bobot: {q.weight} Poin</span>
+                </div>
+
+                {/* Prompt */}
+                <div className="p-4 bg-slate-50 border-2 border-slate-950 rounded-2xl text-xs sm:text-sm font-bold text-slate-900 leading-relaxed">
+                  {q.prompt}
+                </div>
+
+                {/* Student's Answer */}
+                <div className="p-3 bg-amber-50 border-2 border-slate-950 rounded-2xl text-xs font-bold text-slate-900">
+                  <span className="font-black text-amber-900 font-mono uppercase block mb-1">
+                    Jawaban yang Anda Kirim:
+                  </span>
+                  <p className="whitespace-pre-line">{studentText}</p>
+                </div>
+
+                {/* Step Discussion */}
+                <div className="p-4 bg-[#a5f3fc]/40 border-3 border-cyan-950 rounded-2xl shadow-[3px_3px_0px_0px_#083344] space-y-2">
+                  <span className="font-mono text-xs font-black text-cyan-950 uppercase block">
+                    Langkah Pembahasan Resmi:
+                  </span>
+                  <pre className="font-sans whitespace-pre-line text-xs font-bold text-slate-900 leading-relaxed bg-white/80 p-3 rounded-xl border border-cyan-950/20">
+                    {q.discussion}
+                  </pre>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Back to Home CTA */}
+        <div className="flex justify-between items-center bg-white border-3 border-slate-950 rounded-3xl p-6 shadow-[6px_6px_0px_0px_#0f172a]">
+          <button
+            onClick={() => onNavigate('siswa')}
+            className="px-6 py-3 bg-[#ffe600] hover:bg-yellow-400 text-slate-950 font-mono text-xs font-black rounded-2xl border-3 border-slate-950 shadow-[4px_4px_0px_0px_#0f172a] transition-all cursor-pointer flex items-center gap-2"
           >
-            Kerjakan Ulang Evaluasi Soal Essai
-          </ArrowFillButton>
+            <span>Kembali ke Beranda Belajar</span>
+            <ArrowRight size={16} />
+          </button>
         </div>
 
       </div>
     );
   }
 
-  // Active Exam Form Mode
+  // 3. ACTIVE EVALUATION EXAM TAKING SCREEN
   const currentQ = questions[activeQuestionIdx] || questions[0];
+  const totalQuestions = questions.length;
 
   return (
-    <div className="space-y-6 max-w-3xl mx-auto pb-12">
+    <div className="space-y-6 max-w-4xl mx-auto font-sans pb-12">
       
-      {/* Top Header Card */}
-      <DoubleBezelCard className="bg-slate-100/80 border-slate-200/80 shadow-xs">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="space-y-1.5">
-            <div className="flex items-center gap-2">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-wider bg-slate-900 text-white dark:bg-white dark:text-slate-950">
-                <PenTool size={13} className="text-[#00ffc6]" />
-                <span>Ujian Evaluasi Essai</span>
-              </span>
-              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-brand-50 text-brand-700 border border-brand-200/70">
-                <Sparkles size={12} className="text-brand-600" />
-                <span>Asesmen Sumatif</span>
-              </span>
-            </div>
-            <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
-              Evaluasi Pemahaman Pecahan
-            </h1>
-            <p className="text-xs text-slate-500 max-w-xl leading-relaxed">
-              Tuliskan langkah pengerjaan di buku coretan, ketik jawaban ringkas, lalu lampirkan foto fisik hasil kerjaanmu.
-            </p>
-          </div>
-
-          <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
-            <span className="px-3.5 py-1.5 rounded-full text-xs font-mono font-bold bg-white border border-slate-200 shadow-2xs">
-              Soal {activeQuestionIdx + 1} dari {questions.length}
+      {/* Header with Live Countdown Timer & Anti-Cheat Notification */}
+      <div className="bg-[#ffe600] border-4 border-slate-950 rounded-3xl p-6 shadow-[8px_8px_0px_0px_#0f172a] text-slate-950 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <div className="flex flex-wrap items-center gap-2 mb-1">
+            <span className="px-3 py-0.5 bg-white text-slate-950 border-2 border-slate-950 rounded-xl text-xs font-mono font-black shadow-[2px_2px_0px_0px_#0f172a]">
+              EVALUASI SUMATIF BAB 1
+            </span>
+            <span className="px-3 py-0.5 bg-[#a5f3fc] text-slate-950 border-2 border-slate-950 rounded-xl text-xs font-mono font-black shadow-[2px_2px_0px_0px_#0f172a]">
+              TAHAP 3 (FINAL)
             </span>
           </div>
+          <h1 className="text-xl sm:text-2xl font-black font-mono">
+            Ujian Soal Uraian HOTS Pecahan
+          </h1>
+          <p className="text-xs font-bold text-slate-900 mt-1">
+            Ketik langkah pengerjaan untuk setiap soal. Lampirkan foto coretan jika diperlukan (opsional).
+          </p>
         </div>
-      </DoubleBezelCard>
 
-      {/* Anti-Cheat Warning Live Indicator */}
+        {/* Timer Box */}
+        <div className={`flex items-center gap-2 px-5 py-3 rounded-2xl border-3 border-slate-950 font-mono text-base font-black shadow-[4px_4px_0px_0px_#0f172a] shrink-0 ${
+          timeLeft < 180 ? 'bg-red-300 text-red-950 animate-pulse' : 'bg-white text-slate-950'
+        }`}>
+          <Clock size={20} />
+          <span>{Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, '0')}</span>
+        </div>
+      </div>
+
+      {/* Anti-cheat tab alert */}
       {switchCount > 0 && (
-        <div className="p-4 bg-amber-50 border border-amber-300 rounded-2xl text-xs font-bold text-amber-900 flex items-center justify-between gap-2 animate-in fade-in">
-          <div className="flex items-center gap-2">
-            <ShieldAlert size={18} className="text-amber-600 shrink-0" />
-            <span>Peringatan Anti-Joki: Anda telah berpindah tab sebanyak <b>{switchCount} kali</b>. Tetap berada di halaman ujian demi validitas nilai!</span>
-          </div>
+        <div className="bg-red-100 border-3 border-red-950 rounded-2xl p-4 shadow-[4px_4px_0px_0px_#7f1d1d] flex items-center gap-3 text-red-950 font-mono text-xs font-black">
+          <ShieldAlert size={22} className="text-red-600 shrink-0" />
+          <span>Peringatan: Kamu telah berpindah tab sebanyak {switchCount}x. Seluruh durasi keluar dicatat dan dilaporkan ke Portal Guru.</span>
         </div>
       )}
 
-      {/* Question Number Tabs */}
-      <div className="flex flex-wrap gap-2">
+      {/* Question Stepper Tabs */}
+      <div className="flex gap-2">
         {questions.map((q, idx) => {
+          const isFilled = (textAnswers[q.id] || '').trim().length > 0;
           const isCurrent = activeQuestionIdx === idx;
-          const hasAnswer = Boolean(answers[q.id]?.trim());
 
           return (
             <button
               key={q.id}
-              type="button"
               onClick={() => {
                 soundService.click();
                 setActiveQuestionIdx(idx);
               }}
-              className={`px-4 py-2 rounded-2xl text-xs font-black transition-all cursor-pointer flex items-center gap-1.5 ${
+              className={`px-4 py-2.5 rounded-2xl border-3 border-slate-950 font-mono font-black text-xs uppercase tracking-wider transition-all cursor-pointer flex items-center gap-2 ${
                 isCurrent
-                  ? 'bg-slate-900 text-white shadow-md'
-                  : hasAnswer
-                  ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
-                  : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'
+                  ? 'bg-[#ffe600] text-slate-950 shadow-[3px_3px_0px_0px_#0f172a] translate-x-[-1px] translate-y-[-1px]'
+                  : isFilled
+                  ? 'bg-emerald-200 text-emerald-950 shadow-[2px_2px_0px_0px_#0f172a]'
+                  : 'bg-white text-slate-700 hover:bg-slate-100 shadow-[2px_2px_0px_0px_#0f172a]'
               }`}
             >
-              <span>Soal {idx + 1}</span>
-              {hasAnswer && <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />}
+              <span>Soal #{idx + 1}</span>
+              {isFilled && <CheckCircle2 size={14} className="text-emerald-700" />}
             </button>
           );
         })}
       </div>
 
-      {/* Active Question Prompt & Answer Form */}
+      {/* Current Question Card */}
       {currentQ && (
-        <form onSubmit={handleSubmitExam} className="space-y-6">
-          <DoubleBezelCard className="bg-white border-slate-200/90 shadow-sm">
-            <div className="space-y-4">
-              
-              <div className="flex justify-between items-center text-xs pb-3 border-b border-slate-100">
-                <span className="font-mono font-black text-brand-700 bg-brand-50 border border-brand-200/60 px-2.5 py-0.5 rounded-md">
-                  Soal Uraian #{activeQuestionIdx + 1}
-                </span>
-                <span className="font-bold text-slate-500">Bobot: {currentQ.weight} Poin</span>
-              </div>
+        <div className="bg-white border-4 border-slate-950 rounded-3xl p-6 sm:p-8 shadow-[8px_8px_0px_0px_#0f172a] space-y-6">
+          <div className="flex items-center justify-between border-b-2 border-slate-950 pb-3">
+            <span className="font-mono text-xs font-black bg-[#ffe600] px-3 py-1 rounded-xl border-2 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a]">
+              SOAL {activeQuestionIdx + 1} DARI {totalQuestions}
+            </span>
+            <span className="font-mono text-xs font-bold text-slate-600">Bobot: {currentQ.weight} Poin</span>
+          </div>
 
-              <h3 className="font-black text-base sm:text-lg text-slate-900">
-                {currentQ.title}
-              </h3>
+          {/* Question Text */}
+          <div className="p-4 bg-slate-50 border-2 border-slate-950 rounded-2xl text-xs sm:text-sm font-bold text-slate-950 leading-relaxed">
+            {currentQ.prompt}
+          </div>
 
-              <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 text-xs sm:text-sm text-slate-800 font-medium leading-relaxed">
-                {renderFormattedMathText(currentQ.prompt, 'xs')}
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="block text-xs font-black uppercase tracking-wider text-slate-600">
-                  Tuliskan Ringkasan Langkah / Jawaban Akhir:
-                </label>
-                <textarea
-                  rows={4}
-                  value={answers[currentQ.id] || ''}
-                  onChange={(e) => handleAnswerChange(currentQ.id, e.target.value)}
-                  placeholder="Contoh: KPK(4, 2) = 4 -> 7/4 + 2/4 = 9/4 = 2 1/4..."
-                  className="w-full text-xs sm:text-sm p-4 rounded-2xl border border-slate-300 bg-slate-50/60 text-slate-900 focus:bg-white focus:border-brand-500 focus:ring-4 focus:ring-brand-500/15 outline-none transition font-medium shadow-2xs resize-none"
-                />
-              </div>
-
-            </div>
-          </DoubleBezelCard>
-
-          {/* Photo Attachment & Final Submit Section */}
-          <Card className="p-6 sm:p-7 rounded-3xl space-y-4 border border-slate-200/90 shadow-sm bg-white">
-            <div className="space-y-1">
-              <div className="flex items-center gap-2 text-sm font-black text-slate-900">
-                <Camera size={18} className="text-brand-600" />
-                <span>Lampirkan Foto Lembar Coretan / Pengerjaan Fisik (Wajib):</span>
-              </div>
-              <p className="text-xs text-slate-500">
-                Ambil foto tulisan tanganmu sebagai bukti keaslian pengerjaan soal uraian.
-              </p>
-            </div>
-
-            <input
-              type="file"
-              accept="image/*"
-              required
-              onChange={handlePhotoSelect}
-              className="w-full text-xs text-slate-600 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100 cursor-pointer"
+          {/* Text Area for Typing Answer */}
+          <div className="space-y-2">
+            <label className="block text-xs font-mono font-black uppercase text-slate-900">
+              Ketik Uraian Jawaban &amp; Langkah Hitung:
+            </label>
+            <textarea
+              rows={5}
+              value={textAnswers[currentQ.id] || ''}
+              onChange={(e) => handleTextChange(currentQ.id, e.target.value)}
+              placeholder="Tuliskan langkah-langkah pengerjaan, penyamaan penyebut KPK, dan kesimpulan jawaban akhirmu di sini..."
+              className="w-full p-4 bg-[#fffdf5] border-2 border-slate-950 rounded-2xl font-sans text-xs sm:text-sm font-bold text-slate-950 focus:outline-none focus:ring-2 focus:ring-[#ffe600]"
             />
+          </div>
 
-            {photoProof && (
-              <div className="p-3 bg-slate-50 rounded-2xl border border-dashed border-slate-300 text-center space-y-2">
-                <span className="text-xs font-bold text-slate-500">Preview Foto Lembar Jawaban:</span>
+          {/* Photo Attachment (Optional) */}
+          <div className="space-y-2 pt-2 border-t-2 border-slate-200">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-mono font-black uppercase text-slate-900 flex items-center gap-1.5">
+                <Camera size={14} />
+                <span>Foto Bukti Lembar Coretan (Opsional):</span>
+              </label>
+              {photoProof && (
+                <button
+                  onClick={() => setPhotoProof(null)}
+                  className="text-xs font-mono text-red-600 hover:text-red-800 font-bold flex items-center gap-1 cursor-pointer"
+                >
+                  <Trash2 size={13} />
+                  <span>Hapus Foto</span>
+                </button>
+              )}
+            </div>
+
+            {photoProof ? (
+              <div className="relative rounded-2xl border-2 border-slate-950 overflow-hidden bg-slate-100 p-2 max-w-sm">
                 <img
                   src={photoProof}
-                  alt="Proof"
-                  className="max-h-56 mx-auto rounded-xl shadow object-contain"
+                  alt="Bukti Coretan Evaluasi"
+                  className="w-full h-auto max-h-48 object-contain rounded-xl"
                 />
               </div>
+            ) : (
+              <label className="flex items-center justify-center gap-2 p-3 bg-slate-50 border-2 border-dashed border-slate-950 rounded-2xl cursor-pointer hover:bg-slate-100 transition text-xs font-mono font-bold text-slate-700">
+                <Upload size={16} />
+                <span>Unggah Foto Lembar Jawaban Fisik (Jika Ada)</span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handlePhotoSelect}
+                />
+              </label>
             )}
-
-            <div className="pt-2">
-              <GlassmorphismCTA
-                fullWidth
-                variant="mint"
-                size="lg"
-                onClick={(e) => handleSubmitExam(e as any)}
-              >
-                Kumpulkan Evaluasi Soal Essai
-              </GlassmorphismCTA>
-            </div>
-          </Card>
-        </form>
+          </div>
+        </div>
       )}
+
+      {/* Bottom Actions */}
+      <div className="flex items-center justify-between bg-white border-4 border-slate-950 rounded-3xl p-6 shadow-[8px_8px_0px_0px_#0f172a]">
+        <button
+          onClick={() => {
+            soundService.click();
+            setActiveQuestionIdx(prev => Math.max(0, prev - 1));
+          }}
+          disabled={activeQuestionIdx === 0}
+          className="px-5 py-3 bg-slate-100 hover:bg-slate-200 disabled:opacity-40 text-slate-950 font-mono text-xs font-black rounded-2xl border-3 border-slate-950 shadow-[3px_3px_0px_0px_#0f172a] transition-all cursor-pointer"
+        >
+          ← Soal Sebelumnya
+        </button>
+
+        {activeQuestionIdx < totalQuestions - 1 ? (
+          <button
+            onClick={() => {
+              soundService.click();
+              setActiveQuestionIdx(prev => prev + 1);
+            }}
+            className="px-6 py-3 bg-[#ffe600] hover:bg-yellow-400 text-slate-950 font-mono text-xs font-black rounded-2xl border-3 border-slate-950 shadow-[4px_4px_0px_0px_#0f172a] transition-all cursor-pointer flex items-center gap-2"
+          >
+            <span>Soal Berikutnya</span>
+            <ArrowRight size={16} />
+          </button>
+        ) : (
+          <button
+            onClick={handleSubmitExam}
+            className="px-8 py-3.5 bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-mono text-xs font-black rounded-2xl border-3 border-slate-950 shadow-[4px_4px_0px_0px_#0f172a] transition-all cursor-pointer flex items-center gap-2"
+          >
+            <span>Kumpulkan Evaluasi Final</span>
+            <Send size={16} />
+          </button>
+        )}
+      </div>
 
     </div>
   );

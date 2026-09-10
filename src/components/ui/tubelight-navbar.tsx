@@ -65,7 +65,7 @@ export function TubelightNavbar({
               <Icon size={16} strokeWidth={isActive ? 2.5 : 2} className={cn(isActive ? 'text-brand-600 dark:text-[#00ffc6]' : 'text-slate-500 dark:text-slate-400')} />
               <span className="hidden sm:inline">{item.name}</span>
               {item.badge && (
-                <span className="hidden md:inline-block text-[10px] font-black uppercase tracking-wider px-1.5 py-0.2 bg-[#00ffc6]/20 text-emerald-800 dark:text-[#00ffc6] border border-emerald-300 dark:border-[#00ffc6]/40 rounded-full">
+                <span className="hidden md:inline-block text-[10px] font-black uppercase tracking-wider px-1.5 py-0.2 bg-[#00ffc6]/20 text-slate-900 dark:text-[#00ffc6] border border-yellow-300 dark:border-[#00ffc6]/40 rounded-full">
                   {item.badge}
                 </span>
               )}

@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { Card, DoubleBezelCard } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { ArrowFillButton } from '@/components/ui/arrow-fill-button';
 import { Fraction, renderFormattedMathText } from '@/components/ui/fraction';
 import { storageService } from '@/services/storageService';
+import { soundService } from '@/services/soundService';
 import {
   BookOpen,
   Sparkles,
@@ -12,8 +12,9 @@ import {
   PieChart,
   ArrowRight,
   Divide,
-  Compass,
-  FileText
+  FileText,
+  Download,
+  Lightbulb
 } from 'lucide-react';
 
 export const SiswaMateri: React.FC<{
@@ -29,15 +30,17 @@ export const SiswaMateri: React.FC<{
       badge: 'Fondasi',
       summary: 'Pecahan merepresentasikan bagian dari keseluruhan dengan syarat penyebut b ≠ 0.',
       renderFormula: () => (
-        <div className="flex items-center gap-2 text-base sm:text-lg font-mono font-black text-[#00ffc6]">
-          <Fraction num="a" den="b" size="lg" />
-          <span className="text-xs text-slate-300 font-sans font-medium">(a = Pembilang, b = Penyebut)</span>
+        <div className="flex items-center gap-3 text-lg font-mono font-black text-slate-950">
+          <Fraction num="a" den="b" size="lg" className="text-slate-950" />
+          <span className="text-xs text-slate-700 font-sans font-bold">(a = Pembilang / Terarsir, b = Penyebut / Total Porsi)</span>
         </div>
       ),
       renderExample: () => (
-        <div className="flex items-center gap-2">
-          <span>Jika 1 loyang pizza dipotong 8 bagian dan dimakan 3 potong:</span>
-          <Fraction num="3" den="8" size="sm" className="text-brand-600" />
+        <div className="flex items-center gap-2 flex-wrap text-slate-900 font-bold text-xs sm:text-sm">
+          <span>Jika 1 loyang pizza dipotong menjadi 8 bagian sama besar dan dimakan 3 potong:</span>
+          <span className="px-2 py-0.5 rounded-lg bg-[#ffe600] border-2 border-slate-950 font-black">
+            <Fraction num="3" den="8" size="sm" />
+          </span>
         </div>
       ),
       visualType: 'pizza',
@@ -49,7 +52,7 @@ export const SiswaMateri: React.FC<{
       badge: 'Klasifikasi',
       summary: 'Mengenal pecahan biasa, pecahan campuran, desimal, dan persen.',
       renderFormula: () => (
-        <div className="flex items-center gap-2 text-base sm:text-lg font-mono font-black text-[#00ffc6]">
+        <div className="flex items-center gap-3 text-base sm:text-lg font-mono font-black text-slate-950 flex-wrap">
           <span>Campuran:</span>
           <Fraction whole="w" num="n" den="d" size="md" />
           <span>=</span>
@@ -57,10 +60,14 @@ export const SiswaMateri: React.FC<{
         </div>
       ),
       renderExample: () => (
-        <div className="flex items-center gap-2 flex-wrap">
-          <Fraction num="7" den="4" size="sm" className="text-brand-600" />
+        <div className="flex items-center gap-2 flex-wrap text-slate-900 font-bold text-xs sm:text-sm">
+          <span className="px-2 py-0.5 rounded-lg bg-sky-200 border-2 border-slate-950">
+            <Fraction num="7" den="4" size="sm" />
+          </span>
           <span>diubah menjadi bentuk campuran</span>
-          <Fraction whole="1" num="3" den="4" size="sm" className="text-amber-600" />
+          <span className="px-2 py-0.5 rounded-lg bg-yellow-200 border-2 border-slate-950">
+            <Fraction whole="1" num="3" den="4" size="sm" />
+          </span>
           <span>= 1,75 = 175%</span>
         </div>
       ),
@@ -73,21 +80,27 @@ export const SiswaMateri: React.FC<{
       badge: 'Penyederhanaan',
       summary: 'Pecahan senilai memiliki rasio perbandingan yang setara (dikalikan/dibagi FPB yang sama).',
       renderFormula: () => (
-        <div className="flex items-center gap-2 text-base sm:text-lg font-mono font-black text-[#00ffc6]">
+        <div className="flex items-center gap-3 text-base sm:text-lg font-mono font-black text-slate-950 flex-wrap">
           <Fraction num="a × k" den="b × k" size="md" />
           <span>=</span>
           <Fraction num="a" den="b" size="md" />
-          <span className="text-xs text-slate-300 font-sans font-medium">(k ≠ 0)</span>
+          <span className="text-xs text-slate-700 font-sans font-bold">(Pengali k ≠ 0)</span>
         </div>
       ),
       renderExample: () => (
-        <div className="flex items-center gap-2 flex-wrap">
-          <Fraction num="2" den="3" size="sm" className="text-brand-600" />
+        <div className="flex items-center gap-2 flex-wrap text-slate-900 font-bold text-xs sm:text-sm">
+          <span className="px-2 py-0.5 rounded-lg bg-lime-200 border-2 border-slate-950 font-black">
+            <Fraction num="2" den="3" size="sm" />
+          </span>
           <span>=</span>
-          <Fraction num="4" den="6" size="sm" className="text-brand-600" />
+          <span className="px-2 py-0.5 rounded-lg bg-lime-200 border-2 border-slate-950 font-black">
+            <Fraction num="4" den="6" size="sm" />
+          </span>
           <span>=</span>
-          <Fraction num="8" den="12" size="sm" className="text-brand-600" />
-          <span>(disederhanakan menggunakan FPB)</span>
+          <span className="px-2 py-0.5 rounded-lg bg-lime-200 border-2 border-slate-950 font-black">
+            <Fraction num="8" den="12" size="sm" />
+          </span>
+          <span className="text-xs text-slate-600">(Pecahan senilai dari perkalian faktor 2 dan 4)</span>
         </div>
       ),
       visualType: 'equivalent',
@@ -99,7 +112,7 @@ export const SiswaMateri: React.FC<{
       badge: 'Operasi Hitung',
       summary: 'Menyamakan penyebut yang berbeda dengan mencari Kelipatan Persekutuan Terkecil (KPK).',
       renderFormula: () => (
-        <div className="flex items-center gap-2 text-base sm:text-lg font-mono font-black text-[#00ffc6]">
+        <div className="flex items-center gap-3 text-base sm:text-lg font-mono font-black text-slate-950 flex-wrap">
           <Fraction num="a" den="c" size="md" />
           <span>+</span>
           <Fraction num="b" den="d" size="md" />
@@ -108,16 +121,18 @@ export const SiswaMateri: React.FC<{
         </div>
       ),
       renderExample: () => (
-        <div className="flex items-center gap-2 flex-wrap">
-          <Fraction num="1" den="2" size="sm" className="text-brand-600" />
+        <div className="flex items-center gap-2 flex-wrap text-slate-900 font-bold text-xs sm:text-sm">
+          <Fraction num="1" den="2" size="sm" />
           <span>+</span>
-          <Fraction num="1" den="3" size="sm" className="text-brand-600" />
+          <Fraction num="1" den="3" size="sm" />
           <span>=</span>
-          <Fraction num="3" den="6" size="sm" className="text-brand-600" />
+          <Fraction num="3" den="6" size="sm" />
           <span>+</span>
-          <Fraction num="2" den="6" size="sm" className="text-brand-600" />
+          <Fraction num="2" den="6" size="sm" />
           <span>=</span>
-          <Fraction num="5" den="6" size="sm" className="text-emerald-600" />
+          <span className="px-2.5 py-1 rounded-lg bg-[#ffe600] border-2 border-slate-950 font-black">
+            <Fraction num="5" den="6" size="sm" />
+          </span>
         </div>
       ),
       visualType: 'operation',
@@ -125,153 +140,186 @@ export const SiswaMateri: React.FC<{
     },
   ];
 
+  const currentTopic = topicsDetail[activeTab] || topicsDetail[0];
+
   return (
-    <div className="space-y-6 max-w-4xl mx-auto pb-12">
+    <div className="space-y-8 max-w-5xl mx-auto pb-12 font-sans">
       
-      {/* Top Header Card */}
-      <DoubleBezelCard className="bg-slate-100/80 border-slate-200/80 shadow-xs">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="space-y-1.5">
-            <div className="flex items-center gap-2">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-wider bg-slate-900 text-white dark:bg-white dark:text-slate-950">
-                <BookOpen size={13} className="text-[#00ffc6]" />
-                <span>Modul Teori & Konsep</span>
+      {/* Header Banner Pure Neobrutalism V3 */}
+      <div className="relative rounded-3xl bg-[#38bdf8] border-4 border-slate-950 p-6 sm:p-8 shadow-[8px_8px_0px_0px_#0f172a] overflow-hidden text-slate-950">
+        <div className="absolute right-4 bottom-0 text-slate-950/10 font-mono text-8xl font-black pointer-events-none select-none">
+          MATERI
+        </div>
+
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 relative z-10">
+          <div className="space-y-3 max-w-2xl">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="px-3 py-1 bg-white text-slate-950 border-2 border-slate-950 rounded-xl text-xs font-mono font-black shadow-[2px_2px_0px_0px_#0f172a]">
+                MODUL TEORI &amp; KONSEP DASAR
               </span>
-              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200/70">
-                <Sparkles size={12} className="text-emerald-500" />
-                <span>Kurikulum Merdeka Fase D</span>
+              <span className="px-3 py-1 bg-white/80 text-slate-900 border-2 border-slate-950 rounded-xl text-xs font-bold font-mono">
+                Kurikulum Merdeka Kelas 7 SMP
               </span>
             </div>
-            <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+
+            <h1 className="text-2xl sm:text-4xl font-black tracking-tight text-slate-950 font-mono leading-tight">
               Materi Pembelajaran Bilangan Pecahan
             </h1>
-            <p className="text-xs text-slate-500 max-w-xl leading-relaxed">
-              Pelajari definisi formal, ragam bentuk pecahan, metode penyederhanaan FPB, serta operasi hitung berbasis KPK secara runtut.
+
+            <p className="text-xs sm:text-sm text-slate-950 max-w-2xl leading-relaxed font-bold">
+              Pelajari definisi formal, ragam bentuk pecahan, metode penyederhanaan FPB, serta operasi hitung berbasis KPK secara runtut dan visual.
             </p>
           </div>
 
-          <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
-            <ArrowFillButton
-              variant="mint"
-              size="sm"
-              onClick={() => onNavigate('siswa/studio')}
-            >
-              Buka Studio Visual
-            </ArrowFillButton>
+          <div className="w-16 h-16 rounded-2xl bg-[#ffe600] border-3 border-slate-950 text-slate-950 flex items-center justify-center shrink-0 shadow-[4px_4px_0px_0px_#0f172a]">
+            <BookOpen size={36} />
           </div>
         </div>
-      </DoubleBezelCard>
+      </div>
 
-      {/* Sub-Bab Quick Segmented Tabs */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+      {/* Sub-Topic Selection Pills (Neobrutal High-Contrast Buttons) */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {topicsDetail.map((t, idx) => {
           const isActive = activeTab === idx;
           return (
             <button
               key={t.code}
               type="button"
-              onClick={() => setActiveTab(idx)}
-              className={`p-3 rounded-2xl border text-left transition-all cursor-pointer ${
+              onClick={() => {
+                soundService.click();
+                setActiveTab(idx);
+              }}
+              className={`p-3.5 rounded-2xl border-3 border-slate-950 text-left transition-all cursor-pointer flex flex-col justify-between gap-2 ${
                 isActive
-                  ? 'bg-slate-900 text-white border-slate-900 shadow-md ring-2 ring-brand-500/20'
-                  : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+                  ? 'bg-[#ffe600] text-slate-950 shadow-[5px_5px_0px_0px_#0f172a] -translate-x-0.5 -translate-y-0.5'
+                  : 'bg-white text-slate-800 shadow-[3px_3px_0px_0px_#0f172a] hover:bg-amber-50 hover:shadow-[5px_5px_0px_0px_#0f172a]'
               }`}
             >
-              <div className="flex items-center justify-between text-[10px] font-mono font-bold opacity-70 mb-1">
-                <span>{t.code}</span>
-                <span>{t.badge}</span>
+              <div className="flex items-center justify-between">
+                <span className="px-2 py-0.5 rounded-md bg-white border border-slate-950 text-[10px] font-mono font-black text-slate-950">
+                  {t.code}
+                </span>
+                <span className="text-[10px] font-mono font-bold text-slate-600">
+                  {t.badge}
+                </span>
               </div>
-              <div className="font-extrabold text-xs line-clamp-1">
-                {t.title.split('. ')[1] || t.title}
+              <div className="font-black text-xs sm:text-sm text-slate-950 line-clamp-1">
+                {t.title}
               </div>
             </button>
           );
         })}
       </div>
 
-      {/* Active Sub-Bab Interactive Bento Presentation */}
-      {(() => {
-        const item = topicsDetail[activeTab];
-        return (
-          <div className="space-y-6 animate-in fade-in zoom-in-95 duration-200">
-            
-            {/* Main Content Double-Bezel Card */}
-            <DoubleBezelCard className="bg-white border-slate-200/90 shadow-sm">
-              <div className="space-y-5">
-                
-                <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-100">
-                  <div className="flex items-center gap-2">
-                    <span className="font-mono text-xs font-black text-brand-700 bg-brand-50 border border-brand-200/70 px-2.5 py-1 rounded-lg">
-                      {item.code}
-                    </span>
-                    <h2 className="text-lg sm:text-xl font-black text-slate-900">
-                      {item.title}
-                    </h2>
-                  </div>
-                  <span className="px-3 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-700 border border-slate-200">
-                    {item.badge}
-                  </span>
-                </div>
-
-                {/* Mathematical Concept Formula Highlight Box */}
-                <div className="p-4 rounded-2xl bg-gradient-to-r from-slate-900 to-slate-800 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-md">
-                  <div className="space-y-1">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
-                      Notasi / Rumus Kunci:
-                    </span>
-                    <div>
-                      {item.renderFormula()}
-                    </div>
-                  </div>
-                  <div className="text-xs text-slate-300 font-medium max-w-xs leading-relaxed">
-                    {item.summary}
-                  </div>
-                </div>
-
-                {/* Explanation Content */}
-                <div className="space-y-3 text-xs sm:text-sm text-slate-700 leading-relaxed font-medium bg-slate-50/70 p-5 rounded-2xl border border-slate-200/80">
-                  <h4 className="font-black text-slate-900 text-sm">Uraian Konsep Matematis:</h4>
-                  <p className="whitespace-pre-line leading-relaxed">
-                    {renderFormattedMathText(materials[activeTab]?.content || '', 'sm')}
-                  </p>
-                </div>
-
-                {/* Visual Demonstration Bar */}
-                <div className="p-4 rounded-2xl bg-white border border-slate-200/90 flex flex-col sm:flex-row items-center justify-between gap-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-brand-50 text-brand-700 flex items-center justify-center font-black shrink-0">
-                      <PieChart size={20} />
-                    </div>
-                    <div className="space-y-0.5">
-                      <div className="text-xs font-black text-slate-900">Contoh Nyata Pembuktian:</div>
-                      <div className="text-xs text-slate-600 font-medium">{item.renderExample()}</div>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-2 shrink-0">
-                    <ArrowFillButton
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => onNavigate('siswa/studio')}
-                    >
-                      Buka di Studio
-                    </ArrowFillButton>
-                    <ArrowFillButton
-                      variant="primary"
-                      size="sm"
-                      onClick={() => onNavigate('siswa/lkpd')}
-                    >
-                      Kerjakan LKPD
-                    </ArrowFillButton>
-                  </div>
-                </div>
-
-              </div>
-            </DoubleBezelCard>
-
+      {/* Main Material Detail Card */}
+      <div className="rounded-3xl bg-white border-4 border-slate-950 p-6 sm:p-8 shadow-[8px_8px_0px_0px_#0f172a] space-y-6">
+        
+        {/* Topic Title & Summary */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b-3 border-slate-950">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="px-2.5 py-0.5 rounded-lg bg-[#a3e635] text-slate-950 font-mono font-black text-xs border-2 border-slate-950 shadow-[1.5px_1.5px_0px_0px_#0f172a]">
+                {currentTopic.code}
+              </span>
+              <span className="px-2.5 py-0.5 rounded-lg bg-[#c084fc] text-slate-950 font-mono font-black text-xs border-2 border-slate-950">
+                {currentTopic.badge}
+              </span>
+            </div>
+            <h2 className="text-xl sm:text-2xl font-black text-slate-950 font-mono mt-2">
+              {currentTopic.title}
+            </h2>
+            <p className="text-xs sm:text-sm font-bold text-slate-700 mt-1">
+              {currentTopic.summary}
+            </p>
           </div>
-        );
-      })()}
+        </div>
+
+        {/* Formula / Concept Rule Box (Yellow Neobrutal Card) */}
+        <div className="p-5 rounded-2xl bg-[#fffdf5] border-3 border-slate-950 shadow-[4px_4px_0px_0px_#0f172a] space-y-3">
+          <div className="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-slate-900 font-mono">
+            <Lightbulb size={16} className="text-amber-500" />
+            <span>Rumus &amp; Definisi Formal:</span>
+          </div>
+
+          <div className="p-4 rounded-xl bg-white border-2 border-slate-950 overflow-x-auto shadow-inner">
+            {currentTopic.renderFormula()}
+          </div>
+        </div>
+
+        {/* Concrete Example Box (Cyan Neobrutal Card) */}
+        <div className="p-5 rounded-2xl bg-[#e0f2fe] border-3 border-slate-950 shadow-[4px_4px_0px_0px_#0f172a] space-y-3">
+          <div className="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-slate-900 font-mono">
+            <CheckCircle2 size={16} className="text-sky-600" />
+            <span>Contoh Kasus &amp; Penyelesaian:</span>
+          </div>
+
+          <div className="p-4 rounded-xl bg-white border-2 border-slate-950">
+            {currentTopic.renderExample()}
+          </div>
+        </div>
+
+        {/* Supplementary Materials from Teacher (Uploaded Files & Subbab) */}
+        {materials && materials.length > 0 && (
+          <div className="p-5 rounded-2xl bg-[#fdf4ff] border-3 border-slate-950 shadow-[4px_4px_0px_0px_#0f172a] space-y-3">
+            <div className="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-slate-900 font-mono">
+              <FileText size={16} className="text-purple-600" />
+              <span>Modul &amp; Berkas Tambahan dari Guru:</span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+              {materials.map(m => (
+                <div key={m.id} className="p-3.5 rounded-xl bg-white border-2 border-slate-950 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="px-2 py-0.5 rounded bg-yellow-200 text-slate-950 font-mono font-black text-[10px] border border-slate-950">
+                      {m.badge}
+                    </span>
+                  </div>
+                  <h4 className="font-black text-xs text-slate-950">{m.title}</h4>
+                  <div className="text-[11px] text-slate-600 font-medium">
+                    {renderFormattedMathText(m.content, 'xs')}
+                  </div>
+                  {m.fileName && (
+                    <a
+                      href={m.fileUrl || '#'}
+                      download={m.fileName}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#ffe600] text-slate-950 border border-slate-950 text-[11px] font-mono font-black shadow-[1.5px_1.5px_0px_0px_#0f172a] hover:bg-yellow-400"
+                    >
+                      <Download size={13} />
+                      <span>Unduh {m.fileName}</span>
+                    </a>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Action Buttons to next modules */}
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t-3 border-slate-950">
+          <Button
+            variant="secondary"
+            size="md"
+            className="w-full sm:w-auto font-black text-xs"
+            onClick={() => onNavigate('siswa/studio')}
+          >
+            <PieChart size={16} />
+            <span>Eksplorasi Studio Visual Pizza</span>
+          </Button>
+
+          <Button
+            variant="yellow"
+            size="md"
+            className="w-full sm:w-auto font-black text-xs"
+            onClick={() => onNavigate('siswa/lkpd')}
+          >
+            <span>Lanjut Kerjakan LKPD Digital</span>
+            <ArrowRight size={16} />
+          </Button>
+        </div>
+
+      </div>
 
     </div>
   );

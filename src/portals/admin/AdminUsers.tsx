@@ -80,7 +80,7 @@ export const AdminUsers: React.FC<{
       avatar: `https://api.dicebear.com/7.x/bottts/svg?seed=${username.trim()}`,
       sessionToken: null,
       deviceId: null,
-      progress: { materi: 0, video: 0, lkpd: 0, evaluasi: 0 },
+      progress: { materi: 0, video: 0, lkpd: 0, latsol: 0, evaluasi: 0 },
       readAnnouncements: [],
     };
 
@@ -184,7 +184,7 @@ export const AdminUsers: React.FC<{
                       u.role === 'siswa'
                         ? 'bg-brand-50 text-brand-700 border-brand-200/70'
                         : u.role === 'guru'
-                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200/70'
+                        ? 'bg-yellow-100 text-slate-900 border-yellow-300/70'
                         : 'bg-purple-50 text-purple-700 border-purple-200/70'
                     }`}>
                       {u.role === 'siswa' ? 'Siswa' : u.role === 'guru' ? 'Guru' : 'Administrator'}
@@ -209,17 +209,17 @@ export const AdminUsers: React.FC<{
                       </button>
                       <button
                         onClick={() => handleCopyCredentials(u)}
-                        className="p-1 text-slate-400 hover:text-emerald-600 transition-colors cursor-pointer"
+                        className="p-1 text-slate-400 hover:text-amber-600 transition-colors cursor-pointer"
                         title="Salin Username & Password"
                       >
-                        {copiedId === u.id ? <Check size={15} className="text-emerald-600" /> : <Copy size={15} />}
+                        {copiedId === u.id ? <Check size={15} className="text-amber-600" /> : <Copy size={15} />}
                       </button>
                     </div>
                   </td>
                   <td className="p-4 text-slate-600 font-medium">{u.class || '-'}</td>
                   <td className="p-4">
                     {u.sessionToken ? (
-                      <span className="text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md font-bold text-xs inline-flex items-center gap-1 font-mono">
+                      <span className="text-slate-900 bg-yellow-100 border border-yellow-300 px-2 py-0.5 rounded-md font-bold text-xs inline-flex items-center gap-1 font-mono">
                         <Lock size={12} /> Terkunci
                       </span>
                     ) : (

@@ -11,7 +11,7 @@ export interface FeedbackWidgetProps {
 }
 
 const categories = [
-  { id: 'paham', label: 'Paling Dipahami', icon: Lightbulb, color: 'text-emerald-600 bg-emerald-50 border-emerald-200' },
+  { id: 'paham', label: 'Paling Dipahami', icon: Lightbulb, color: 'text-amber-600 bg-yellow-100 border-yellow-300' },
   { id: 'tanya', label: 'Perlu Latihan', icon: HelpCircle, color: 'text-blue-600 bg-blue-50 border-blue-200' },
   { id: 'sulit', label: 'Kendala / Sulit', icon: AlertCircle, color: 'text-rose-600 bg-rose-50 border-rose-200' },
 ];
@@ -113,7 +113,7 @@ export const FeedbackWidget: React.FC<FeedbackWidgetProps> = ({
           >
             {isSubmitted ? (
               <>
-                <Check size={14} className="text-emerald-700" />
+                <Check size={14} className="text-slate-900" />
                 <span>Tersimpan!</span>
               </>
             ) : (

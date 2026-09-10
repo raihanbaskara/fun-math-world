@@ -25,7 +25,7 @@ export const defaultDatabaseState: DatabaseState = {
       avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=Aisyah",
       sessionToken: null,
       deviceId: null,
-      progress: { materi: 85, video: 70, lkpd: 100, evaluasi: 90 },
+      progress: { materi: 85, video: 70, lkpd: 100, latsol: 90, evaluasi: 90 },
       readAnnouncements: []
     },
     {
@@ -38,7 +38,7 @@ export const defaultDatabaseState: DatabaseState = {
       avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=Budi",
       sessionToken: null,
       deviceId: null,
-      progress: { materi: 60, video: 50, lkpd: 0, evaluasi: 0 },
+      progress: { materi: 60, video: 50, lkpd: 0, latsol: 0, evaluasi: 0 },
       readAnnouncements: []
     },
     {
@@ -51,7 +51,7 @@ export const defaultDatabaseState: DatabaseState = {
       avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=Citra",
       sessionToken: null,
       deviceId: null,
-      progress: { materi: 100, video: 100, lkpd: 100, evaluasi: 95 },
+      progress: { materi: 100, video: 100, lkpd: 100, latsol: 100, evaluasi: 95 },
       readAnnouncements: []
     },
     {
@@ -131,15 +131,47 @@ export const defaultDatabaseState: DatabaseState = {
       description: "Peserta didik melakukan pemodelan pembagian kue dan petak sawah untuk menemukan pola pecahan senilai.",
       imageUrl: "https://images.unsplash.com/photo-1606326608606-aa0b62935f2b?auto=format&fit=crop&w=800&q=80",
       pdfFilename: "LKPD_01_Pecahan_Senilai_SMP7.pdf",
-      objectives: "1. Siswa mampu memodelkan pecahan 1/2, 2/4, dan 4/8.\n2. Siswa mampu menyimpulkan aturan perkalian pecahan senilai."
+      objectives: "1. Siswa mampu memodelkan pecahan 1/2, 2/4, dan 4/8.\n2. Siswa mampu menyimpulkan aturan perkalian pecahan senilai.",
+      questions: [
+        {
+          id: "lkpd1_q1",
+          title: "Aktivitas 1: Pemodelan Pizza Pecahan Senilai",
+          prompt: "Dua loyang pizza berukuran sama dibagi dengan cara berbeda. Pizza A dipotong menjadi 4 bagian sama besar dan dimakan 2 potong (2/4). Pizza B dipotong menjadi 8 bagian sama besar dan dimakan 4 potong (4/8). Apakah jumlah pizza yang dimakan pada kedua loyang tersebut sama banyak? Jelaskan dengan konsep pecahan senilai dan FPB!",
+          discussion: "Langkah Pembahasan:\n1. Pecahan Pizza A = 2/4, Pizza B = 4/8.\n2. Bentuk paling sederhana dari 2/4 (dibagi FPB 2) = 1/2.\n3. Bentuk paling sederhana dari 4/8 (dibagi FPB 4) = 1/2.\n4. Kesimpulan: Keduanya senilai (2/4 = 4/8 = 1/2), sehingga jumlah pizza yang dimakan sama banyak.",
+          weight: 50
+        },
+        {
+          id: "lkpd1_q2",
+          title: "Aktivitas 2: Menentukan Pecahan Senilai",
+          prompt: "Tentukan 3 pecahan yang senilai dengan 3/5 dengan cara mengalikan pembilang dan penyebut dengan bilangan bulat yang sama! Tuliskan langkah perhitungannya!",
+          discussion: "Langkah Pembahasan:\n1. Kalikan 2: (3×2)/(5×2) = 6/10.\n2. Kalikan 3: (3×3)/(5×3) = 9/15.\n3. Kalikan 4: (3×4)/(5×4) = 12/20.\nPecahan senilai: 6/10, 9/15, dan 12/20.",
+          weight: 50
+        }
+      ]
     },
     {
       id: "lkpd_2",
-      title: "LKPD 2 — Pemecahan Masalah Penjumlahan Pecahan dalam Kehidupan Sehari-hari",
-      description: "Menganalisis resep kue bolu dan pembagian pita hiasan menggunakan operasi hitung pecahan.",
+      title: "LKPD 2 — Pemecahan Masalah Operasi Penjumlahan Pecahan",
+      description: "Menganalisis resep masakan dan pembagian pita hiasan menggunakan operasi hitung pecahan.",
       imageUrl: "https://images.unsplash.com/photo-1596495578065-6e0763fa1178?auto=format&fit=crop&w=800&q=80",
       pdfFilename: "LKPD_02_Operasi_Pecahan_SMP7.pdf",
-      objectives: "1. Siswa mampu menyelesaikan soal kontekstual resep masakan.\n2. Siswa mampu menyamakan penyebut menggunakan KPK."
+      objectives: "1. Siswa mampu menyelesaikan soal kontekstual resep masakan.\n2. Siswa mampu menyamakan penyebut menggunakan KPK.",
+      questions: [
+        {
+          id: "lkpd2_q1",
+          title: "Aktivitas 1: Resep Adonan Roti",
+          prompt: "Siti mencampurkan 2/3 kg tepung gandum dan 1/4 kg tepung beras untuk membuat adonan roti. Berapa kg total berat tepung yang dicampurkan Siti? Tuliskan langkah penyamaan penyebut menggunakan KPK!",
+          discussion: "Langkah Pembahasan:\n1. Cari KPK dari penyebut 3 dan 4, yaitu 12.\n2. Ubah pecahan: 2/3 = 8/12 dan 1/4 = 3/12.\n3. Jumlahkan pembilang: 8/12 + 3/12 = 11/12 kg.\nTotal berat tepung adalah 11/12 kg.",
+          weight: 50
+        },
+        {
+          id: "lkpd2_q2",
+          title: "Aktivitas 2: Pita Prakarya",
+          prompt: "Budi memiliki pita sepanjang 5/6 meter. Ia memberikan 1/3 meter pita kepada adiknya. Berapakah sisa pita yang dimiliki Budi sekarang?",
+          discussion: "Langkah Pembahasan:\n1. Samakan penyebut: 1/3 = 2/6.\n2. Kurangkan: 5/6 - 2/6 = 3/6.\n3. Sederhanakan dengan FPB 3: 3/6 = 1/2 meter.\nSisa pita Budi adalah 1/2 meter.",
+          weight: 50
+        }
+      ]
     }
   ],
   lkpdSubmissions: [
@@ -150,12 +182,138 @@ export const defaultDatabaseState: DatabaseState = {
       studentClass: "Kelas 7-A",
       lkpdId: "lkpd_1",
       photoUrl: "https://images.unsplash.com/photo-1588072432836-e10032774350?auto=format&fit=crop&w=600&q=80",
+      answers: {
+        lkpd1_q1: {
+          textAnswer: "Kedua loyang pizza sama banyak karena 2/4 jika disederhanakan menjadi 1/2 dan 4/8 juga disederhanakan menjadi 1/2."
+        },
+        lkpd1_q2: {
+          textAnswer: "Pecahan senilai dari 3/5 adalah 6/10, 9/15, dan 12/20 dengan mengalikan pembilang dan penyebut dengan bilangan 2, 3, dan 4."
+        }
+      },
       date: "2026-09-02 09:15",
       aiScore: 92,
-      aiFeedback: "Model pecahan senilai (2/4 = 4/8) digambar dengan sangat rapi dan proporsional. Langkah penyamaan pembilang dan penyebut tepat.",
+      aiFeedback: "Jawaban sangat sistematis. Konsep pecahan senilai dan penyederhanaan menggunakan FPB sudah tepat.",
       teacherScore: 95,
       teacherFeedback: "Pekerjaan luar biasa Aisyah! Penjelasan langkah sangat sistematis.",
       status: "Dinilai"
+    }
+  ],
+  latsolRooms: [
+    {
+      id: "room_1",
+      title: "Latihan Soal 1: Pecahan Senilai & Desimal",
+      topic: "Konsep Dasar, Pecahan Senilai, dan Konversi Desimal",
+      badge: "Latihan Soal 1",
+      durationSeconds: 180,
+      isLockedByTeacher: false,
+      questions: [
+        {
+          id: "ls1_q1",
+          question: "Bentuk pecahan paling sederhana dari 18/24 adalah...",
+          options: ["3/4", "2/3", "4/6", "3/8"],
+          correctIndex: 0,
+          explanation: "Bagi pembilang dan penyebut dengan FPB(18, 24) = 6. Maka 18/6 = 3 dan 24/6 = 4 -> 3/4.",
+          points: 20
+        },
+        {
+          id: "ls1_q2",
+          question: "Pecahan desimal dari 3/5 adalah...",
+          options: ["0.35", "0.6", "0.65", "0.53"],
+          correctIndex: 1,
+          explanation: "Kalikan pembilang dan penyebut dengan 2: 3/5 = 6/10 = 0.6.",
+          points: 20
+        },
+        {
+          id: "ls1_q3",
+          question: "Pecahan berikut yang SENILAI dengan 2/3 adalah...",
+          options: ["4/9", "6/9", "8/15", "5/6"],
+          correctIndex: 1,
+          explanation: "Kalikan pembilang dan penyebut dengan 3: (2×3)/(3×3) = 6/9.",
+          points: 20
+        },
+        {
+          id: "ls1_q4",
+          question: "Bentuk persen dari 7/20 adalah...",
+          options: ["35%", "70%", "28%", "14%"],
+          correctIndex: 0,
+          explanation: "7/20 = (7×5)/(20×5) = 35/100 = 35%.",
+          points: 20
+        },
+        {
+          id: "ls1_q5",
+          question: "Urutan pecahan 1/2, 3/4, 2/5 dari yang TERKECIL adalah...",
+          options: ["2/5, 1/2, 3/4", "1/2, 2/5, 3/4", "3/4, 1/2, 2/5", "2/5, 3/4, 1/2"],
+          correctIndex: 0,
+          explanation: "Ubah ke desimal: 2/5 = 0.4, 1/2 = 0.5, 3/4 = 0.75. Urutan terkecil: 2/5, 1/2, 3/4.",
+          points: 20
+        }
+      ]
+    },
+    {
+      id: "room_2",
+      title: "Latihan Soal 2: Operasi Campuran Penjumlahan & Pengurangan",
+      topic: "Operasi Hitung Pecahan Beda Penyebut (KPK)",
+      badge: "Latihan Soal 2",
+      durationSeconds: 240,
+      isLockedByTeacher: true,
+      questions: [
+        {
+          id: "ls2_q1",
+          question: "Hasil dari 1/3 + 1/4 adalah...",
+          options: ["2/7", "7/12", "5/12", "1/12"],
+          correctIndex: 1,
+          explanation: "KPK dari 3 dan 4 adalah 12. 1/3 = 4/12, 1/4 = 3/12. 4/12 + 3/12 = 7/12.",
+          points: 20
+        },
+        {
+          id: "ls2_q2",
+          question: "Hasil dari 5/6 - 1/2 adalah...",
+          options: ["4/4", "2/6", "1/3", "2/3"],
+          correctIndex: 2,
+          explanation: "1/2 = 3/6. 5/6 - 3/6 = 2/6 = 1/3.",
+          points: 20
+        },
+        {
+          id: "ls2_q3",
+          question: "Hasil dari 2 1/3 + 1 1/2 adalah...",
+          options: ["3 2/5", "3 5/6", "4 1/6", "3 1/6"],
+          correctIndex: 1,
+          explanation: "(2+1) + (2/6 + 3/6) = 3 + 5/6 = 3 5/6.",
+          points: 20
+        },
+        {
+          id: "ls2_q4",
+          question: "Ibu membeli 3/4 kg gula, dipakai 1/3 kg. Berapa kg sisa gula?",
+          options: ["5/12 kg", "2/12 kg", "1/4 kg", "7/12 kg"],
+          correctIndex: 0,
+          explanation: "3/4 - 1/3 = 9/12 - 4/12 = 5/12 kg.",
+          points: 20
+        },
+        {
+          id: "ls2_q5",
+          question: "Hasil dari 3/4 - 1/2 + 2/3 adalah...",
+          options: ["11/12", "7/12", "5/12", "9/12"],
+          correctIndex: 0,
+          explanation: "KPK 12: 9/12 - 6/12 + 8/12 = 11/12.",
+          points: 20
+        }
+      ]
+    }
+  ],
+  latsolSubmissions: [
+    {
+      id: "latsub_1",
+      studentId: "std_1",
+      studentName: "Aisyah Putri",
+      studentClass: "Kelas 7-A",
+      roomId: "room_1",
+      roomTitle: "Latihan Soal 1: Pecahan Senilai & Desimal",
+      score: 100,
+      correctCount: 5,
+      totalQuestions: 5,
+      answers: { ls1_q1: 0, ls1_q2: 1, ls1_q3: 1, ls1_q4: 0, ls1_q5: 0 },
+      timeSpentSeconds: 65,
+      date: "2026-09-02 10:30"
     }
   ],
   evaluationQuestions: [
@@ -215,7 +373,60 @@ export const defaultDatabaseState: DatabaseState = {
       isImportant: false
     }
   ],
-  reflections: []
+  reflections: [
+    {
+      id: "ref_1",
+      studentId: "std_1",
+      studentName: "Aisyah Putri",
+      studentClass: "Kelas 7-A",
+      date: "2026-09-02 12:00",
+      emoji: "🤩",
+      easy: "Visualisasi pizza di Studio Visual sangat membantu memahami kenapa 2/4 sama dengan 1/2.",
+      challenge: "Kadang masih perlu teliti saat menyamakan penyebut 3 pecahan berbeda dengan KPK."
+    }
+  ],
+  schedules: [
+    {
+      id: "sch_1",
+      title: "Modul Teori: Fondasi & Notasi Pecahan",
+      type: "materi",
+      topic: "Bab 1.1 Pecahan Senilai & Desimal",
+      date: "02 Sep 2026",
+      dueTime: "08:00 WIB",
+      status: "Tersedia",
+      description: "Pelajari konsep pembilang, penyebut, dan pemodelan luas daerah pecahan."
+    },
+    {
+      id: "sch_2",
+      title: "Tugas LKPD 1: Eksplorasi Model Konkrit",
+      type: "lkpd",
+      topic: "LKPD Digital Soal Essai",
+      date: "04 Sep 2026",
+      dueTime: "23:59 WIB",
+      status: "Tersedia",
+      description: "Kerjakan 2 butir soal uraian dan unggah lembar kerja tulisan tangan."
+    },
+    {
+      id: "sch_3",
+      title: "Latihan Soal Quizizz: Room 1 & 2",
+      type: "latsol",
+      topic: "Game Interaktif Berwaktu",
+      date: "07 Sep 2026",
+      dueTime: "10:00 WIB",
+      status: "Tersedia",
+      description: "Uji kecepatan hitung pecahan berwaktu dengan auto-submit Quizizz."
+    },
+    {
+      id: "sch_4",
+      title: "Evaluasi Sumatif: Ujian Uraian HOTS",
+      type: "evaluasi",
+      topic: "Penilaian Capaian Bab 1",
+      date: "09 Sep 2026",
+      dueTime: "12:00 WIB",
+      status: "Segera",
+      description: "Penyelesaian soal cerita kontekstual dengan pengawasan tab integrity monitor."
+    }
+  ]
 };
 
 type Listener = (state: DatabaseState) => void;
@@ -255,7 +466,14 @@ class StorageService {
         .maybeSingle();
 
       if (data && data.data) {
-        this.state = data.data;
+        this.state = {
+          ...defaultDatabaseState,
+          ...data.data,
+          latsolRooms: data.data.latsolRooms || defaultDatabaseState.latsolRooms,
+          latsolSubmissions: data.data.latsolSubmissions || defaultDatabaseState.latsolSubmissions,
+          schedules: data.data.schedules || defaultDatabaseState.schedules,
+          reflections: data.data.reflections || defaultDatabaseState.reflections,
+        };
         localStorage.setItem(STORAGE_KEY, JSON.stringify(this.state));
         this.notify();
       } else {
@@ -275,7 +493,14 @@ class StorageService {
           (payload) => {
             if (payload.new && (payload.new as { data?: DatabaseState }).data) {
               const remoteState = (payload.new as { data: DatabaseState }).data;
-              this.state = remoteState;
+              this.state = {
+                ...defaultDatabaseState,
+                ...remoteState,
+                latsolRooms: remoteState.latsolRooms || defaultDatabaseState.latsolRooms,
+                latsolSubmissions: remoteState.latsolSubmissions || defaultDatabaseState.latsolSubmissions,
+                schedules: remoteState.schedules || defaultDatabaseState.schedules,
+                reflections: remoteState.reflections || defaultDatabaseState.reflections,
+              };
               localStorage.setItem(STORAGE_KEY, JSON.stringify(this.state));
               this.notify();
             }
@@ -295,11 +520,17 @@ class StorageService {
     }
     try {
       const parsed: DatabaseState = JSON.parse(raw);
-      // Enforce bright light mode studio theme as requested by user
-      if (parsed.settings) {
-        parsed.settings.darkMode = false;
-      }
-      return parsed;
+      // Merge with defaultDatabaseState to ensure all new keys (latsolRooms, schedules, etc.) exist
+      const merged: DatabaseState = {
+        ...defaultDatabaseState,
+        ...parsed,
+        latsolRooms: parsed.latsolRooms?.length ? parsed.latsolRooms : defaultDatabaseState.latsolRooms,
+        latsolSubmissions: parsed.latsolSubmissions || defaultDatabaseState.latsolSubmissions,
+        schedules: parsed.schedules?.length ? parsed.schedules : defaultDatabaseState.schedules,
+        reflections: parsed.reflections?.length ? parsed.reflections : defaultDatabaseState.reflections,
+        lkpdList: parsed.lkpdList?.length && parsed.lkpdList[0].questions ? parsed.lkpdList : defaultDatabaseState.lkpdList
+      };
+      return merged;
     } catch {
       return JSON.parse(JSON.stringify(defaultDatabaseState));
     }

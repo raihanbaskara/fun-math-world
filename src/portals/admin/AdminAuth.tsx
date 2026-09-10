@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { ArrowLeft, ShieldAlert, KeyRound, User as UserIcon, CheckCircle2, Eye, EyeOff, Sparkles, Terminal } from 'lucide-react';
-import { InteractiveHoverButton } from '@/components/ui/interactive-hover-button';
+import { ArrowLeft, ShieldAlert, KeyRound, User as UserIcon, Eye, EyeOff } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { storageService } from '@/services/storageService';
 import { soundService } from '@/services/soundService';
 import { User } from '@/types';
@@ -54,11 +54,9 @@ export const AdminAuth: React.FC<AdminAuthProps> = ({
     onLoginSuccess(updatedUser);
   };
 
-  const handleQuickDemo = (e?: React.MouseEvent) => {
-    if (e) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
+  const handleQuickDemoAdmin = () => {
+    setUsername('admin');
+    setPassword('admin123');
     const db = storageService.getState();
     const user = db.users.find(u => u.username === 'admin' && u.role === 'admin');
     if (user) {
@@ -79,198 +77,102 @@ export const AdminAuth: React.FC<AdminAuthProps> = ({
   };
 
   return (
-    <div className="auth-wrapper select-none">
-      <style>{`
-        .auth-wrapper {
-          min-height: 100vh;
-          width: 100vw;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          background: linear-gradient(135deg, #cecbcb 0%, #bebebe 50%, #dcdcdc 100%);
-          padding: 20px;
-          position: relative;
-          overflow: hidden;
-          font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
-        }
-
-        .auth-card-container-admin {
-          position: relative;
-          width: 100%;
-          max-width: 960px;
-          min-height: 580px;
-          background: #ffffff;
-          border-radius: 28px;
-          box-shadow: 0 25px 60px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(255, 255, 255, 0.6);
-          overflow: hidden;
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-        }
-
-        .auth-input-field {
-          width: 100%;
-          background-color: #f1f5f9;
-          margin: 7px 0;
-          height: 50px;
-          border-radius: 16px;
-          display: flex;
-          align-items: center;
-          padding: 0 1rem;
-          position: relative;
-          transition: 0.25s ease;
-          border: 1px solid #e2e8f0;
-        }
-
-        .auth-input-field:focus-within {
-          background-color: #ffffff;
-          border-color: #8b5cf6;
-          box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.25);
-        }
-
-        .auth-input-field .icon {
-          color: #94a3b8;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          margin-right: 12px;
-        }
-
-        .auth-input-field input {
-          background: none;
-          outline: none;
-          border: none;
-          line-height: 1;
-          font-weight: 700;
-          font-size: 0.875rem;
-          color: #0f172a;
-          width: 100%;
-        }
-
-        .auth-input-field input::placeholder {
-          color: #94a3b8;
-          font-weight: 500;
-        }
-
-        @media (max-width: 870px) {
-          .auth-card-container-admin {
-            grid-template-columns: 1fr;
-            min-height: auto;
-          }
-          .admin-visual-panel {
-            display: none !important;
-          }
-        }
-      `}</style>
-
+    <div className="min-h-screen w-full bg-[#fffdf5] bg-graph-grid flex flex-col items-center justify-center p-4 relative font-sans text-slate-950 select-none">
+      
       {/* Top Floating Back Button */}
       <button
-        onClick={onBackToLanding}
-        className="fixed top-6 left-6 px-4 py-2.5 rounded-full bg-white/90 hover:bg-white text-slate-800 text-xs font-bold backdrop-blur-md transition-all flex items-center gap-2 border border-white shadow-sm cursor-pointer hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 z-50"
+        onClick={() => {
+          soundService.click();
+          onBackToLanding();
+        }}
+        className="fixed top-6 left-6 px-4 py-2 rounded-full bg-white border-2 border-slate-950 shadow-[3px_3px_0px_0px_#0f172a] text-slate-950 font-black text-xs hover:bg-[#ffe600] transition-all flex items-center gap-2 cursor-pointer active:translate-x-0.5 active:translate-y-0.5 active:shadow-none z-50"
       >
         <ArrowLeft size={16} />
-        <span>Kembali ke Beranda Admin</span>
+        <span>Kembali ke Beranda</span>
       </button>
 
-      {/* Main Luxury Auth Card */}
-      <div className="auth-card-container-admin max-w-4xl w-full">
+      {/* Main Neobrutal Admin Card */}
+      <div className="w-full max-w-md bg-white border-4 border-slate-950 rounded-3xl p-6 sm:p-8 shadow-[8px_8px_0px_0px_#0f172a] space-y-6 relative my-12">
         
-        {/* Left Visual Panel */}
-        <div className="admin-visual-panel bg-gradient-to-br from-purple-950 via-slate-900 to-slate-950 p-8 sm:p-10 flex flex-col justify-between text-white relative overflow-hidden">
-          <div className="absolute -right-12 -top-12 w-64 h-64 rounded-full bg-purple-500/15 blur-3xl pointer-events-none" />
-
-          <div className="space-y-4 relative z-10">
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 border border-white/15 text-[11px] font-black uppercase tracking-wider text-purple-300 font-mono">
-              <Sparkles size={13} className="text-purple-400" />
-              <span>Terminal Pusat Kendali</span>
-            </div>
-
-            <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-white leading-tight">
-              Pemeliharaan Server & Manajemen Akun
+        {/* Header */}
+        <div className="flex items-center gap-3 pb-4 border-b-3 border-slate-950">
+          <div className="w-11 h-11 rounded-2xl bg-[#c084fc] border-2 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a] flex items-center justify-center font-black text-slate-950">
+            <ShieldAlert size={24} />
+          </div>
+          <div>
+            <span className="px-2.5 py-0.5 bg-[#c084fc] text-slate-950 font-mono font-black text-[10px] rounded border border-slate-950 shadow-[1px_1px_0px_0px_#0f172a]">
+              KONTROL ADMINISTRATOR
+            </span>
+            <h2 className="text-xl font-black text-slate-950 font-mono mt-0.5">
+              Terminal Admin
             </h2>
-
-            <p className="text-xs text-slate-300 font-medium leading-relaxed">
-              Kontrol penuh atas seluruh pengguna sistem, reset kunci perangkat aktif (1 Device Lock), serta backup & restore database state.
-            </p>
-          </div>
-
-          <div className="space-y-2.5 my-auto py-6 relative z-10">
-            {[
-              'Reset 1 Akun 1 Device Lock Seketika',
-              'Manajemen Akun Siswa, Guru & Admin',
-              'Backup & Restore Database State JSON',
-              'Pemantauan Integritas Server & Cache'
-            ].map((feat, idx) => (
-              <div key={idx} className="flex items-center gap-2.5 p-3 rounded-2xl bg-white/10 border border-white/10 text-xs font-bold text-white shadow-xs backdrop-blur-md">
-                <CheckCircle2 size={16} className="text-purple-400 shrink-0" />
-                <span>{feat}</span>
-              </div>
-            ))}
-          </div>
-
-          <div className="p-3.5 rounded-2xl bg-white/10 border border-white/10 text-xs font-semibold text-slate-300 flex items-center gap-3 relative z-10">
-            <Terminal size={18} className="text-purple-400 shrink-0" />
-            <span>Hak Akses Superadmin • Harap jaga kerahasiaan kredensial server.</span>
           </div>
         </div>
 
-        {/* Right Form Container */}
-        <div className="p-8 sm:p-12 flex flex-col justify-center bg-white">
-          <div className="max-w-md w-full mx-auto space-y-5">
-            
-            <div className="text-center space-y-1.5">
-              <div className="w-12 h-12 rounded-2xl bg-purple-600 flex items-center justify-center text-white font-black mx-auto shadow-sm ring-4 ring-purple-600/20">
-                <ShieldAlert size={26} />
-              </div>
-              <h2 className="text-2xl font-black text-slate-900 tracking-tight">
-                Terminal Administrator
-              </h2>
-              <p className="text-xs text-slate-500 font-medium">
-                Masuk ke panel kontrol teknis untuk pemeliharaan sistem
-              </p>
+        {/* Demo Sticker */}
+        <div className="p-3 bg-amber-100/80 rounded-2xl border-2 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a] space-y-1.5">
+          <div className="flex items-center justify-between text-xs font-mono font-black text-slate-950">
+            <span>⚡ DEMO AKUN ADMIN:</span>
+            <span className="text-[10px] text-slate-700">1 Klik Autologin</span>
+          </div>
+          <button
+            type="button"
+            onClick={handleQuickDemoAdmin}
+            className="w-full py-2 bg-white text-slate-950 font-mono font-black text-xs rounded-xl border-2 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a] hover:bg-[#ffe600] transition cursor-pointer active:translate-x-0.5 active:translate-y-0.5 active:shadow-none flex items-center justify-center gap-2"
+          >
+            <KeyRound size={14} />
+            <span>Admin: admin (PW: admin123)</span>
+          </button>
+        </div>
+
+        {/* Login Form */}
+        <form onSubmit={handleLogin} className="space-y-4">
+          <div>
+            <label className="block text-xs font-mono font-black uppercase text-slate-700 mb-1">
+              Username Admin:
+            </label>
+            <input
+              type="text"
+              required
+              placeholder="Contoh: admin"
+              value={username}
+              onChange={e => setUsername(e.target.value)}
+              className="w-full p-3 bg-amber-50/50 border-2 border-slate-950 rounded-xl text-xs font-bold text-slate-950 focus:bg-white focus:ring-2 focus:ring-amber-400 outline-none shadow-[2px_2px_0px_0px_#0f172a]"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-mono font-black uppercase text-slate-700 mb-1">
+              Kata Sandi (Password):
+            </label>
+            <div className="relative flex items-center">
+              <input
+                type={showPassword ? "text" : "password"}
+                required
+                placeholder="••••••••"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                className="w-full p-3 bg-amber-50/50 border-2 border-slate-950 rounded-xl text-xs font-bold text-slate-950 focus:bg-white focus:ring-2 focus:ring-amber-400 outline-none shadow-[2px_2px_0px_0px_#0f172a] pr-10"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 text-slate-700 hover:text-slate-950 cursor-pointer"
+              >
+                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
             </div>
-
-            <form onSubmit={handleLogin} className="space-y-3.5">
-              <div className="auth-input-field">
-                <span className="icon"><UserIcon size={18} /></span>
-                <input
-                  type="text"
-                  required
-                  value={username}
-                  onChange={e => setUsername(e.target.value)}
-                  placeholder="Username Admin"
-                />
-              </div>
-
-              <div className="auth-input-field">
-                <span className="icon"><KeyRound size={18} /></span>
-                <input
-                  type={showPassword ? "text" : "password"}
-                  required
-                  value={password}
-                  onChange={e => setPassword(e.target.value)}
-                  placeholder="Kata Sandi (Password)"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="text-slate-400 hover:text-slate-600 cursor-pointer pl-2"
-                >
-                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                </button>
-              </div>
-
-              <div className="pt-2">
-                <InteractiveHoverButton
-                  type="submit"
-                  fullWidth
-                  text="Masuk Panel Admin"
-                  dotColor="bg-purple-600"
-                />
-              </div>
-            </form>
-
           </div>
-        </div>
+
+          <Button
+            type="submit"
+            variant="purple"
+            size="lg"
+            className="w-full font-black mt-2"
+          >
+            Masuk Panel Admin
+          </Button>
+        </form>
 
       </div>
     </div>
