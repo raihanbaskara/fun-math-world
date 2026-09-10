@@ -96,7 +96,7 @@ export const AdminAuth: React.FC<AdminAuthProps> = ({
             <input
               type="text"
               required
-              placeholder="Contoh: admin"
+              placeholder="Masukkan username admin"
               value={username}
               onChange={e => setUsername(e.target.value)}
               className="w-full p-3 bg-amber-50/50 border-2 border-slate-950 rounded-xl text-xs font-bold text-slate-950 focus:bg-white focus:ring-2 focus:ring-amber-400 outline-none shadow-[2px_2px_0px_0px_#0f172a]"

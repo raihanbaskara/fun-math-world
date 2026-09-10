@@ -185,7 +185,7 @@ export default function SiswaAuthSwitch({
                 <input
                   type="text"
                   required
-                  placeholder="Contoh: Baskara99"
+                  placeholder="Masukkan NIS atau username"
                   value={signInUsername}
                   onChange={(e) => setSignInUsername(e.target.value)}
                   className="w-full p-3 bg-amber-50/50 border-2 border-slate-950 rounded-xl text-xs font-bold text-slate-950 focus:bg-white focus:ring-2 focus:ring-amber-400 outline-none shadow-[2px_2px_0px_0px_#0f172a]"
@@ -235,7 +235,7 @@ export default function SiswaAuthSwitch({
               <input
                 type="text"
                 required
-                placeholder="Contoh: Baskara Putra"
+                placeholder="Masukkan nama lengkap siswa"
                 value={regName}
                 onChange={(e) => setRegName(e.target.value)}
                 className="w-full p-3 bg-amber-50/50 border-2 border-slate-950 rounded-xl text-xs font-bold text-slate-950 focus:bg-white focus:ring-2 focus:ring-amber-400 outline-none shadow-[2px_2px_0px_0px_#0f172a]"
@@ -249,7 +249,7 @@ export default function SiswaAuthSwitch({
               <input
                 type="text"
                 required
-                placeholder="Contoh: Baskara99"
+                placeholder="Masukkan NIS atau username baru"
                 value={regUsername}
                 onChange={(e) => setRegUsername(e.target.value)}
                 className="w-full p-3 bg-amber-50/50 border-2 border-slate-950 rounded-xl text-xs font-bold text-slate-950 focus:bg-white focus:ring-2 focus:ring-amber-400 outline-none shadow-[2px_2px_0px_0px_#0f172a]"
