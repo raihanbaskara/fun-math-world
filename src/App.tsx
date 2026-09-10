@@ -202,10 +202,16 @@ export function App() {
 
   // Toggle Theme
   const handleToggleTheme = () => {
+    const nextMode = !db.settings.darkMode;
     storageService.update(draft => {
-      draft.settings.darkMode = !draft.settings.darkMode;
+      draft.settings.darkMode = nextMode;
     });
-    showToast(db.settings.darkMode ? "☀️ Mode Terang Aktif" : "🌙 Mode Gelap Aktif", "info");
+    if (nextMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+    showToast(nextMode ? "🌙 Mode Gelap Aktif" : "☀️ Mode Terang Aktif", "info");
   };
 
   // Toggle Sound
