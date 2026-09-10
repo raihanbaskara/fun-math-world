@@ -333,7 +333,7 @@ export const GuruLatsol: React.FC<{
               {/* Card Body (Top Portion) */}
               <div className="space-y-4">
                 <div className="flex items-start justify-between gap-3">
-                  <div className="space-y-1">
+                  <div className="space-y-1 min-h-[82px] flex flex-col justify-start">
                     <div className="flex items-center gap-2">
                       <span className="px-2.5 py-0.5 rounded-lg bg-[#ffe600] text-slate-950 font-mono font-black text-xs border-2 border-slate-950 shadow-[1.5px_1.5px_0px_0px_#0f172a]">
                         Ruang #{idx + 1}
@@ -342,8 +342,8 @@ export const GuruLatsol: React.FC<{
                         {room.badge}
                       </span>
                     </div>
-                    <h3 className="font-black text-slate-950 text-lg leading-snug">{room.title}</h3>
-                    <p className="text-xs font-bold text-slate-600">{room.topic}</p>
+                    <h3 className="font-black text-slate-950 text-lg leading-snug line-clamp-2">{room.title}</h3>
+                    <p className="text-xs font-bold text-slate-600 line-clamp-1">{room.topic}</p>
                   </div>
 
                   {/* Lock/Unlock Badge */}
@@ -355,7 +355,7 @@ export const GuruLatsol: React.FC<{
                   </div>
                 </div>
 
-                {/* Metrics */}
+                {/* Metrics (Aligned) */}
                 <div className="grid grid-cols-3 gap-2 py-2">
                   <div className="p-2.5 rounded-xl bg-slate-100 border-2 border-slate-950 text-center">
                     <div className="text-[10px] font-mono font-bold text-slate-600">Soal</div>
@@ -371,19 +371,19 @@ export const GuruLatsol: React.FC<{
                   </div>
                 </div>
 
-                {/* Duration Configurator */}
+                {/* Duration Configurator (Preset + Custom Duration) */}
                 <div className="p-3 bg-amber-50 rounded-2xl border-2 border-slate-950 space-y-2">
                   <div className="flex items-center justify-between text-xs font-bold text-slate-900">
                     <span className="flex items-center gap-1">
                       <Clock size={14} className="text-slate-950" />
                       <span>Setel Durasi Pengerjaan:</span>
                     </span>
-                    <span className="font-mono font-black text-slate-950 bg-white px-2 py-0.5 rounded-md border border-slate-950">
+                    <span className="font-mono font-black text-slate-950 bg-white px-2.5 py-0.5 rounded-md border border-slate-950 shadow-[1px_1px_0px_0px_#0f172a]">
                       {durationMins} Menit
                     </span>
                   </div>
 
-                  <div className="flex flex-wrap gap-1.5">
+                  <div className="flex items-center gap-1.5 flex-wrap">
                     {[5, 10, 15, 20, 30].map(mins => (
                       <button
                         key={mins}
@@ -398,6 +398,31 @@ export const GuruLatsol: React.FC<{
                         {mins}m
                       </button>
                     ))}
+
+                    {/* Custom Duration Input */}
+                    <div className="flex items-center gap-1 bg-white px-2 py-0.5 rounded-xl border-2 border-slate-950 shadow-[1.5px_1.5px_0px_0px_#0f172a]">
+                      <span className="text-[10px] font-mono font-black text-slate-600">Kustom:</span>
+                      <input
+                        type="number"
+                        min="1"
+                        max="180"
+                        placeholder="Menit"
+                        key={`${room.id}_${durationMins}`}
+                        defaultValue={![5, 10, 15, 20, 30].includes(durationMins) ? durationMins : ''}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            const val = parseInt((e.target as HTMLInputElement).value);
+                            if (val > 0) handleUpdateDuration(room.id, val);
+                          }
+                        }}
+                        onBlur={(e) => {
+                          const val = parseInt(e.target.value);
+                          if (val > 0 && val !== durationMins) handleUpdateDuration(room.id, val);
+                        }}
+                        className="w-12 text-xs font-mono font-black text-slate-950 outline-none text-center bg-transparent"
+                      />
+                      <span className="text-[10px] font-mono font-bold text-slate-500">m</span>
+                    </div>
                   </div>
                 </div>
               </div>
