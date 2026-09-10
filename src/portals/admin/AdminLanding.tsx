@@ -14,7 +14,7 @@ export const AdminLanding: React.FC<AdminLandingProps> = ({ onNavigate }) => {
   };
 
   return (
-    <div className="relative w-full min-h-screen bg-[#fffdf5] bg-graph-grid text-slate-950 font-sans selection:bg-[#c084fc] selection:text-slate-950 flex flex-col justify-between">
+    <div className="relative w-full min-h-screen overflow-hidden bg-[#fffdf5] bg-graph-grid text-slate-950 font-sans selection:bg-[#c084fc] selection:text-slate-950 flex flex-col justify-between">
       
       {/* 1. TOP FLOATING NEOBRUTAL HEADER */}
       <header className="sticky top-0 z-50 w-full px-4 sm:px-8 py-4 bg-[#fffdf5]/90 backdrop-blur-md border-b-3 border-slate-950">
@@ -39,52 +39,78 @@ export const AdminLanding: React.FC<AdminLandingProps> = ({ onNavigate }) => {
         </div>
       </header>
 
-      {/* 2. MAIN HERO SECTION WITH FLOATING ACCENTS */}
-      <main className="relative max-w-5xl mx-auto px-4 sm:px-8 py-16 sm:py-24 flex-1 flex flex-col items-center justify-center text-center space-y-8 w-full">
+      {/* 2. FLOATING NEOBRUTAL MATH OPERATORS & SYSTEM BADGES (In Wide Open Space Canvas) */}
+      {/* Upper Left: MULTIPLY [X] 3D SVG & SIGMA BADGE */}
+      <div 
+        style={{ '--rot': '-10deg' } as React.CSSProperties}
+        className="absolute top-28 sm:top-36 left-4 md:left-8 lg:left-14 xl:left-24 2xl:left-36 hidden md:flex flex-col items-start gap-2.5 z-20 animate-float-slow select-none pointer-events-none"
+      >
+        <svg width="56" height="56" viewBox="0 0 80 80" fill="none" className="drop-shadow-sm">
+          <path d="M16 28L32 44L48 28L58 38L42 54L58 70L48 80L32 64L16 80L6 70L22 54L6 38L16 28Z" fill="#0f172a" />
+          <path d="M12 24L28 40L44 24L54 34L38 50L54 66L44 76L28 60L12 76L2 66L18 50L2 34L12 24Z" fill="#c084fc" stroke="#0f172a" strokeWidth="4" strokeLinejoin="round" />
+          <line x1="8" y1="66" x2="16" y2="74" stroke="#0f172a" strokeWidth="2.5" />
+          <line x1="22" y1="60" x2="30" y2="68" stroke="#0f172a" strokeWidth="2.5" />
+        </svg>
+        <div className="flex items-center gap-1.5 px-3 py-1.5 bg-[#c084fc] text-slate-950 font-mono font-black text-xs rounded-xl border-2.5 border-slate-950 shadow-[3px_3px_0px_0px_#0f172a] transform -rotate-3">
+          <span>∑ DATA</span>
+        </div>
+      </div>
+
+      {/* Upper Right: DIVIDE [÷] 3D SVG & PI BADGE */}
+      <div 
+        style={{ '--rot': '12deg' } as React.CSSProperties}
+        className="absolute top-28 sm:top-36 right-4 md:right-8 lg:right-14 xl:right-24 2xl:right-36 hidden md:flex flex-col items-end gap-2.5 z-20 animate-float-reverse select-none pointer-events-none"
+      >
+        <svg width="58" height="58" viewBox="0 0 90 90" fill="none" className="drop-shadow-sm">
+          <circle cx="45" cy="14" r="10" fill="#0f172a" />
+          <circle cx="42" cy="11" r="10" fill="#a3e635" stroke="#0f172a" strokeWidth="3.5" />
+          <rect x="14" y="38" width="64" height="18" rx="6" fill="#0f172a" />
+          <rect x="10" y="34" width="64" height="18" rx="6" fill="#a3e635" stroke="#0f172a" strokeWidth="4" />
+          <line x1="16" y1="48" x2="24" y2="40" stroke="#0f172a" strokeWidth="2.5" />
+          <line x1="28" y1="48" x2="36" y2="40" stroke="#0f172a" strokeWidth="2.5" />
+          <circle cx="45" cy="74" r="10" fill="#0f172a" />
+          <circle cx="42" cy="71" r="10" fill="#a3e635" stroke="#0f172a" strokeWidth="3.5" />
+        </svg>
+        <div className="flex items-center gap-1.5 px-3 py-1.5 bg-[#a3e635] text-slate-950 font-mono font-black text-xs rounded-xl border-2.5 border-slate-950 shadow-[3px_3px_0px_0px_#0f172a] transform rotate-3">
+          <span>π RAD</span>
+        </div>
+      </div>
+
+      {/* Lower Left: MINUS [-] 3D SVG & SQUARE ROOT */}
+      <div 
+        style={{ '--rot': '6deg' } as React.CSSProperties}
+        className="absolute bottom-24 sm:bottom-32 left-4 md:left-8 lg:left-14 xl:left-24 2xl:left-36 hidden lg:flex flex-col items-start gap-2.5 z-20 animate-float-reverse select-none pointer-events-none"
+      >
+        <svg width="56" height="32" viewBox="0 0 84 48" fill="none" className="drop-shadow-sm">
+          <rect x="10" y="16" width="66" height="22" rx="6" fill="#0f172a" />
+          <rect x="6" y="11" width="66" height="22" rx="6" fill="#38bdf8" stroke="#0f172a" strokeWidth="4" />
+          <line x1="14" y1="28" x2="22" y2="20" stroke="#0f172a" strokeWidth="2.5" />
+          <line x1="26" y1="28" x2="34" y2="20" stroke="#0f172a" strokeWidth="2.5" />
+        </svg>
+        <div className="flex items-center gap-1 px-3 py-1.5 bg-[#38bdf8] text-slate-950 font-mono font-black text-xs rounded-xl border-2.5 border-slate-950 shadow-[3px_3px_0px_0px_#0f172a] transform -rotate-2">
+          <span>√x &gt; 0</span>
+        </div>
+      </div>
+
+      {/* Lower Right: PLUS [+] 3D SVG & SESSION LOCK BADGE */}
+      <div 
+        style={{ '--rot': '-7deg' } as React.CSSProperties}
+        className="absolute bottom-24 sm:bottom-32 right-4 md:right-8 lg:right-14 xl:right-24 2xl:right-36 hidden lg:flex flex-col items-end gap-2.5 z-20 animate-float-slow select-none pointer-events-none"
+      >
+        <svg width="56" height="56" viewBox="0 0 80 80" fill="none" className="drop-shadow-sm">
+          <path d="M32 10H48V32H70V48H48V70H32V48H10V32H32V10Z" fill="#0f172a" />
+          <path d="M28 6H44V28H66V44H44V66H28V44H6V28H28V6Z" fill="#ffe600" stroke="#0f172a" strokeWidth="4" strokeLinejoin="round" />
+          <line x1="12" y1="44" x2="20" y2="52" stroke="#0f172a" strokeWidth="2.5" />
+          <line x1="32" y1="64" x2="40" y2="72" stroke="#0f172a" strokeWidth="2.5" />
+        </svg>
+        <div className="flex items-center gap-1.5 px-3 py-1.5 bg-[#ffe600] text-slate-950 font-mono font-black text-xs rounded-xl border-2.5 border-slate-950 shadow-[3px_3px_0px_0px_#0f172a] transform rotate-2">
+          <span>1/1 Sesi Lock</span>
+        </div>
+      </div>
+
+      {/* 3. MAIN HERO SECTION (Centered with clean spacing) */}
+      <main className="max-w-4xl mx-auto px-4 sm:px-8 py-14 sm:py-20 flex-1 flex flex-col items-center justify-center text-center space-y-7 w-full z-10">
         
-        {/* Floating Math Decorative Elements (Gambar 4 & 5) */}
-        {/* 1. SIGMA [∑] (Top Left Floating) */}
-        <div 
-          style={{ '--rot': '-10deg' } as React.CSSProperties}
-          className="absolute -top-2 left-2 sm:left-6 hidden md:block animate-float-slow select-none pointer-events-none z-10"
-        >
-          <div className="flex items-center gap-1.5 px-3 py-1.5 bg-[#c084fc] text-slate-950 font-mono font-black text-sm rounded-2xl border-3 border-slate-950 shadow-[3.5px_3.5px_0px_0px_#0f172a]">
-            <span>∑</span>
-            <span className="text-xs">DATA</span>
-          </div>
-        </div>
-
-        {/* 2. PI [π] (Top Right Floating) */}
-        <div 
-          style={{ '--rot': '12deg' } as React.CSSProperties}
-          className="absolute -top-3 right-2 sm:right-6 hidden md:block animate-float-reverse select-none pointer-events-none z-10"
-        >
-          <div className="flex items-center gap-1.5 px-3.5 py-1.5 bg-[#a3e635] text-slate-950 font-mono font-black text-sm rounded-2xl border-3 border-slate-950 shadow-[3.5px_3.5px_0px_0px_#0f172a]">
-            <span>π</span>
-            <span className="text-xs">RAD</span>
-          </div>
-        </div>
-
-        {/* 3. SQUARE ROOT [√] (Bottom Left Floating) */}
-        <div 
-          style={{ '--rot': '6deg' } as React.CSSProperties}
-          className="absolute bottom-6 left-4 sm:left-10 hidden lg:block animate-float-reverse select-none pointer-events-none z-10"
-        >
-          <div className="flex items-center gap-1 px-3 py-1 bg-[#38bdf8] text-slate-950 font-mono font-black text-xs rounded-xl border-2 border-slate-950 shadow-[3px_3px_0px_0px_#0f172a]">
-            <span>√x &gt; 0</span>
-          </div>
-        </div>
-
-        {/* 4. FRACTION / RATIO BADGE (Bottom Right Floating) */}
-        <div 
-          style={{ '--rot': '-7deg' } as React.CSSProperties}
-          className="absolute bottom-6 right-4 sm:right-10 hidden lg:block animate-float-slow select-none pointer-events-none z-10"
-        >
-          <div className="flex items-center gap-1.5 px-3 py-1 bg-[#ffe600] text-slate-950 font-mono font-black text-xs rounded-xl border-2 border-slate-950 shadow-[3px_3px_0px_0px_#0f172a]">
-            <span>1/1 Sesi Lock</span>
-          </div>
-        </div>
-
         {/* Dual Neobrutal Eyebrow Badges */}
         <div className="flex flex-wrap items-center justify-center gap-2.5 sm:gap-3">
           <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#c084fc] text-slate-950 border-2 border-slate-950 shadow-[2.5px_2.5px_0px_0px_#0f172a] font-mono font-black text-xs uppercase tracking-wider transform -rotate-1">
@@ -129,8 +155,8 @@ export const AdminLanding: React.FC<AdminLandingProps> = ({ onNavigate }) => {
 
       </main>
 
-      {/* 3. FOOTER (Gambar 3 Neobrutal Standard) */}
-      <footer className="w-full bg-white border-t-2 border-slate-950 py-3.5 px-6 sm:px-12 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs font-mono font-bold text-slate-600">
+      {/* 4. FOOTER (Gambar 3 Neobrutal Standard) */}
+      <footer className="w-full bg-white border-t-2 border-slate-950 py-3.5 px-6 sm:px-12 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs font-mono font-bold text-slate-600 z-10">
         <div>© 2026 Fun Math World — Kurikulum Merdeka Kelas 7 SMP</div>
         <div className="text-slate-500 font-medium">v2.0 Neobrutal Edition</div>
       </footer>
