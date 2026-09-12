@@ -32,6 +32,7 @@ export interface Material {
   fileUrl?: string;
   fileName?: string;
   fileType?: string;
+  fileSize?: string;
 }
 
 export interface VideoLesson {

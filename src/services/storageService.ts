@@ -83,29 +83,42 @@ export const defaultDatabaseState: DatabaseState = {
       id: "m1",
       title: "1. Konsep Dasar & Arti Pecahan",
       badge: "Fondasi",
-      content: "Pecahan adalah bilangan yang merepresentasikan bagian dari keseluruhan atau perbandingan bagian terhadap himpunan utuh. Pada bentuk pecahan a/b:\n- a disebut Pembilang (banyak bagian yang diambil)\n- b disebut Penyebut (total bagian sama rata keseluruhan, dengan syarat b ≠ 0).\n\nContoh konkret: Jika 1 loyang pizza dipotong menjadi 8 bagian sama besar dan kamu memakan 3 potong, maka bagian pizza yang kamu makan adalah 3/8.",
-      fraction: [3, 8]
+      content: "Pecahan adalah bilangan yang merepresentasikan bagian dari keseluruhan atau perbandingan bagian terhadap himpunan utuh. Pada bentuk pecahan a/b: a disebut pembilang dan b disebut penyebut (b ≠ 0).",
+      fraction: [3, 8],
+      fileName: "Modul_1_Konsep_Dasar_Pecahan.pdf",
+      fileType: "application/pdf",
+      fileSize: "1.2 MB"
     },
     {
       id: "m2",
       title: "2. Jenis-Jenis Pecahan di Kelas 7",
       badge: "Klasifikasi",
-      content: "1. Pecahan Biasa: Pembilang lebih kecil dari penyebut (contoh: 2/5, 3/7).\n2. Pecahan Tidak Murni / Campuran: Pembilang lebih besar dari penyebut. Dapat diubah menjadi pecahan campuran yang memuat bilangan bulat dan pecahan murni (contoh: 7/4 = 1 3/4).\n3. Pecahan Desimal: Pecahan dengan sistem nilai tempat persepuluhan, perseratusan, dst (contoh: 0,75).\n4. Persen: Pecahan dengan penyebut seratus (lambang %, contoh: 50% = 50/100).",
-      fraction: [7, 4]
+      content: "Klasifikasi pecahan biasa, campuran, desimal persepuluhan/perseratusan, dan konversi persen.",
+      fraction: [7, 4],
+      fileName: "Infografis_Klasifikasi_Pecahan.png",
+      fileType: "image/png",
+      fileSize: "840 KB",
+      fileUrl: "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?auto=format&fit=crop&w=800&q=80"
     },
     {
       id: "m3",
       title: "3. Pecahan Senilai & Menyederhanakan",
-      badge: "Penting",
-      content: "Pecahan senilai adalah pecahan yang memiliki nilai perbandingan yang sama meskipun lambang bilangannya berbeda. Pecahan senilai diperoleh dengan mengalikan atau membagi pembilang dan penyebut dengan bilangan bulat yang sama (k ≠ 0).\nContoh: 2/3 = (2×2)/(3×2) = 4/6 = (2×4)/(3×4) = 8/12.\n\nMenyederhanakan pecahan dilakukan dengan membagi pembilang dan penyebut menggunakan FPB keduanya.",
-      fraction: [4, 6]
+      badge: "Penyederhanaan",
+      content: "Pecahan senilai diperoleh dengan mengalikan atau membagi pembilang dan penyebut dengan FPB bilangan bulat yang sama.",
+      fraction: [4, 6],
+      fileName: "Rangkuman_Pecahan_Senilai_FPB.pdf",
+      fileType: "application/pdf",
+      fileSize: "950 KB"
     },
     {
       id: "m4",
       title: "4. Operasi Penjumlahan & Pengurangan Pecahan",
       badge: "Operasi",
-      content: "Kunci utama penjumlahan dan pengurangan pecahan:\n1. Jika penyebut sudah sama: Jumlahkan atau kurangkan pembilang langsung, penyebut tetap sama. a/c + b/c = (a+b)/c.\n2. Jika penyebut berbeda: Cari KPK dari kedua penyebut untuk menyamakan penyebut terlebih dahulu, kalikan pembilang dengan faktor pengali yang sesuai, lalu operasikan.",
-      fraction: [5, 6]
+      content: "Penyelesaian operasi hitung pecahan berpenyebut sama dan berbeda dengan metode KPK.",
+      fraction: [5, 6],
+      fileName: "Panduan_Operasi_Hitung_KPK.pdf",
+      fileType: "application/pdf",
+      fileSize: "1.5 MB"
     }
   ],
   videos: [
