@@ -361,7 +361,6 @@ export const SiswaLKPD: React.FC<{
           {questions.map((q, idx) => {
             const ans = existingSubmission.answers?.[q.id] || { textAnswer: '' };
             const photo = ans.photoUrl || (idx === 0 ? existingSubmission.photoUrl : undefined);
-            const liveFeedback = aiEvaluationResult?.perQuestion?.[q.id]?.conceptFeedback || ans.aiFeedback;
 
             return (
               <div
@@ -418,18 +417,6 @@ export const SiswaLKPD: React.FC<{
                       <Bot size={18} className="text-cyan-800 dark:text-cyan-400" />
                       <span>PEMBAHASAN &amp; BIMBINGAN ASISTEN AI (KEGIATAN {idx + 1}):</span>
                     </div>
-
-                    {/* AI Feedback for Student (No score shown) */}
-                    {liveFeedback && (
-                      <div className="p-3 bg-white/95 dark:bg-slate-900/95 rounded-xl border border-cyan-800/30 text-xs font-bold text-slate-900 dark:text-slate-100 space-y-1">
-                        <span className="font-mono font-black text-cyan-900 dark:text-cyan-300 text-[11px] block">
-                          💡 Catatan &amp; Diagnosa AI untuk Jawabanmu:
-                        </span>
-                        <p className="leading-relaxed">
-                          {liveFeedback}
-                        </p>
-                      </div>
-                    )}
 
                     <div className="space-y-1">
                       <span className="font-mono font-black text-cyan-950 dark:text-cyan-200 text-[11px] block">
@@ -661,18 +648,6 @@ export const SiswaLKPD: React.FC<{
                   </button>
                 </div>
               </div>
-
-              {/* Personalized AI Analysis for student's own answer (NO score shown) */}
-              {aiEvaluationResult?.perQuestion?.[currentQ.id]?.conceptFeedback && (
-                <div className="p-3 bg-white/95 dark:bg-slate-900/95 rounded-xl border-2 border-cyan-950/20 dark:border-cyan-800/40 text-xs font-bold text-slate-900 dark:text-slate-100 space-y-1">
-                  <span className="font-mono font-black text-cyan-900 dark:text-cyan-300 text-[11px] block">
-                    💡 Catatan &amp; Diagnosa AI untuk Jawabanmu:
-                  </span>
-                  <p className="leading-relaxed">
-                    {aiEvaluationResult.perQuestion[currentQ.id].conceptFeedback}
-                  </p>
-                </div>
-              )}
 
               <div className="space-y-1">
                 <span className="font-mono font-black text-cyan-950 dark:text-cyan-200 text-[11px] block">
