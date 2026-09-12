@@ -261,20 +261,12 @@ export const SiswaLKPD: React.FC<{
   };
 
   const handleSubmitLKPD = async () => {
-    const answeredCount = questions.filter(q => (answers[q.id]?.textAnswer || '').trim().length > 0).length;
-    if (answeredCount < questions.length) {
-      const confirmSubmit = window.confirm(
-        `Kamu baru menjawab ${answeredCount} dari ${questions.length} kegiatan. Yakin ingin mengirim sekarang? Setelah dikirim, jawaban akan tersimpan otomatis dan tidak dapat diedit lagi.`
-      );
-      if (!confirmSubmit) return;
-    } else {
-      const confirmSubmit = window.confirm(
-        "Apakah kamu sudah yakin dengan semua jawabanmu? Jawaban akan tersimpan otomatis dan tidak dapat diedit lagi."
-      );
-      if (!confirmSubmit) return;
-    }
-
+    // Ambil laporan integritas anti-cheat sebelum transisi selesai
     const antiCheatReport = getReport();
+    setIsSolvingMode(false);
+
+    showToast("Mengirimkan lembar jawaban...", "info");
+
     const aiEval = aiEvaluationResult || await evaluateLKPDWithAI(questions, answers);
 
     const finalAnswers: Record<string, LKPDEssayAnswer> = {};
