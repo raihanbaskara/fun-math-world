@@ -329,7 +329,7 @@ export const SiswaLKPD: React.FC<{
     showToast("LKPD Digital Berhasil Dikirim ke Guru! Tahap Latihan Soal kini terbuka.", "success");
   };
 
-  // Modern Chevron Dropdown LKPD Selector
+  // Modern Minimalist Chevron Dropdown LKPD Selector
   const renderLkpdSelector = () => {
     const currentSub = db.lkpdSubmissions.find(
       s => s.studentId === currentUser.id && s.lkpdId === selectedLkpd?.id
@@ -339,25 +339,15 @@ export const SiswaLKPD: React.FC<{
 
     return (
       <div className="relative z-30 font-sans" ref={dropdownRef}>
-        <div className="bg-white dark:bg-[#111827] border-4 border-slate-950 dark:border-slate-800 rounded-3xl p-3.5 sm:p-4 shadow-[6px_6px_0px_0px_#0f172a] dark:shadow-[6px_6px_0px_0px_#000000] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          {/* Left Title & Status Info */}
+        <div className="bg-white dark:bg-[#111827] border-4 border-slate-950 dark:border-slate-800 rounded-3xl p-3.5 sm:px-6 sm:py-4 shadow-[6px_6px_0px_0px_#0f172a] dark:shadow-[6px_6px_0px_0px_#000000] flex flex-row items-center justify-between gap-3">
+          {/* Left Title */}
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-2xl bg-[#ffe600] border-3 border-slate-950 flex items-center justify-center font-mono font-black text-slate-950 shadow-[2px_2px_0px_0px_#0f172a] shrink-0">
               <BookOpen size={18} />
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="font-mono text-xs font-black uppercase tracking-wider text-slate-950 dark:text-slate-100">
-                  PILIH TUGAS LKPD:
-                </span>
-                <span className="text-[10px] font-mono font-black px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-950/20">
-                  {lkpdList.length} Tersedia
-                </span>
-              </div>
-              <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400">
-                Pilih atau beralih lembar kerja melalui tombol dropdown berikut
-              </p>
-            </div>
+            <span className="font-mono text-xs sm:text-sm font-black uppercase tracking-wider text-slate-950 dark:text-slate-100 whitespace-nowrap">
+              PILIH TUGAS LKPD:
+            </span>
           </div>
 
           {/* Dropdown Button Trigger */}
@@ -368,92 +358,64 @@ export const SiswaLKPD: React.FC<{
                 soundService.click();
                 setIsDropdownOpen(prev => !prev);
               }}
-              className={`w-full sm:w-auto min-w-[280px] sm:min-w-[340px] px-4 py-2.5 rounded-2xl border-3 border-slate-950 dark:border-slate-700 font-mono font-black text-xs transition-all cursor-pointer flex items-center justify-between gap-3 shadow-[3px_3px_0px_0px_#0f172a] dark:shadow-[3px_3px_0px_0px_#000000] active:translate-x-0.5 active:translate-y-0.5 ${
+              className={`px-4 py-2 sm:px-5 sm:py-2.5 rounded-2xl border-3 border-slate-950 dark:border-slate-700 font-mono font-black text-xs sm:text-sm transition-all cursor-pointer flex items-center gap-3 shadow-[3px_3px_0px_0px_#0f172a] dark:shadow-[3px_3px_0px_0px_#000000] active:translate-x-0.5 active:translate-y-0.5 ${
                 isDropdownOpen
                   ? 'bg-[#ffe600] text-slate-950'
                   : 'bg-white dark:bg-slate-800 text-slate-950 dark:text-slate-100 hover:bg-slate-50 dark:hover:bg-slate-750'
               }`}
             >
-              <div className="flex items-center gap-2.5 truncate">
-                <span className="px-2.5 py-0.5 rounded-lg bg-[#a5f3fc] text-slate-950 border-2 border-slate-950 text-[11px] font-black shrink-0 shadow-[1.5px_1.5px_0px_0px_#0f172a]">
-                  LKPD #{selectedIdx >= 0 ? selectedIdx + 1 : 1}
-                </span>
-                <span className="truncate text-left text-xs font-black">
-                  {selectedLkpd?.title || 'Pilih Lembar Kerja'}
-                </span>
-              </div>
+              <span className="tracking-wide uppercase font-black whitespace-nowrap">
+                LKPD {selectedIdx >= 0 ? selectedIdx + 1 : 1}
+              </span>
 
-              <div className="flex items-center gap-2 shrink-0">
-                {isDone ? (
-                  <span className="px-2 py-0.5 rounded-lg bg-emerald-500 text-white text-[10px] font-mono font-black border border-slate-950 shadow-[1px_1px_0px_0px_#0f172a] flex items-center gap-1">
-                    <CheckCircle2 size={11} />
-                    <span>Selesai</span>
-                  </span>
-                ) : (
-                  <span className="px-2 py-0.5 rounded-lg bg-amber-100 text-amber-950 border border-slate-950 text-[10px] font-mono font-black">
-                    Belum
-                  </span>
-                )}
+              {isDone ? (
+                <span className="px-2.5 py-1 rounded-xl bg-emerald-500 text-white text-[10px] font-mono font-black border-2 border-slate-950 shadow-[1px_1px_0px_0px_#0f172a] flex items-center gap-1">
+                  <CheckCircle2 size={12} />
+                  <span>Selesai</span>
+                </span>
+              ) : (
+                <span className="px-2.5 py-1 rounded-xl bg-amber-100 text-amber-950 border-2 border-slate-950 text-[10px] font-mono font-black shadow-[1px_1px_0px_0px_#0f172a]">
+                  Belum
+                </span>
+              )}
 
-                {/* Chevron Down Button with Cyan Neo-brutalist Badge */}
-                <div
-                  className={`w-6 h-6 rounded-lg bg-[#a5f3fc] border-2 border-slate-950 flex items-center justify-center text-slate-950 shadow-[1px_1px_0px_0px_#0f172a] transition-transform duration-200 ${
-                    isDropdownOpen ? 'rotate-180 bg-[#ffe600]' : ''
-                  }`}
-                >
-                  <ChevronDown size={14} className="stroke-[2.5]" />
-                </div>
+              {/* Chevron Down Button */}
+              <div
+                className={`w-7 h-7 rounded-xl bg-[#a5f3fc] border-2 border-slate-950 flex items-center justify-center text-slate-950 shadow-[1.5px_1.5px_0px_0px_#0f172a] transition-transform duration-200 ${
+                  isDropdownOpen ? 'rotate-180 bg-[#ffe600]' : ''
+                }`}
+              >
+                <ChevronDown size={16} className="stroke-[2.5]" />
               </div>
             </button>
 
             {/* Dropdown Menu Panel (Opens right underneath) */}
             {isDropdownOpen && (
-              <div className="absolute right-0 mt-2 w-full sm:w-[380px] bg-white dark:bg-[#111827] border-4 border-slate-950 dark:border-slate-800 rounded-2xl shadow-[8px_8px_0px_0px_#0f172a] dark:shadow-[8px_8px_0px_0px_#000000] p-2 space-y-1.5 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
-                <div className="px-3 py-1.5 border-b-2 border-slate-200 dark:border-slate-800 flex items-center justify-between text-[10px] font-mono font-black text-slate-500 uppercase">
-                  <span>Daftar Tugas LKPD Guru</span>
-                  <span>{lkpdList.length} Tugas Tersedia</span>
-                </div>
-
-                <div className="max-h-72 overflow-y-auto space-y-1.5 pr-1">
+              <div className="absolute right-0 mt-2.5 w-56 sm:w-64 bg-white dark:bg-[#111827] border-4 border-slate-950 dark:border-slate-800 rounded-2xl shadow-[8px_8px_0px_0px_#0f172a] dark:shadow-[8px_8px_0px_0px_#000000] p-2 space-y-1.5 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
+                <div className="space-y-1">
                   {lkpdList.map((item, idx) => {
                     const isCurrent = item.id === (selectedLkpd?.id || selectedLkpdId);
                     const sub = db.lkpdSubmissions.find(
                       s => s.studentId === currentUser.id && s.lkpdId === item.id
                     );
                     const itemDone = Boolean(sub);
-                    const itemQCount = item.questions?.length || 0;
-                    const itemPoints = (item.questions || []).reduce((a, q) => a + (q.weight || 0), 0);
 
                     return (
                       <button
                         key={item.id}
                         type="button"
                         onClick={() => handleSelectLkpd(item.id)}
-                        className={`w-full text-left p-3 rounded-xl border-2 transition-all cursor-pointer flex items-center justify-between gap-3 ${
+                        className={`w-full text-left px-3.5 py-2.5 rounded-xl border-2 transition-all cursor-pointer flex items-center justify-between gap-2 ${
                           isCurrent
                             ? 'bg-[#ffe600] border-slate-950 text-slate-950 shadow-[2px_2px_0px_0px_#0f172a] -translate-y-0.5'
                             : 'bg-slate-50 dark:bg-slate-850 border-slate-300 dark:border-slate-700 hover:border-slate-950 hover:bg-white dark:hover:bg-slate-800 text-slate-900 dark:text-slate-100'
                         }`}
                       >
-                        <div className="space-y-0.5 truncate">
-                          <div className="flex items-center gap-2">
-                            <span
-                              className={`px-2 py-0.5 rounded-md font-mono text-[10px] font-black border border-slate-950 ${
-                                isCurrent ? 'bg-white text-slate-950' : 'bg-[#a5f3fc] text-slate-950'
-                              }`}
-                            >
-                              LKPD #{idx + 1}
-                            </span>
-                            <span className="font-mono font-black text-xs truncate">
-                              {item.title}
-                            </span>
-                          </div>
-                          <div className="text-[10px] font-bold text-slate-600 dark:text-slate-400 truncate pl-0.5">
-                            {itemQCount} Butir Kegiatan • Bobot: {itemPoints} Poin
-                          </div>
-                        </div>
+                        <span className="font-mono font-black text-xs uppercase">
+                          LKPD {idx + 1}
+                        </span>
 
-                        <div className="shrink-0 flex items-center gap-1.5">
+                        <div className="shrink-0">
                           {itemDone ? (
                             <span className="px-2 py-0.5 rounded-lg bg-emerald-500 text-white font-mono text-[10px] font-black border border-slate-950 shadow-[1px_1px_0px_0px_#0f172a] flex items-center gap-1">
                               <CheckCircle2 size={11} />
