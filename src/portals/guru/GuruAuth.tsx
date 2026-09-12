@@ -148,24 +148,6 @@ export const GuruAuth: React.FC<GuruAuthProps> = ({
           >
             Masuk ke Portal Guru
           </Button>
-
-          {/* Quick Fill Demo Badges */}
-          <div className="pt-3 border-t-2 border-slate-950/20 dark:border-slate-800 text-xs">
-            <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 mb-2 font-mono">
-              Akun Pengajar (Klik untuk Isi Otomatis):
-            </p>
-            <button
-              type="button"
-              onClick={() => {
-                soundService.click();
-                setUsername('guru');
-                setPassword('guru123');
-              }}
-              className="px-3 py-1.5 rounded-lg bg-amber-100 hover:bg-amber-200 dark:bg-slate-800 text-slate-950 dark:text-slate-200 border border-slate-950 text-[11px] font-mono font-black shadow-[1.5px_1.5px_0px_0px_#0f172a] cursor-pointer active:translate-x-0.5 active:translate-y-0.5 transition-all"
-            >
-              Ibu Rahmawati, S.Pd. (guru / guru123)
-            </button>
-          </div>
         </form>
 
       </div>

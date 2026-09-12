@@ -238,48 +238,6 @@ export default function SiswaAuthSwitch({
             >
               Masuk ke Portal Siswa
             </Button>
-
-            {/* Quick Fill Demo Badges for Phone / Easy Testing */}
-            <div className="pt-3 border-t-2 border-slate-950/20 dark:border-slate-800 text-xs">
-              <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 mb-2 font-mono">
-                Pilihan Akun Siswa (Klik untuk Isi Otomatis):
-              </p>
-              <div className="flex flex-wrap gap-1.5">
-                <button
-                  type="button"
-                  onClick={() => {
-                    soundService.click();
-                    setSignInUsername('siswa1');
-                    setSignInPassword('siswa123');
-                  }}
-                  className="px-2.5 py-1.5 rounded-lg bg-amber-100 hover:bg-amber-200 dark:bg-slate-800 text-slate-950 dark:text-slate-200 border border-slate-950 text-[11px] font-mono font-black shadow-[1.5px_1.5px_0px_0px_#0f172a] cursor-pointer active:translate-x-0.5 active:translate-y-0.5 transition-all"
-                >
-                  Aisyah (siswa1)
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    soundService.click();
-                    setSignInUsername('budi');
-                    setSignInPassword('budi123');
-                  }}
-                  className="px-2.5 py-1.5 rounded-lg bg-sky-100 hover:bg-sky-200 dark:bg-slate-800 text-slate-950 dark:text-slate-200 border border-slate-950 text-[11px] font-mono font-black shadow-[1.5px_1.5px_0px_0px_#0f172a] cursor-pointer active:translate-x-0.5 active:translate-y-0.5 transition-all"
-                >
-                  Budi (budi)
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    soundService.click();
-                    setSignInUsername('citra');
-                    setSignInPassword('citra123');
-                  }}
-                  className="px-2.5 py-1.5 rounded-lg bg-pink-100 hover:bg-pink-200 dark:bg-slate-800 text-slate-950 dark:text-slate-200 border border-slate-950 text-[11px] font-mono font-black shadow-[1.5px_1.5px_0px_0px_#0f172a] cursor-pointer active:translate-x-0.5 active:translate-y-0.5 transition-all"
-                >
-                  Citra (citra)
-                </button>
-              </div>
-            </div>
           </form>
         ) : (
           /* Sign Up Form */
