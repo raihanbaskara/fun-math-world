@@ -639,9 +639,8 @@ class StorageService {
   }
 
   public reset(): void {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(defaultDatabaseState));
     this.state = JSON.parse(JSON.stringify(defaultDatabaseState));
-    this.notify();
+    this.save();
   }
 
   public getCurrentSessionUser(): User | null {
