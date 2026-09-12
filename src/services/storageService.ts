@@ -1,11 +1,11 @@
 import { DatabaseState, User } from '@/types';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 
-const STORAGE_KEY = "FUN_MATH_WORLD_SMP7_DB_V4";
+const STORAGE_KEY = "FUN_MATH_WORLD_SMP7_DB_V5";
 
 export const defaultDatabaseState: DatabaseState = {
   system: {
-    version: "2.0.0",
+    version: "2.1.0",
     appName: "Fun Math World SMP 7",
     school: "SMP Negeri Malang",
     subject: "Matematika (Bilangan Pecahan)"
@@ -533,10 +533,15 @@ class StorageService {
         .maybeSingle();
 
       if (data && data.data) {
+        const remoteHasValidNewQuestions =
+          (data.data.evaluationQuestions?.length === 5) &&
+          (data.data.latsolRooms?.[0]?.questions?.length === 10);
+
         this.state = {
           ...defaultDatabaseState,
           ...data.data,
-          latsolRooms: data.data.latsolRooms || defaultDatabaseState.latsolRooms,
+          latsolRooms: remoteHasValidNewQuestions ? data.data.latsolRooms : defaultDatabaseState.latsolRooms,
+          evaluationQuestions: remoteHasValidNewQuestions ? data.data.evaluationQuestions : defaultDatabaseState.evaluationQuestions,
           latsolSubmissions: data.data.latsolSubmissions || defaultDatabaseState.latsolSubmissions,
           schedules: data.data.schedules || defaultDatabaseState.schedules,
           reflections: data.data.reflections || defaultDatabaseState.reflections,
@@ -560,10 +565,15 @@ class StorageService {
           (payload) => {
             if (payload.new && (payload.new as { data?: DatabaseState }).data) {
               const remoteState = (payload.new as { data: DatabaseState }).data;
+              const remoteHasValidNewQuestions =
+                (remoteState.evaluationQuestions?.length === 5) &&
+                (remoteState.latsolRooms?.[0]?.questions?.length === 10);
+
               this.state = {
                 ...defaultDatabaseState,
                 ...remoteState,
-                latsolRooms: remoteState.latsolRooms || defaultDatabaseState.latsolRooms,
+                latsolRooms: remoteHasValidNewQuestions ? remoteState.latsolRooms : defaultDatabaseState.latsolRooms,
+                evaluationQuestions: remoteHasValidNewQuestions ? remoteState.evaluationQuestions : defaultDatabaseState.evaluationQuestions,
                 latsolSubmissions: remoteState.latsolSubmissions || defaultDatabaseState.latsolSubmissions,
                 schedules: remoteState.schedules || defaultDatabaseState.schedules,
                 reflections: remoteState.reflections || defaultDatabaseState.reflections,
@@ -587,11 +597,16 @@ class StorageService {
     }
     try {
       const parsed: DatabaseState = JSON.parse(raw);
-      // Merge with defaultDatabaseState to ensure all new keys (latsolRooms, schedules, etc.) exist
+      const hasValidNewQuestions =
+        (parsed.evaluationQuestions?.length === 5) &&
+        (parsed.latsolRooms?.[0]?.questions?.length === 10);
+
+      // Merge with defaultDatabaseState to ensure all new keys exist and questions are up-to-date
       const merged: DatabaseState = {
         ...defaultDatabaseState,
         ...parsed,
-        latsolRooms: parsed.latsolRooms?.length ? parsed.latsolRooms : defaultDatabaseState.latsolRooms,
+        latsolRooms: hasValidNewQuestions ? parsed.latsolRooms : defaultDatabaseState.latsolRooms,
+        evaluationQuestions: hasValidNewQuestions ? parsed.evaluationQuestions : defaultDatabaseState.evaluationQuestions,
         latsolSubmissions: parsed.latsolSubmissions || defaultDatabaseState.latsolSubmissions,
         schedules: parsed.schedules?.length ? parsed.schedules : defaultDatabaseState.schedules,
         reflections: parsed.reflections?.length ? parsed.reflections : defaultDatabaseState.reflections,
