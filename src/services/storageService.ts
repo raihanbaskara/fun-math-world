@@ -557,8 +557,9 @@ class StorageService {
       }
 
       // 2. Real-time subscription for live sync between Teacher & Student devices!
+      const channelName = 'app_state_' + Math.random().toString(36).substring(2, 8);
       supabase
-        .channel('public:app_state')
+        .channel(channelName)
         .on(
           'postgres_changes',
           { event: '*', schema: 'public', table: 'app_state', filter: 'id=eq.main' },
