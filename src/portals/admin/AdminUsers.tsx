@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Modal } from '@/components/ui/modal';
 import { storageService } from '@/services/storageService';
@@ -28,6 +28,14 @@ export const AdminUsers: React.FC<{
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterRole, setFilterRole] = useState<'all' | UserRole>('all');
+
+  // Real-time synchronization subscription
+  useEffect(() => {
+    const unsub = storageService.subscribe(newState => {
+      setDbState({ ...newState });
+    });
+    return () => unsub();
+  }, []);
 
   // Form State
   const [role, setRole] = useState<UserRole>('siswa');
