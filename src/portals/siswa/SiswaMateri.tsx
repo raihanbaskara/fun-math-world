@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { renderFormattedMathText } from '@/components/ui/fraction';
 import { DocumentPreviewModal, DocumentPreviewItem } from '@/components/ui/DocumentPreviewModal';
@@ -16,7 +16,12 @@ import {
   Lightbulb,
   Image as ImageIcon,
   Eye,
-  GraduationCap
+  GraduationCap,
+  ChevronDown,
+  ChevronUp,
+  Check,
+  Layers,
+  ListOrdered
 } from 'lucide-react';
 import { Material } from '@/types';
 
@@ -26,6 +31,8 @@ export const SiswaMateri: React.FC<{
   const [activeTab, setActiveTab] = useState<number>(0);
   const [materials, setMaterials] = useState<Material[]>(storageService.getState().materials || []);
   const [previewItem, setPreviewItem] = useState<DocumentPreviewItem | null>(null);
+  const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const loadData = () => {
@@ -50,6 +57,17 @@ export const SiswaMateri: React.FC<{
     }
 
     return () => unsub();
+  }, []);
+
+  // Click outside to close dropdown
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   const currentChapter: Material | undefined = materials[activeTab] || materials[0];
@@ -89,47 +107,117 @@ export const SiswaMateri: React.FC<{
         </div>
       </div>
 
-      {/* 2. Sub-Topic Selection Pills (Dynamic Chapters) */}
-      {materials.length > 0 ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-          {materials.map((m, idx) => {
-            const isActive = activeTab === idx;
-            return (
-              <button
-                key={m.id || idx}
-                type="button"
-                onClick={() => {
-                  soundService.click();
-                  setActiveTab(idx);
-                }}
-                className={"p-3.5 rounded-2xl border-3 border-slate-950 dark:border-slate-700 text-left transition-all cursor-pointer flex flex-col justify-between gap-2.5 " + (
-                  isActive
-                    ? 'bg-[#ffe600] text-slate-950 shadow-[5px_5px_0px_0px_#0f172a] dark:shadow-[5px_5px_0px_0px_#000000] -translate-x-0.5 -translate-y-0.5'
-                    : 'bg-white dark:bg-[#111827] text-slate-800 dark:text-slate-200 shadow-[3px_3px_0px_0px_#0f172a] dark:shadow-[3px_3px_0px_0px_#000000] hover:bg-amber-50 dark:hover:bg-slate-800'
-                )}
-              >
-                <div className="flex items-center justify-between gap-1 flex-wrap">
-                  <span className="px-2 py-0.5 rounded-md bg-white dark:bg-slate-800 border border-slate-950 dark:border-slate-700 text-[10px] font-black text-slate-950 dark:text-slate-100">
-                    {m.chapterCode || ("BAB 1." + (idx + 1))}
-                  </span>
-                  <span className="text-[10px] font-black text-slate-700 dark:text-slate-300">
-                    {m.badge || 'Modul'}
-                  </span>
-                </div>
-                <div className="font-black text-xs sm:text-sm text-slate-950 dark:text-slate-100 line-clamp-2 leading-snug">
-                  {m.title}
-                </div>
-              </button>
-            );
-          })}
-        </div>
-      ) : (
-        <div className="p-8 text-center bg-white dark:bg-[#111827] rounded-3xl border-4 border-slate-950 dark:border-slate-700 shadow-[5px_5px_0px_0px_#0f172a]">
-          <p className="text-sm font-black text-slate-700 dark:text-slate-300">
-            Belum ada bab materi yang terdaftar.
-          </p>
-        </div>
-      )}
+      {/* 2. Interactive Chapter Dropdown Selector (with Chevron Icon) */}
+      <div className="relative z-30" ref={dropdownRef}>
+        <label className="block text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-2 flex items-center gap-2">
+          <Layers size={15} className="text-amber-500" />
+          <span>Pilih Bab / Materi Pembelajaran:</span>
+        </label>
+
+        {/* Dropdown Trigger Button */}
+        <button
+          type="button"
+          onClick={() => {
+            soundService.click();
+            setIsDropdownOpen(prev => !prev);
+          }}
+          className={"w-full p-4 sm:p-5 rounded-2xl border-4 border-slate-950 dark:border-slate-700 transition-all flex items-center justify-between gap-4 cursor-pointer text-left " + (
+            isDropdownOpen
+              ? 'bg-[#ffe600] text-slate-950 shadow-[6px_6px_0px_0px_#0f172a] -translate-x-0.5 -translate-y-0.5'
+              : 'bg-white dark:bg-[#111827] text-slate-900 dark:text-slate-100 shadow-[5px_5px_0px_0px_#0f172a] dark:shadow-[5px_5px_0px_0px_#000000] hover:bg-amber-50/70 dark:hover:bg-slate-800/80'
+          )}
+        >
+          <div className="flex items-center gap-3.5 min-w-0">
+            <div className="w-10 h-10 rounded-xl bg-slate-950 text-[#ffe600] flex items-center justify-center shrink-0 font-black text-sm border-2 border-slate-950 shadow-[2px_2px_0px_0px_rgba(0,0,0,0.3)]">
+              {activeTab + 1}
+            </div>
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 flex-wrap mb-0.5">
+                <span className="px-2 py-0.5 rounded-md bg-[#a3e635] text-slate-950 border border-slate-950 text-[11px] font-black shadow-[1px_1px_0px_0px_#0f172a]">
+                  {currentChapter?.chapterCode || `BAB 1.${activeTab + 1}`}
+                </span>
+                <span className="text-[11px] font-bold text-slate-600 dark:text-slate-300">
+                  {currentChapter?.badge || 'Modul Pembelajaran'}
+                </span>
+              </div>
+              <h3 className="font-black text-sm sm:text-base text-slate-950 dark:text-slate-100 truncate">
+                {currentChapter?.title || 'Pilih Materi...'}
+              </h3>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2.5 shrink-0">
+            <span className="hidden sm:inline-block px-3 py-1 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border-2 border-slate-950 dark:border-slate-600 text-xs font-black">
+              {materials.length} Bab Tersedia
+            </span>
+            <div className={"w-9 h-9 rounded-xl border-2 border-slate-950 flex items-center justify-center transition-transform duration-200 " + (
+              isDropdownOpen ? 'bg-slate-950 text-white rotate-180 shadow-none' : 'bg-white dark:bg-slate-800 text-slate-950 dark:text-slate-100 shadow-[2px_2px_0px_0px_#0f172a]'
+            )}>
+              <ChevronDown size={20} strokeWidth={3} />
+            </div>
+          </div>
+        </button>
+
+        {/* Dropdown Options Menu */}
+        {isDropdownOpen && (
+          <div className="absolute left-0 right-0 top-full mt-2 bg-white dark:bg-[#111827] border-4 border-slate-950 dark:border-slate-700 rounded-2xl shadow-[8px_8px_0px_0px_#0f172a] dark:shadow-[8px_8px_0px_0px_#000000] overflow-hidden divide-y-2 divide-slate-200 dark:divide-slate-800 max-h-[380px] overflow-y-auto animate-in fade-in slide-in-from-top-2 duration-150">
+            {materials.map((m, idx) => {
+              const isSelected = activeTab === idx;
+              return (
+                <button
+                  key={m.id || idx}
+                  type="button"
+                  onClick={() => {
+                    soundService.click();
+                    setActiveTab(idx);
+                    setIsDropdownOpen(false);
+                  }}
+                  className={"w-full p-3.5 sm:p-4 text-left flex items-center justify-between gap-3 transition-colors cursor-pointer " + (
+                    isSelected
+                      ? 'bg-amber-100/80 dark:bg-amber-950/40 text-slate-950 dark:text-slate-100 font-black'
+                      : 'hover:bg-slate-50 dark:hover:bg-slate-800/60 text-slate-800 dark:text-slate-200'
+                  )}
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <span className={"w-8 h-8 rounded-lg flex items-center justify-center shrink-0 text-xs font-black border-2 border-slate-950 " + (
+                      isSelected
+                        ? 'bg-[#ffe600] text-slate-950 shadow-[1.5px_1.5px_0px_0px_#0f172a]'
+                        : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
+                    )}>
+                      {idx + 1}
+                    </span>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="px-2 py-0.5 rounded bg-slate-200 dark:bg-slate-800 text-slate-900 dark:text-slate-100 border border-slate-950 text-[10px] font-black">
+                          {m.chapterCode || `BAB 1.${idx + 1}`}
+                        </span>
+                        <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400">
+                          {m.badge || 'Modul'}
+                        </span>
+                      </div>
+                      <p className="font-black text-xs sm:text-sm text-slate-950 dark:text-slate-100 truncate mt-0.5">
+                        {m.title}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 shrink-0">
+                    {isSelected ? (
+                      <div className="w-6 h-6 rounded-full bg-[#a3e635] border-2 border-slate-950 flex items-center justify-center text-slate-950 shadow-[1px_1px_0px_0px_#0f172a]">
+                        <Check size={14} strokeWidth={3} />
+                      </div>
+                    ) : (
+                      <span className="text-xs font-bold text-slate-400 dark:text-slate-500">
+                        Buka Bab
+                      </span>
+                    )}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </div>
 
       {/* 3. Main Chapter Card */}
       {currentChapter && (
