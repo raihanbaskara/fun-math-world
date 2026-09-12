@@ -1073,7 +1073,7 @@ export const SiswaLKPD: React.FC<{
           </div>
 
           {/* Official Step-by-Step Discussion (Only shown if student pressed Koreksi AI button) */}
-          {aiDiscussionUnlocked ? (
+          {aiDiscussionUnlocked && (
             <div className="p-4 bg-[#a5f3fc]/30 dark:bg-cyan-950/40 border-3 border-cyan-950 dark:border-cyan-800 rounded-2xl shadow-[3px_3px_0px_0px_#083344] dark:shadow-[3px_3px_0px_0px_#000000] space-y-3 animate-in fade-in">
               <div className="flex items-center gap-2 text-cyan-950 dark:text-cyan-300 font-mono text-xs font-black">
                 <Bot size={18} className="text-cyan-800 dark:text-cyan-400" />
@@ -1088,28 +1088,6 @@ export const SiswaLKPD: React.FC<{
                   {currentQ.discussion}
                 </pre>
               </div>
-            </div>
-          ) : isAllAnswered ? (
-            <div className="p-3.5 bg-cyan-50 dark:bg-cyan-950/30 border-2 border-dashed border-cyan-600 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-in fade-in">
-              <div className="flex items-center gap-2 text-cyan-950 dark:text-cyan-300 font-mono text-xs font-bold">
-                <Bot size={18} className="shrink-0 text-cyan-700 dark:text-cyan-400" />
-                <span>Semua kegiatan telah selesai dijawab! Tekan tombol di samping untuk menelaah jawabanmu secara live.</span>
-              </div>
-              <button
-                type="button"
-                onClick={() => handleRunAiCorrection(false)}
-                disabled={isAiLoading}
-                className="px-4 py-2 bg-[#a5f3fc] hover:bg-cyan-300 text-slate-950 font-mono text-xs font-black rounded-xl border-2 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a] cursor-pointer shrink-0 flex items-center justify-center gap-1.5 active:translate-x-0.5 active:translate-y-0.5 transition-all"
-              >
-                <Sparkles size={14} />
-                <span>Jalankan Koreksi AI (Live)</span>
-              </button>
-            </div>
-          ) : (
-            <div className="p-3 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-dashed border-slate-300 dark:border-slate-800 text-center">
-              <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400">
-                🔒 Tombol <strong>Jalankan Koreksi AI (Live)</strong> akan aktif setelah semua ({answeredCount}/{totalQuestions}) kegiatan LKPD selesai dijawab.
-              </span>
             </div>
           )}
         </div>
