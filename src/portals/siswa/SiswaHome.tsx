@@ -112,9 +112,6 @@ export const SiswaHome: React.FC<{
 
               <div>
                 <h3 className="font-mono font-black text-base text-slate-950 dark:text-slate-100">LKPD Digital Soal Essai</h3>
-                <p className="text-xs font-bold text-slate-600 dark:text-slate-400 mt-1 leading-relaxed">
-                  Jawab butir soal uraian dan buka pembahasan otomatis bersama Asisten AI.
-                </p>
               </div>
             </div>
 
@@ -161,9 +158,6 @@ export const SiswaHome: React.FC<{
 
               <div>
                 <h3 className="font-mono font-black text-base text-slate-950 dark:text-slate-100">Latihan Soal (Quizizz)</h3>
-                <p className="text-xs font-bold text-slate-600 dark:text-slate-400 mt-1 leading-relaxed">
-                  Kuis room berwaktu dengan auto-submit dan papan skor instan.
-                </p>
               </div>
             </div>
 
@@ -215,9 +209,6 @@ export const SiswaHome: React.FC<{
 
               <div>
                 <h3 className="font-mono font-black text-base text-slate-950 dark:text-slate-100">Evaluasi Sumatif HOTS</h3>
-                <p className="text-xs font-bold text-slate-600 dark:text-slate-400 mt-1 leading-relaxed">
-                  Ujian akhir bab pecahan dengan pengawasan tab integrity monitor.
-                </p>
               </div>
             </div>
 
@@ -284,7 +275,6 @@ export const SiswaHome: React.FC<{
 
                 <div>
                   <h4 className="font-mono font-black text-sm text-slate-950 dark:text-slate-100">{sch.title}</h4>
-                  <p className="text-xs font-bold text-slate-600 dark:text-slate-400 mt-1">{sch.description}</p>
                 </div>
 
                 <div className="pt-1 flex items-center justify-between text-xs font-mono">
