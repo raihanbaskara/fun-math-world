@@ -35,7 +35,7 @@ export function evaluateLKPDWithRubric(
 
     let earnedRatio = 0.2; // Default low ratio if text is minimal or uncertain
 
-    if (text.length < 5) {
+    if (text.length < 3 && !hasPhoto) {
       earnedRatio = 0;
     } else if (q.id.includes('c3') || q.title.toLowerCase().includes('menerapkan') || q.title.toLowerCase().includes('tepung')) {
       const hasFraction = text.includes('1/2') || text.includes('4/8') || text.includes('setengah');
@@ -68,6 +68,7 @@ export function evaluateLKPDWithRubric(
     } else {
       if (text.length > 30) earnedRatio = 0.85;
       else if (text.length > 10) earnedRatio = 0.60;
+      else earnedRatio = 0;
     }
 
     if (hasPhoto && earnedRatio < 0.95 && earnedRatio > 0) {
@@ -81,9 +82,16 @@ export function evaluateLKPDWithRubric(
       questionId: q.id,
       score: qScore,
       maxScore: weight,
-      diagnosa: earnedRatio >= 0.8 ? "Langkah pengerjaan dan konsep pecahan sesuai." : "Perlu ketelitian lebih dalam penyamaan penyebut dan kesimpulan.",
+      diagnosa:
+        earnedRatio === 0
+          ? "Siswa tidak mengumpulkan jawaban / lembar kerja kosong."
+          : earnedRatio >= 0.8
+          ? "Langkah pengerjaan dan konsep pecahan sesuai."
+          : "Perlu ketelitian lebih dalam penyamaan penyebut dan kesimpulan.",
       conceptFeedback:
-        earnedRatio >= 0.85
+        earnedRatio === 0
+          ? "Tidak ada pengerjaan yang dapat dinilai pada kegiatan ini."
+          : earnedRatio >= 0.85
           ? "Penalaran konsep sangat runtut dan perhitungan sudah akurat."
           : earnedRatio >= 0.5
           ? "Pemahaman konsep cukup baik. Cermati kembali penyamaan penyebut dengan KPK agar langkah makin sempurna."
@@ -92,13 +100,15 @@ export function evaluateLKPDWithRubric(
     };
   });
 
-  const normalizedTotalScore = maxScore > 0 ? Math.round((totalScore / maxScore) * 100) : 80;
+  const normalizedTotalScore = maxScore > 0 ? Math.round((totalScore / maxScore) * 100) : 0;
 
   return {
     totalScore: normalizedTotalScore,
     maxScore: 100,
     overallFeedback:
-      normalizedTotalScore >= 85
+      normalizedTotalScore === 0
+        ? "Siswa tidak menjawab atau lembar kerja belum diisi."
+        : normalizedTotalScore >= 85
         ? "Luar biasa! Analisis konsep pecahan sangat baik dan sistematis."
         : normalizedTotalScore >= 65
         ? "Cukup baik. Perlu penguatan pada langkah penyamaan penyebut KPK."
@@ -217,15 +227,28 @@ export async function evaluateLKPDWithAI(
     questions.forEach(q => {
       const qEval = parsed.perQuestion?.[q.id];
       const maxScore = q.weight || 30;
-      const qScore = typeof qEval?.score === 'number' ? Math.min(maxScore, Math.max(0, qEval.score)) : Math.round(maxScore * 0.8);
+      const studentAnsText = (answers[q.id]?.textAnswer || '').trim();
+      const hasPhoto = Boolean(answers[q.id]?.photoUrl && answers[q.id].photoUrl!.length > 50);
+
+      let qScore = 0;
+      if (studentAnsText.length > 0 || hasPhoto) {
+        qScore = typeof qEval?.score === 'number' ? Math.min(maxScore, Math.max(0, qEval.score)) : 0;
+      }
+
       calculatedTotal += qScore;
 
       resultPerQuestion[q.id] = {
         questionId: q.id,
         score: qScore,
         maxScore: maxScore,
-        diagnosa: qEval?.diagnosa || "Telah dievaluasi oleh Asisten AI.",
-        conceptFeedback: qEval?.conceptFeedback || "Periksa kembali kesesuaian langkah dengan kunci pembahasan resmi.",
+        diagnosa:
+          studentAnsText.length === 0 && !hasPhoto
+            ? "Siswa tidak mengumpulkan jawaban / lembar kerja kosong."
+            : qEval?.diagnosa || "Telah dievaluasi oleh Asisten AI.",
+        conceptFeedback:
+          studentAnsText.length === 0 && !hasPhoto
+            ? "Tidak ada pengerjaan yang dapat dinilai pada kegiatan ini."
+            : qEval?.conceptFeedback || "Periksa kembali kesesuaian langkah dengan kunci pembahasan resmi.",
         discussion: q.discussion
       };
     });
