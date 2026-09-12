@@ -621,10 +621,64 @@ class StorageService {
   private listeners: Set<Listener> = new Set();
   private syncTimeout: number | null = null;
   private isInitialSyncDone: boolean = false;
+  private memorySessionUser: User | null = null;
 
   constructor() {
     this.state = this.load();
     this.initSupabaseSync();
+  }
+
+  /**
+   * Safely persists state to localStorage with automatic pruning fallback for iOS Safari QuotaExceededError.
+   * Supabase Cloud keeps the 100% full unpruned state.
+   */
+  private safeSaveToLocalStorage(state: DatabaseState): void {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } catch (err) {
+      console.warn('[StorageService] Standard localStorage save failed (quota exceeded). Pruning heavy media cache...', err);
+      try {
+        // Strip heavy image payloads from local storage cache only
+        // Note: Full payloads remain intact in this.state (in-memory) and Supabase (cloud database)
+        const prunedSubmissions = (state.lkpdSubmissions || []).map(sub => {
+          let prunedAnswers = sub.answers;
+          if (sub.answers && typeof sub.answers === 'object') {
+            const ansMap: Record<string, { textAnswer: string; photoUrl?: string; aiFeedback?: string; aiScore?: number }> = {};
+            for (const [k, v] of Object.entries(sub.answers)) {
+              if (v && typeof v === 'object') {
+                ansMap[k] = {
+                  textAnswer: v.textAnswer || '',
+                  aiFeedback: v.aiFeedback,
+                  aiScore: v.aiScore,
+                  photoUrl: (typeof v.photoUrl === 'string' && v.photoUrl.length > 200) ? '' : v.photoUrl
+                };
+              } else {
+                ansMap[k] = {
+                  textAnswer: String(v || '')
+                };
+              }
+            }
+            prunedAnswers = ansMap;
+          }
+          return {
+            ...sub,
+            photoUrl: (sub.photoUrl && sub.photoUrl.length > 200) ? '' : sub.photoUrl,
+            photoUrls: Array.isArray(sub.photoUrls)
+              ? sub.photoUrls.map(p => (p && p.length > 200 ? '' : p)).filter(Boolean)
+              : undefined,
+            answers: prunedAnswers
+          };
+        });
+
+        const slimState: DatabaseState = {
+          ...state,
+          lkpdSubmissions: prunedSubmissions
+        };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(slimState));
+      } catch (pruneErr) {
+        console.warn('[StorageService] Fallback localStorage save also failed (private mode or zero quota):', pruneErr);
+      }
+    }
   }
 
   public getState(): DatabaseState {
@@ -675,7 +729,7 @@ class StorageService {
           schedules: data.data.schedules || defaultDatabaseState.schedules,
           reflections: data.data.reflections || defaultDatabaseState.reflections,
         });
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(this.state));
+        this.safeSaveToLocalStorage(this.state);
         this.isInitialSyncDone = true;
         this.notify();
       } else {
@@ -720,7 +774,7 @@ class StorageService {
                 schedules: remoteState.schedules || defaultDatabaseState.schedules,
                 reflections: remoteState.reflections || defaultDatabaseState.reflections,
               });
-              localStorage.setItem(STORAGE_KEY, JSON.stringify(this.state));
+              this.safeSaveToLocalStorage(this.state);
               this.notify();
             }
           }
@@ -748,9 +802,15 @@ class StorageService {
   }
 
   public load(): DatabaseState {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    let raw: string | null = null;
+    try {
+      raw = localStorage.getItem(STORAGE_KEY);
+    } catch (e) {
+      console.warn('[StorageService] localStorage.getItem failed:', e);
+    }
+
     if (!raw) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(defaultDatabaseState));
+      this.safeSaveToLocalStorage(defaultDatabaseState);
       return JSON.parse(JSON.stringify(defaultDatabaseState));
     }
     try {
@@ -781,7 +841,7 @@ class StorageService {
   }
 
   public save(): void {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(this.state));
+    this.safeSaveToLocalStorage(this.state);
     this.notify();
 
     // Async save to Supabase cloud with lossless remote merge
@@ -811,7 +871,7 @@ class StorageService {
               evaluationSubmissions: mergedEval
             };
             this.state = stateToSave;
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(this.state));
+            this.safeSaveToLocalStorage(this.state);
             this.notify();
           }
 
@@ -827,7 +887,7 @@ class StorageService {
 
   public async removeUser(userId: string): Promise<void> {
     this.state.users = this.state.users.filter(u => u.id !== userId);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(this.state));
+    this.safeSaveToLocalStorage(this.state);
     this.notify();
 
     if (isSupabaseConfigured && supabase) {
@@ -853,7 +913,11 @@ class StorageService {
   }
 
   public update(updater: (draft: DatabaseState) => void): void {
-    updater(this.state);
+    try {
+      updater(this.state);
+    } catch (e) {
+      console.error('[StorageService] update callback warning:', e);
+    }
     this.save();
   }
 
@@ -863,7 +927,7 @@ class StorageService {
       this.syncTimeout = null;
     }
     this.state = JSON.parse(JSON.stringify(defaultDatabaseState));
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(this.state));
+    this.safeSaveToLocalStorage(this.state);
     this.notify();
 
     if (isSupabaseConfigured && supabase) {
@@ -878,6 +942,10 @@ class StorageService {
   }
 
   public getCurrentSessionUser(): User | null {
+    if (this.memorySessionUser) {
+      return this.memorySessionUser;
+    }
+
     let stored: string | null = null;
     try {
       stored = sessionStorage.getItem("FMW_CURRENT_USER") || localStorage.getItem("FMW_CURRENT_USER");
@@ -888,10 +956,17 @@ class StorageService {
       if (!parsed || !parsed.id) return null;
       const found = this.state.users.find(u => u.id === parsed.id);
       if (found) {
-        return {
+        const fullUser: User = {
           ...found,
           sessionToken: parsed.sessionToken || found.sessionToken || null
         };
+        this.memorySessionUser = fullUser;
+        return fullUser;
+      }
+      // If user object has role and name/username directly (complete user record), use it directly
+      if (parsed.role && (parsed.name || parsed.username)) {
+        this.memorySessionUser = parsed as User;
+        return parsed as User;
       }
       return null;
     } catch {
@@ -900,7 +975,13 @@ class StorageService {
   }
 
   public setCurrentSessionUser(user: User, token: string): void {
-    const payload = JSON.stringify({ id: user.id, sessionToken: token, role: user.role });
+    const fullSessionUser: User = {
+      ...user,
+      sessionToken: token
+    };
+    this.memorySessionUser = fullSessionUser;
+
+    const payload = JSON.stringify(fullSessionUser);
     try {
       sessionStorage.setItem("FMW_CURRENT_USER", payload);
     } catch {}
@@ -910,6 +991,7 @@ class StorageService {
   }
 
   public clearCurrentSession(): void {
+    this.memorySessionUser = null;
     try {
       sessionStorage.removeItem("FMW_CURRENT_USER");
     } catch {}

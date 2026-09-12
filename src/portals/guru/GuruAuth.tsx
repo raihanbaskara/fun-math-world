@@ -24,40 +24,53 @@ export const GuruAuth: React.FC<GuruAuthProps> = ({
     e.preventDefault();
     soundService.click();
 
-    const db = storageService.getState();
-    const cleanUsername = username.trim().toLowerCase();
-    const cleanPassword = password.trim();
+    try {
+      const db = storageService.getState();
+      const cleanUsername = username.trim().toLowerCase();
+      const cleanPassword = password.trim();
 
-    const user = db.users.find(
-      u => u.username.toLowerCase() === cleanUsername && u.password.trim() === cleanPassword && u.role === 'guru'
-    );
+      const user = db.users.find(
+        u => u.username.toLowerCase() === cleanUsername && u.password.trim() === cleanPassword && u.role === 'guru'
+      );
 
-    if (!user) {
-      soundService.alert();
-      showToast('Kredensial Guru Matematika tidak sesuai!', 'error');
-      return;
-    }
-
-    const newSessionToken = "sess_guru_" + Math.random().toString(36).substring(2) + "_" + Date.now();
-    const updatedUser: User = {
-      ...user,
-      sessionToken: newSessionToken,
-    };
-
-    // 1. Immediately register session
-    storageService.setCurrentSessionUser(updatedUser, newSessionToken);
-
-    // 2. Update DB
-    storageService.update(draft => {
-      const target = draft.users.find(u => u.id === user.id);
-      if (target) {
-        target.sessionToken = newSessionToken;
+      if (!user) {
+        soundService.alert();
+        showToast('Kredensial Guru Matematika tidak sesuai!', 'error');
+        return;
       }
-    });
 
-    soundService.success();
-    showToast(`Selamat datang, ${updatedUser.name}!`, 'success');
-    onLoginSuccess(updatedUser);
+      const newSessionToken = "sess_guru_" + Math.random().toString(36).substring(2) + "_" + Date.now();
+      const updatedUser: User = {
+        ...user,
+        sessionToken: newSessionToken,
+      };
+
+      // 1. Immediately register session
+      try {
+        storageService.setCurrentSessionUser(updatedUser, newSessionToken);
+      } catch (sessErr) {
+        console.warn("Guru session storage warning:", sessErr);
+      }
+
+      // 2. Update DB
+      try {
+        storageService.update(draft => {
+          const target = draft.users.find(u => u.id === user.id);
+          if (target) {
+            target.sessionToken = newSessionToken;
+          }
+        });
+      } catch (updErr) {
+        console.warn("Guru storage update warning:", updErr);
+      }
+
+      soundService.success();
+      showToast(`Selamat datang, ${updatedUser.name}!`, 'success');
+      onLoginSuccess(updatedUser);
+    } catch (globalErr) {
+      console.error("Guru sign in error:", globalErr);
+      showToast("Terjadi kendala saat masuk. Silakan coba lagi.", "error");
+    }
   };
 
   return (

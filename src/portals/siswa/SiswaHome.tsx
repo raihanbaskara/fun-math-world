@@ -28,9 +28,9 @@ export const SiswaHome: React.FC<{
 }> = ({ currentUser, onNavigate }) => {
   const db = storageService.getState();
 
-  const hasLKPD = db.lkpdSubmissions.some(s => s.studentId === currentUser.id) || (currentUser.progress?.lkpd || 0) >= 100;
-  const hasLatsol = (db.latsolSubmissions && db.latsolSubmissions.some(s => s.studentId === currentUser.id)) || (currentUser.progress?.latsol || 0) > 0;
-  const hasEvaluasi = db.evaluationSubmissions.some(s => s.studentId === currentUser.id) || (currentUser.progress?.evaluasi || 0) > 0;
+  const hasLKPD = (db.lkpdSubmissions || []).some(s => s.studentId === currentUser?.id) || (currentUser?.progress?.lkpd || 0) >= 100;
+  const hasLatsol = (db.latsolSubmissions || []).some(s => s.studentId === currentUser?.id) || (currentUser?.progress?.latsol || 0) > 0;
+  const hasEvaluasi = (db.evaluationSubmissions || []).some(s => s.studentId === currentUser?.id) || (currentUser?.progress?.evaluasi || 0) > 0;
 
   const schedules = db.schedules || [];
 

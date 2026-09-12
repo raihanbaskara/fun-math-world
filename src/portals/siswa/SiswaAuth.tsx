@@ -34,92 +34,119 @@ export default function SiswaAuthSwitch({
     e.preventDefault();
     soundService.click();
 
-    const db = storageService.getState();
-    const cleanUsername = signInUsername.trim().toLowerCase();
-    const cleanPassword = signInPassword.trim();
+    try {
+      const db = storageService.getState();
+      const cleanUsername = signInUsername.trim().toLowerCase();
+      const cleanPassword = signInPassword.trim();
 
-    const user = db.users.find(
-      (u) =>
-        u.username.toLowerCase() === cleanUsername &&
-        u.password.trim() === cleanPassword &&
-        u.role === "siswa"
-    );
+      const user = db.users.find(
+        (u) =>
+          u.username.toLowerCase() === cleanUsername &&
+          u.password.trim() === cleanPassword &&
+          u.role === "siswa"
+      );
 
-    if (!user) {
-      soundService.alert();
-      showToast("NIS / Username atau Kata Sandi siswa tidak sesuai!", "error");
-      return;
-    }
-
-    const newSessionToken = "sess_" + Math.random().toString(36).substring(2) + "_" + Date.now();
-    const deviceId = "dev_" + (navigator.userAgent.replace(/\D/g, "").slice(0, 8) || "web");
-
-    const updatedUser: User = {
-      ...user,
-      sessionToken: newSessionToken,
-      deviceId: deviceId,
-    };
-
-    // 1. Immediately store in session storage to ensure active session is recognized
-    storageService.setCurrentSessionUser(updatedUser, newSessionToken);
-
-    // 2. Update DB and broadcast
-    storageService.update((draft) => {
-      const target = draft.users.find((u) => u.id === user.id);
-      if (target) {
-        target.sessionToken = newSessionToken;
-        target.deviceId = deviceId;
+      if (!user) {
+        soundService.alert();
+        showToast("NIS / Username atau Kata Sandi siswa tidak sesuai!", "error");
+        return;
       }
-    });
 
-    soundService.success();
-    showToast(`Selamat datang, ${updatedUser.name}! Semangat belajar!`, "success");
-    onLoginSuccess(updatedUser);
+      const newSessionToken = "sess_" + Math.random().toString(36).substring(2) + "_" + Date.now();
+      const deviceId = "dev_" + (navigator.userAgent.replace(/\D/g, "").slice(0, 8) || "web");
+
+      const updatedUser: User = {
+        ...user,
+        sessionToken: newSessionToken,
+        deviceId: deviceId,
+      };
+
+      // 1. Immediately store in session storage to ensure active session is recognized
+      try {
+        storageService.setCurrentSessionUser(updatedUser, newSessionToken);
+      } catch (sessionErr) {
+        console.warn("Session storage save warning:", sessionErr);
+      }
+
+      // 2. Update DB and broadcast
+      try {
+        storageService.update((draft) => {
+          const target = draft.users.find((u) => u.id === user.id);
+          if (target) {
+            target.sessionToken = newSessionToken;
+            target.deviceId = deviceId;
+          }
+        });
+      } catch (updateErr) {
+        console.warn("Storage update warning:", updateErr);
+      }
+
+      soundService.success();
+      showToast(`Selamat datang, ${updatedUser.name}! Semangat belajar!`, "success");
+      onLoginSuccess(updatedUser);
+    } catch (globalErr) {
+      console.error("Critical login error:", globalErr);
+      showToast("Terjadi kendala saat masuk. Silakan coba lagi.", "error");
+    }
   };
 
   const handleSignUp = (e: React.FormEvent) => {
     e.preventDefault();
     soundService.click();
 
-    if (!regName.trim() || !regUsername.trim() || !regPassword.trim()) {
-      showToast("Mohon lengkapi semua data pendaftaran!", "error");
-      return;
+    try {
+      if (!regName.trim() || !regUsername.trim() || !regPassword.trim()) {
+        showToast("Mohon lengkapi semua data pendaftaran!", "error");
+        return;
+      }
+
+      const db = storageService.getState();
+      const existing = db.users.find(
+        (u) => u.username.toLowerCase() === regUsername.trim().toLowerCase()
+      );
+      if (existing) {
+        showToast("Username / NIS sudah terdaftar! Gunakan username lain.", "error");
+        return;
+      }
+
+      const newId = "siswa_" + Date.now();
+      const newSessionToken = "sess_" + Math.random().toString(36).substring(2) + "_" + Date.now();
+      const deviceId = "dev_" + (navigator.userAgent.replace(/\D/g, "").slice(0, 8) || "web");
+
+      const newUser: User = {
+        id: newId,
+        username: regUsername.trim(),
+        password: regPassword.trim(),
+        name: regName.trim(),
+        role: "siswa",
+        class: regClass,
+        avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=" + encodeURIComponent(regName.trim()),
+        sessionToken: newSessionToken,
+        deviceId: deviceId,
+        progress: { materi: 0, video: 0, lkpd: 0, latsol: 0, evaluasi: 0 },
+      };
+
+      try {
+        storageService.update((draft) => {
+          draft.users.push(newUser);
+        });
+      } catch (updateErr) {
+        console.warn("Storage update warning on register:", updateErr);
+      }
+
+      try {
+        storageService.setCurrentSessionUser(newUser, newSessionToken);
+      } catch (sessErr) {
+        console.warn("Session storage warning on register:", sessErr);
+      }
+
+      soundService.success();
+      showToast(`Pendaftaran berhasil! Selamat datang, ${newUser.name}!`, "success");
+      onLoginSuccess(newUser);
+    } catch (globalErr) {
+      console.error("Critical register error:", globalErr);
+      showToast("Terjadi kendala saat mendaftar. Silakan coba lagi.", "error");
     }
-
-    const db = storageService.getState();
-    const existing = db.users.find(
-      (u) => u.username.toLowerCase() === regUsername.trim().toLowerCase()
-    );
-    if (existing) {
-      showToast("Username / NIS sudah terdaftar! Gunakan username lain.", "error");
-      return;
-    }
-
-    const newId = "siswa_" + Date.now();
-    const newSessionToken = "sess_" + Math.random().toString(36).substring(2) + "_" + Date.now();
-    const deviceId = "dev_" + (navigator.userAgent.replace(/\D/g, "").slice(0, 8) || "web");
-
-    const newUser: User = {
-      id: newId,
-      username: regUsername.trim(),
-      password: regPassword.trim(),
-      name: regName.trim(),
-      role: "siswa",
-      class: regClass,
-      avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=" + encodeURIComponent(regName.trim()),
-      sessionToken: newSessionToken,
-      deviceId: deviceId,
-      progress: { materi: 0, video: 0, lkpd: 0, latsol: 0, evaluasi: 0 },
-    };
-
-    storageService.update((draft) => {
-      draft.users.push(newUser);
-    });
-
-    storageService.setCurrentSessionUser(newUser, newSessionToken);
-    soundService.success();
-    showToast(`Pendaftaran berhasil! Selamat datang, ${newUser.name}!`, "success");
-    onLoginSuccess(newUser);
   };
 
   return (
