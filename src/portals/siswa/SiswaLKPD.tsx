@@ -264,12 +264,12 @@ export const SiswaLKPD: React.FC<{
     const answeredCount = questions.filter(q => (answers[q.id]?.textAnswer || '').trim().length > 0).length;
     if (answeredCount < questions.length) {
       const confirmSubmit = window.confirm(
-        `Kamu baru menjawab ${answeredCount} dari ${questions.length} kegiatan. Yakin ingin mengirim sekarang?`
+        `Kamu baru menjawab ${answeredCount} dari ${questions.length} kegiatan. Yakin ingin mengirim sekarang? Setelah dikirim, jawaban akan tersimpan otomatis dan tidak dapat diedit lagi.`
       );
       if (!confirmSubmit) return;
     } else {
       const confirmSubmit = window.confirm(
-        "Apakah kamu sudah yakin dengan semua jawabanmu? Jawaban akan dikirimkan kepada guru."
+        "Apakah kamu sudah yakin dengan semua jawabanmu? Jawaban akan tersimpan otomatis dan tidak dapat diedit lagi."
       );
       if (!confirmSubmit) return;
     }
@@ -326,7 +326,7 @@ export const SiswaLKPD: React.FC<{
     soundService.success();
     confetti({ particleCount: 100, spread: 80 });
     setIsSolvingMode(false);
-    showToast("LKPD Digital Berhasil Dikirim ke Guru! Tahap Latihan Soal kini terbuka.", "success");
+    showToast("Jawaban LKPD berhasil dikirim dan tersimpan permanen!", "success");
   };
 
   // Modern Minimalist Chevron Dropdown LKPD Selector
@@ -573,7 +573,7 @@ export const SiswaLKPD: React.FC<{
               <Loader2 size={26} className="animate-spin text-cyan-800 dark:text-cyan-300 shrink-0" />
               <div>
                 <span className="font-mono text-xs font-black block text-cyan-950 dark:text-cyan-100">
-                  ASISTEN AI SEDANG MENELAAH LANGKAH PENGERJAANMU (OPENROUTER)...
+                  ASISTEN AI SEDANG MENELAAH LANGKAH PENGERJAANMU...
                 </span>
                 <span className="text-[11px] font-bold text-cyan-800 dark:text-cyan-300">
                   Menganalisis penalaran konsep pecahan, penyamaan penyebut KPK, dan menyiapkan pembahasan bertahap.
@@ -1122,50 +1122,15 @@ export const SiswaLKPD: React.FC<{
           </button>
         </div>
 
-        {/* AI Correction & Submit Buttons */}
-        <div className="flex flex-wrap items-center gap-3">
-          {/* Koreksi AI Button */}
-          {isAllAnswered && (
-            <div className="flex items-center gap-2">
-              {aiDiscussionUnlocked && (
-                <button
-                  type="button"
-                  onClick={() => handleRunAiCorrection(true)}
-                  disabled={isAiLoading}
-                  className="px-3.5 py-3 bg-white dark:bg-slate-800 text-slate-950 dark:text-slate-100 border-3 border-slate-950 rounded-2xl font-mono text-xs font-black shadow-[3px_3px_0px_0px_#0f172a] dark:shadow-[3px_3px_0px_0px_#000000] hover:bg-slate-50 cursor-pointer flex items-center gap-1.5 active:translate-x-0.5 active:translate-y-0.5"
-                  title="Koreksi ulang dengan AI"
-                >
-                  <RefreshCw size={14} />
-                  <span>Koreksi Ulang</span>
-                </button>
-              )}
-
-              <button
-                type="button"
-                onClick={() => handleRunAiCorrection(false)}
-                disabled={isAiLoading}
-                className="px-5 py-3 bg-[#a5f3fc] hover:bg-cyan-300 text-slate-950 border-3 border-slate-950 rounded-2xl font-mono text-xs font-black shadow-[4px_4px_0px_0px_#0f172a] dark:shadow-[4px_4px_0px_0px_#000000] transition-all cursor-pointer flex items-center gap-2 active:translate-x-0.5 active:translate-y-0.5"
-              >
-                <Sparkles size={16} />
-                <span>
-                  {isAiLoading
-                    ? 'Menganalisis...'
-                    : aiDiscussionUnlocked
-                    ? 'Sembunyikan Pembahasan'
-                    : 'Jalankan Koreksi AI (Live)'}
-                </span>
-              </button>
-            </div>
-          )}
-
-          {/* Submit to Teacher Button */}
+        {/* Submit Action Button */}
+        <div className="flex items-center gap-3">
           <button
             onClick={handleSubmitLKPD}
             disabled={!isAllAnswered || isAiLoading}
-            className="px-6 py-3 bg-[#ffe600] hover:bg-yellow-400 disabled:opacity-50 text-slate-950 border-3 border-slate-950 rounded-2xl font-mono text-xs font-black shadow-[4px_4px_0px_0px_#0f172a] dark:shadow-[4px_4px_0px_0px_#000000] transition-all cursor-pointer flex items-center gap-2 active:translate-x-0.5 active:translate-y-0.5"
+            className="px-6 py-3 bg-[#ffe600] hover:bg-yellow-400 disabled:opacity-50 text-slate-950 border-3 border-slate-950 rounded-2xl font-mono text-xs sm:text-sm font-black shadow-[4px_4px_0px_0px_#0f172a] dark:shadow-[4px_4px_0px_0px_#000000] transition-all cursor-pointer flex items-center gap-2 active:translate-x-0.5 active:translate-y-0.5"
           >
             <Send size={16} />
-            <span>Kirim LKPD ke Guru</span>
+            <span>Kirim Jawaban</span>
           </button>
         </div>
       </div>

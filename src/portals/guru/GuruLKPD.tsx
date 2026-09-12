@@ -719,7 +719,7 @@ export const GuruLKPD: React.FC<{
                     <Loader2 size={24} className="animate-spin text-cyan-800 dark:text-cyan-300 shrink-0" />
                     <div>
                       <span className="font-mono text-xs font-black block text-cyan-950 dark:text-cyan-100">
-                        ASISTEN AI SEDANG MENELAAH LANGKAH PENGERJAAN SISWA (OPENROUTER)...
+                        ASISTEN AI SEDANG MENELAAH LANGKAH PENGERJAAN SISWA...
                       </span>
                       <span className="text-[11px] font-bold text-cyan-800 dark:text-cyan-300">
                         Memeriksa uraian teks, foto coretan fisik, mencocokkan ke kunci pembahasan, dan menghitung rekomendasi nilai objektif.
@@ -734,7 +734,7 @@ export const GuruLKPD: React.FC<{
                       </div>
                       <div>
                         <span className="font-mono text-xs font-black block text-slate-950 dark:text-slate-100">
-                          BANTUAN KOREKSI AI (OPENROUTER ENGINE)
+                          BANTUAN KOREKSI AI
                         </span>
                         <span className="text-[11px] font-bold text-slate-600 dark:text-slate-400">
                           {isAiCorrectionRevealed
