@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Fraction, renderFormattedMathText } from '@/components/ui/fraction';
+import { renderFormattedMathText } from '@/components/ui/fraction';
 import { Modal } from '@/components/ui/modal';
 import { storageService } from '@/services/storageService';
 import { soundService } from '@/services/soundService';
@@ -10,6 +10,7 @@ import {
   CheckCircle2,
   PieChart,
   ArrowRight,
+  ArrowLeft,
   FileText,
   Download,
   Lightbulb,
@@ -17,7 +18,8 @@ import {
   Eye,
   Layers,
   ChevronRight,
-  ExternalLink
+  ExternalLink,
+  GraduationCap
 } from 'lucide-react';
 import { Material } from '@/types';
 
@@ -34,9 +36,14 @@ export const SiswaMateri: React.FC<{
   } | null>(null);
 
   useEffect(() => {
-    setMaterials(storageService.getState().materials || []);
-    const unsub = storageService.subscribe(state => {
+    const loadData = () => {
+      const state = storageService.getState();
       setMaterials(state.materials || []);
+    };
+
+    loadData();
+    const unsub = storageService.subscribe(() => {
+      loadData();
     });
 
     const user = storageService.getCurrentSessionUser();
@@ -53,131 +60,11 @@ export const SiswaMateri: React.FC<{
     return () => unsub();
   }, []);
 
-  const topicsDetail = [
-    {
-      code: 'BAB 1.1',
-      title: 'Konsep Dasar & Arti Pecahan',
-      badge: 'Fondasi',
-      summary: 'Pecahan merepresentasikan bagian dari keseluruhan atau rasio himpunan dengan syarat penyebut b ≠ 0.',
-      renderFormula: () => (
-        <div className="flex items-center gap-4 text-lg font-black text-slate-950 dark:text-slate-100 flex-wrap">
-          <Fraction num="a" den="b" size="lg" className="text-slate-950 dark:text-slate-100" />
-          <div className="text-xs text-slate-700 dark:text-slate-300 font-bold space-y-0.5">
-            <p><span className="text-amber-600 dark:text-amber-400 font-black">a (Pembilang):</span> Bagian yang diambil / terarsir</p>
-            <p><span className="text-sky-600 dark:text-sky-400 font-black">b (Penyebut):</span> Total bagian utuh sama rata (b ≠ 0)</p>
-          </div>
-        </div>
-      ),
-      renderExample: () => (
-        <div className="space-y-2 text-slate-900 dark:text-slate-100 font-bold text-xs sm:text-sm">
-          <p>Jika 1 loyang pizza dipotong menjadi 8 bagian sama besar dan kamu memakan 3 potong:</p>
-          <div className="inline-flex items-center gap-2 p-2 rounded-xl bg-white dark:bg-slate-900 border-2 border-slate-950">
-            <span>Bagian pizza termakan =</span>
-            <span className="px-2.5 py-0.5 rounded-lg bg-[#ffe600] text-slate-950 border border-slate-950 font-black">
-              <Fraction num="3" den="8" size="sm" />
-            </span>
-            <span className="text-xs text-slate-500">(3 dari total 8 porsi)</span>
-          </div>
-        </div>
-      ),
-      visualType: 'pizza',
-      visualData: { n: 3, d: 8 },
-    },
-    {
-      code: 'BAB 1.2',
-      title: 'Jenis-Jenis Pecahan di Kelas 7',
-      badge: 'Klasifikasi',
-      summary: 'Mengenal karakteristik pecahan biasa, pecahan campuran, desimal persepuluhan, dan persen.',
-      renderFormula: () => (
-        <div className="flex items-center gap-3 text-base sm:text-lg font-black text-slate-950 dark:text-slate-100 flex-wrap">
-          <span className="text-xs text-slate-600 dark:text-slate-400 font-black uppercase">Campuran:</span>
-          <Fraction whole="w" num="n" den="d" size="md" />
-          <span>=</span>
-          <Fraction num="(w × d + n)" den="d" size="md" />
-        </div>
-      ),
-      renderExample: () => (
-        <div className="flex items-center gap-2 flex-wrap text-slate-900 dark:text-slate-100 font-bold text-xs sm:text-sm">
-          <span className="px-2 py-0.5 rounded-lg bg-sky-200 text-slate-950 border-2 border-slate-950">
-            <Fraction num="7" den="4" size="sm" />
-          </span>
-          <span>diubah menjadi bentuk campuran:</span>
-          <span className="px-2 py-0.5 rounded-lg bg-[#ffe600] text-slate-950 border-2 border-slate-950 font-black">
-            <Fraction whole="1" num="3" den="4" size="sm" />
-          </span>
-          <span>= 1,75 = 175%</span>
-        </div>
-      ),
-      visualType: 'mixed',
-      visualData: { whole: 1, n: 3, d: 4 },
-    },
-    {
-      code: 'BAB 1.3',
-      title: 'Pecahan Senilai & Menyederhanakan',
-      badge: 'Penyederhanaan',
-      summary: 'Pecahan senilai memiliki rasio proporsi setara yang diperoleh melalui perkalian/pembagian faktor pengali sama.',
-      renderFormula: () => (
-        <div className="flex items-center gap-3 text-base sm:text-lg font-black text-slate-950 dark:text-slate-100 flex-wrap">
-          <Fraction num="a × k" den="b × k" size="md" />
-          <span>=</span>
-          <Fraction num="a" den="b" size="md" />
-          <span className="text-xs text-slate-600 dark:text-slate-400 font-bold">(Faktor pengali k ≠ 0)</span>
-        </div>
-      ),
-      renderExample: () => (
-        <div className="flex items-center gap-2 flex-wrap text-slate-900 dark:text-slate-100 font-bold text-xs sm:text-sm">
-          <span className="px-2 py-0.5 rounded-lg bg-lime-200 text-slate-950 border-2 border-slate-950 font-black">
-            <Fraction num="2" den="3" size="sm" />
-          </span>
-          <span>=</span>
-          <span className="px-2 py-0.5 rounded-lg bg-lime-200 text-slate-950 border-2 border-slate-950 font-black">
-            <Fraction num="4" den="6" size="sm" />
-          </span>
-          <span>=</span>
-          <span className="px-2 py-0.5 rounded-lg bg-lime-200 text-slate-950 border-2 border-slate-950 font-black">
-            <Fraction num="8" den="12" size="sm" />
-          </span>
-          <span className="text-xs text-slate-500 dark:text-slate-400">(Hasil pengali 2 dan 4)</span>
-        </div>
-      ),
-      visualType: 'equivalent',
-      visualData: { pairs: ['2/3', '4/6', '8/12'] },
-    },
-    {
-      code: 'BAB 1.4',
-      title: 'Operasi Penjumlahan & Pengurangan',
-      badge: 'Operasi Hitung',
-      summary: 'Menyamakan penyebut berbeda menggunakan Kelipatan Persekutuan Terkecil (KPK) sebelum mengoperasikan pembilang.',
-      renderFormula: () => (
-        <div className="flex items-center gap-3 text-base sm:text-lg font-black text-slate-950 dark:text-slate-100 flex-wrap">
-          <Fraction num="a" den="c" size="md" />
-          <span>±</span>
-          <Fraction num="b" den="d" size="md" />
-          <span>=</span>
-          <Fraction num="(a×k₁ ± b×k₂)" den="KPK(c, d)" size="md" />
-        </div>
-      ),
-      renderExample: () => (
-        <div className="flex items-center gap-2 flex-wrap text-slate-900 dark:text-slate-100 font-bold text-xs sm:text-sm">
-          <Fraction num="1" den="2" size="sm" />
-          <span>+</span>
-          <Fraction num="1" den="3" size="sm" />
-          <span>=</span>
-          <Fraction num="3" den="6" size="sm" />
-          <span>+</span>
-          <Fraction num="2" den="6" size="sm" />
-          <span>=</span>
-          <span className="px-2.5 py-1 rounded-lg bg-[#ffe600] text-slate-950 border-2 border-slate-950 font-black">
-            <Fraction num="5" den="6" size="sm" />
-          </span>
-        </div>
-      ),
-      visualType: 'operation',
-      visualData: { exp: '1/2 + 1/3 = 5/6' },
-    },
-  ];
+  // Safe bounds check for activeTab
+  const currentChapter: Material | undefined = materials[activeTab] || materials[0];
 
-  const currentTopic = topicsDetail[activeTab] || topicsDetail[0];
+  const isPdf = currentChapter?.fileType?.includes('pdf') || currentChapter?.fileName?.endsWith('.pdf');
+  const isImage = currentChapter?.fileType?.startsWith('image/') || currentChapter?.fileName?.match(/\.(png|jpe?g|webp|svg)$/i);
 
   return (
     <div className="space-y-8 max-w-5xl mx-auto pb-16 font-sans">
@@ -204,7 +91,7 @@ export const SiswaMateri: React.FC<{
             </h1>
 
             <p className="text-xs sm:text-sm text-slate-950 max-w-2xl leading-relaxed font-bold">
-              Pelajari definisi formal, ragam bentuk pecahan, metode penyederhanaan FPB, serta operasi hitung berbasis KPK secara runtut dan visual.
+              Pelajari definisi formal, ragam bentuk pecahan, metode penyederhanaan FPB, serta operasi hitung berbasis KPK secara runtut, interaktif, dan visual.
             </p>
           </div>
 
@@ -214,237 +101,286 @@ export const SiswaMateri: React.FC<{
         </div>
       </div>
 
-      {/* 2. Sub-Topic Selection Pills (Sleek High-Contrast Tabs) */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        {topicsDetail.map((t, idx) => {
-          const isActive = activeTab === idx;
-          return (
-            <button
-              key={t.code}
-              type="button"
-              onClick={() => {
-                soundService.click();
-                setActiveTab(idx);
-              }}
-              className={`p-3.5 rounded-2xl border-3 border-slate-950 dark:border-slate-700 text-left transition-all cursor-pointer flex flex-col justify-between gap-2.5 ${
-                isActive
-                  ? 'bg-[#ffe600] text-slate-950 shadow-[5px_5px_0px_0px_#0f172a] dark:shadow-[5px_5px_0px_0px_#000000] -translate-x-0.5 -translate-y-0.5'
-                  : 'bg-white dark:bg-[#111827] text-slate-800 dark:text-slate-200 shadow-[3px_3px_0px_0px_#0f172a] dark:shadow-[3px_3px_0px_0px_#000000] hover:bg-amber-50 dark:hover:bg-slate-800'
-              }`}
-            >
-              <div className="flex items-center justify-between">
-                <span className="px-2 py-0.5 rounded-md bg-white dark:bg-slate-800 border border-slate-950 dark:border-slate-700 text-[10px] font-black text-slate-950 dark:text-slate-100">
-                  {t.code}
-                </span>
-                <span className="text-[10px] font-bold text-slate-600 dark:text-slate-400">
-                  {t.badge}
-                </span>
-              </div>
-              <div className="font-black text-xs sm:text-sm text-slate-950 dark:text-slate-100 line-clamp-1">
-                {t.title}
-              </div>
-            </button>
-          );
-        })}
-      </div>
+      {/* 2. Sub-Topic Selection Pills (Dynamic Chapters from Database) */}
+      {materials.length > 0 ? (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          {materials.map((m, idx) => {
+            const isActive = activeTab === idx;
+            return (
+              <button
+                key={m.id || idx}
+                type="button"
+                onClick={() => {
+                  soundService.click();
+                  setActiveTab(idx);
+                }}
+                className={`p-3.5 rounded-2xl border-3 border-slate-950 dark:border-slate-700 text-left transition-all cursor-pointer flex flex-col justify-between gap-2.5 ${
+                  isActive
+                    ? 'bg-[#ffe600] text-slate-950 shadow-[5px_5px_0px_0px_#0f172a] dark:shadow-[5px_5px_0px_0px_#000000] -translate-x-0.5 -translate-y-0.5'
+                    : 'bg-white dark:bg-[#111827] text-slate-800 dark:text-slate-200 shadow-[3px_3px_0px_0px_#0f172a] dark:shadow-[3px_3px_0px_0px_#000000] hover:bg-amber-50 dark:hover:bg-slate-800'
+                }`}
+              >
+                <div className="flex items-center justify-between gap-1 flex-wrap">
+                  <span className="px-2 py-0.5 rounded-md bg-white dark:bg-slate-800 border border-slate-950 dark:border-slate-700 text-[10px] font-black text-slate-950 dark:text-slate-100">
+                    {m.chapterCode || `BAB 1.${idx + 1}`}
+                  </span>
+                  <span className="text-[10px] font-black text-slate-700 dark:text-slate-300">
+                    {m.badge || 'Modul'}
+                  </span>
+                </div>
+                <div className="font-black text-xs sm:text-sm text-slate-950 dark:text-slate-100 line-clamp-2 leading-snug">
+                  {m.title}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      ) : (
+        <div className="p-8 text-center bg-white dark:bg-[#111827] rounded-3xl border-4 border-slate-950 dark:border-slate-700 shadow-[5px_5px_0px_0px_#0f172a]">
+          <p className="text-sm font-black text-slate-700 dark:text-slate-300">
+            Belum ada bab materi yang terdaftar.
+          </p>
+        </div>
+      )}
 
-      {/* 3. Main Material Detail Card (Double-Bezel Architecture) */}
-      <div className="rounded-3xl bg-white dark:bg-[#111827] border-4 border-slate-950 dark:border-slate-800 p-6 sm:p-8 shadow-[8px_8px_0px_0px_#0f172a] dark:shadow-[8px_8px_0px_0px_#000000] space-y-6">
-        
-        {/* Topic Title & Summary */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b-3 border-slate-950 dark:border-slate-800">
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="px-2.5 py-0.5 rounded-lg bg-[#a3e635] text-slate-950 font-black text-xs border-2 border-slate-950 shadow-[1.5px_1.5px_0px_0px_#0f172a]">
-                {currentTopic.code}
+      {/* 3. Main Chapter Card (Unified per-chapter theory, formulas, examples, and files) */}
+      {currentChapter && (
+        <div className="rounded-3xl bg-white dark:bg-[#111827] border-4 border-slate-950 dark:border-slate-800 p-6 sm:p-8 shadow-[8px_8px_0px_0px_#0f172a] dark:shadow-[8px_8px_0px_0px_#000000] space-y-6">
+          
+          {/* Chapter Title, Badges & Summary */}
+          <div className="space-y-3 pb-5 border-b-3 border-slate-950/15 dark:border-slate-800">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="px-3 py-1 rounded-xl bg-[#a3e635] text-slate-950 font-black text-xs border-2 border-slate-950 shadow-[1.5px_1.5px_0px_0px_#0f172a]">
+                {currentChapter.chapterCode || `BAB 1.${activeTab + 1}`}
               </span>
-              <span className="px-2.5 py-0.5 rounded-lg bg-[#c084fc] text-slate-950 font-black text-xs border-2 border-slate-950">
-                {currentTopic.badge}
+              <span className="px-3 py-1 rounded-xl bg-[#ffe600] text-slate-950 font-black text-xs border-2 border-slate-950">
+                {currentChapter.badge || 'Teori Inti'}
               </span>
+              {isPdf && (
+                <span className="px-2.5 py-0.5 rounded-lg bg-rose-100 text-rose-950 border border-slate-950 text-[11px] font-black flex items-center gap-1">
+                  <FileText size={12} /> Modul PDF Tersedia
+                </span>
+              )}
+              {isImage && (
+                <span className="px-2.5 py-0.5 rounded-lg bg-sky-100 text-sky-950 border border-slate-950 text-[11px] font-black flex items-center gap-1">
+                  <ImageIcon size={12} /> Gambar Infografis
+                </span>
+              )}
             </div>
-            <h2 className="text-xl sm:text-2xl font-black text-slate-950 dark:text-slate-100 mt-2">
-              {currentTopic.title}
+
+            <h2 className="text-xl sm:text-2xl lg:text-3xl font-black text-slate-950 dark:text-slate-100 leading-tight">
+              {currentChapter.title}
             </h2>
-            <p className="text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-300 mt-1">
-              {currentTopic.summary}
-            </p>
-          </div>
-        </div>
 
-        {/* Formula / Concept Rule Box */}
-        <div className="p-5 rounded-2xl bg-[#fffdf5] dark:bg-slate-800/90 border-3 border-slate-950 dark:border-slate-700 shadow-[4px_4px_0px_0px_#0f172a] dark:shadow-[4px_4px_0px_0px_#000000] space-y-3">
-          <div className="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-slate-900 dark:text-slate-100">
-            <Lightbulb size={16} className="text-amber-500" />
-            <span>Rumus &amp; Definisi Formal:</span>
+            {currentChapter.summary && (
+              <p className="text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-300 leading-relaxed">
+                {currentChapter.summary}
+              </p>
+            )}
           </div>
 
-          <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border-2 border-slate-950 dark:border-slate-700 overflow-x-auto shadow-inner">
-            {currentTopic.renderFormula()}
-          </div>
-        </div>
+          {/* Uraian Teori & Penjelasan Konsep */}
+          {currentChapter.content && (
+            <div className="p-5 sm:p-6 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border-3 border-slate-950 dark:border-slate-700 shadow-[3px_3px_0px_0px_#0f172a] dark:shadow-[3px_3px_0px_0px_#000000] space-y-2">
+              <div className="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-slate-950 dark:text-slate-100">
+                <GraduationCap size={16} className="text-[#38bdf8]" />
+                <span>Uraian Penjelasan Konsep:</span>
+              </div>
+              <div className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 leading-relaxed whitespace-pre-line">
+                {renderFormattedMathText(currentChapter.content, 'sm')}
+              </div>
+            </div>
+          )}
 
-        {/* Concrete Example Box */}
-        <div className="p-5 rounded-2xl bg-[#e0f2fe] dark:bg-sky-950/40 border-3 border-slate-950 dark:border-slate-700 shadow-[4px_4px_0px_0px_#0f172a] dark:shadow-[4px_4px_0px_0px_#000000] space-y-3">
-          <div className="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-slate-900 dark:text-slate-100">
-            <CheckCircle2 size={16} className="text-sky-600 dark:text-sky-400" />
-            <span>Contoh Kasus &amp; Penyelesaian:</span>
-          </div>
+          {/* Formula / Concept Rule Box */}
+          {currentChapter.formula && (
+            <div className="p-5 rounded-2xl bg-[#fffdf5] dark:bg-amber-950/20 border-3 border-slate-950 dark:border-slate-700 shadow-[4px_4px_0px_0px_#0f172a] dark:shadow-[4px_4px_0px_0px_#000000] space-y-3">
+              <div className="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-slate-950 dark:text-slate-100">
+                <Lightbulb size={16} className="text-amber-500" />
+                <span>Rumus &amp; Kaidah Matematis:</span>
+              </div>
 
-          <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border-2 border-slate-950 dark:border-slate-700">
-            {currentTopic.renderExample()}
-          </div>
-        </div>
-
-        {/* Supplementary Materials & Files from Teacher (Compact & Sleek) */}
-        {materials && materials.length > 0 && (
-          <div className="p-5 sm:p-6 rounded-2xl bg-[#fdf4ff] dark:bg-purple-950/30 border-3 border-slate-950 dark:border-slate-700 shadow-[4px_4px_0px_0px_#0f172a] dark:shadow-[4px_4px_0px_0px_#000000] space-y-4">
-            <div className="flex items-center justify-between gap-2 flex-wrap">
-              <div className="flex items-center gap-2">
-                <div className="p-1.5 rounded-lg bg-purple-200 border-2 border-slate-950 text-slate-950">
-                  <FileText size={16} />
-                </div>
-                <div>
-                  <h3 className="text-xs sm:text-sm font-black text-slate-950 dark:text-slate-100">
-                    Berkas &amp; Modul Tambahan dari Guru
-                  </h3>
-                  <p className="text-[11px] font-bold text-slate-600 dark:text-slate-400">
-                    Unduh rangkuman PDF, infografis gambar, atau modul pendukung materi pecahan
-                  </p>
+              <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border-2 border-slate-950 dark:border-slate-700 overflow-x-auto shadow-inner">
+                <div className="text-sm sm:text-base font-black text-slate-950 dark:text-slate-100">
+                  {renderFormattedMathText(currentChapter.formula, 'md')}
                 </div>
               </div>
-              <span className="px-2.5 py-1 rounded-lg bg-purple-200 text-purple-950 border border-slate-950 text-[10px] font-black">
-                {materials.length} Berkas Tersedia
-              </span>
             </div>
+          )}
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-1">
-              {materials.map((m: Material) => {
-                const isPdf = m.fileType?.includes('pdf') || m.fileName?.endsWith('.pdf');
-                const isImage = m.fileType?.startsWith('image/') || m.fileName?.match(/\.(png|jpe?g|webp|svg)$/i);
+          {/* Concrete Example Box */}
+          {currentChapter.exampleCase && (
+            <div className="p-5 rounded-2xl bg-[#e0f2fe] dark:bg-sky-950/40 border-3 border-slate-950 dark:border-slate-700 shadow-[4px_4px_0px_0px_#0f172a] dark:shadow-[4px_4px_0px_0px_#000000] space-y-3">
+              <div className="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-slate-950 dark:text-slate-100">
+                <CheckCircle2 size={16} className="text-sky-600 dark:text-sky-400" />
+                <span>Contoh Kasus &amp; Penyelesaian:</span>
+              </div>
 
-                return (
-                  <div
-                    key={m.id}
-                    className="p-4 rounded-2xl bg-white dark:bg-slate-900 border-2 border-slate-950 dark:border-slate-700 shadow-[2px_2px_0px_0px_#0f172a] dark:shadow-[2px_2px_0px_0px_#000000] flex flex-col justify-between gap-3 transition-all hover:translate-x-0.5 hover:-translate-y-0.5"
-                  >
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="px-2.5 py-0.5 rounded-lg bg-[#ffe600] text-slate-950 font-black text-[10px] border border-slate-950">
-                          {m.badge}
-                        </span>
-                        {isPdf ? (
-                          <span className="px-2 py-0.5 rounded-md bg-rose-100 text-rose-800 border border-rose-400 text-[10px] font-black flex items-center gap-1">
-                            <FileText size={11} /> PDF
-                          </span>
-                        ) : isImage ? (
-                          <span className="px-2 py-0.5 rounded-md bg-sky-100 text-sky-800 border border-sky-400 text-[10px] font-black flex items-center gap-1">
-                            <ImageIcon size={11} /> GAMBAR
-                          </span>
-                        ) : null}
-                      </div>
+              <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border-2 border-slate-950 dark:border-slate-700 leading-relaxed">
+                <div className="text-xs sm:text-sm font-bold text-slate-950 dark:text-slate-100">
+                  {renderFormattedMathText(currentChapter.exampleCase, 'sm')}
+                </div>
+              </div>
+            </div>
+          )}
 
-                      <h4 className="font-black text-xs sm:text-sm text-slate-950 dark:text-slate-100 leading-snug line-clamp-1">
-                        {m.title}
-                      </h4>
+          {/* Dedicated File Attachment for THIS chapter (PDF / Image) */}
+          {(currentChapter.fileName || currentChapter.fileUrl) && (
+            <div className="p-5 sm:p-6 rounded-2xl bg-[#fdf4ff] dark:bg-purple-950/30 border-3 border-slate-950 dark:border-slate-700 shadow-[4px_4px_0px_0px_#0f172a] dark:shadow-[4px_4px_0px_0px_#000000] space-y-4">
+              <div className="flex items-center justify-between gap-2 flex-wrap">
+                <div className="flex items-center gap-2.5">
+                  <div className="p-2 rounded-xl bg-purple-200 border-2 border-slate-950 text-slate-950 shadow-[1.5px_1.5px_0px_0px_#0f172a]">
+                    {isPdf ? <FileText size={18} /> : <ImageIcon size={18} />}
+                  </div>
+                  <div>
+                    <h3 className="text-xs sm:text-sm font-black text-slate-950 dark:text-slate-100">
+                      Lampiran Berkas Pendukung Bab Ini
+                    </h3>
+                    <p className="text-[11px] font-bold text-slate-600 dark:text-slate-400">
+                      Materi dan berkas referensi khusus untuk {currentChapter.chapterCode || 'bab ini'}
+                    </p>
+                  </div>
+                </div>
 
-                      {m.content && (
-                        <p className="text-[11px] text-slate-600 dark:text-slate-400 font-bold line-clamp-2">
-                          {m.content}
+                <span className="px-2.5 py-1 rounded-lg bg-purple-200 text-purple-950 border border-slate-950 text-[10px] font-black">
+                  {isPdf ? 'Dokumen PDF' : isImage ? 'Gambar / Infografis' : 'Berkas Guru'}
+                </span>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border-2 border-slate-950 dark:border-slate-700 shadow-[2px_2px_0px_0px_#0f172a] space-y-3">
+                <div className="flex items-center justify-between gap-3 flex-wrap">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-10 h-10 rounded-xl bg-amber-200 border-2 border-slate-950 flex items-center justify-center shrink-0">
+                      {isPdf ? <FileText size={20} className="text-rose-600" /> : <ImageIcon size={20} className="text-sky-600" />}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-xs sm:text-sm font-black text-slate-950 dark:text-slate-100 truncate max-w-[250px] sm:max-w-md">
+                        {currentChapter.fileName || `${currentChapter.title}.${isPdf ? 'pdf' : 'png'}`}
+                      </p>
+                      {currentChapter.fileSize && (
+                        <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400">
+                          Ukuran: {currentChapter.fileSize}
                         </p>
                       )}
-
-                      {/* Image Thumbnail if attached */}
-                      {isImage && m.fileUrl && (
-                        <div
-                          onClick={() => setPreviewItem({ title: m.title, url: m.fileUrl!, type: 'image', name: m.fileName })}
-                          className="relative h-24 rounded-xl overflow-hidden border-2 border-slate-950 group cursor-pointer"
-                        >
-                          <img
-                            src={m.fileUrl}
-                            alt={m.title}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                          />
-                          <div className="absolute inset-0 bg-slate-950/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1.5 text-white font-black text-[11px]">
-                            <Eye size={14} />
-                            <span>Perbesar Gambar</span>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Action Bar */}
-                    <div className="pt-2 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between gap-2">
-                      <div className="truncate text-[10px] font-bold text-slate-500 dark:text-slate-400">
-                        {m.fileName || 'Modul Guru'} {m.fileSize ? `• ${m.fileSize}` : ''}
-                      </div>
-
-                      <div className="flex items-center gap-1.5 shrink-0">
-                        {m.fileUrl && (
-                          <button
-                            type="button"
-                            onClick={() => setPreviewItem({
-                              title: m.title,
-                              url: m.fileUrl!,
-                              type: isPdf ? 'pdf' : 'image',
-                              name: m.fileName
-                            })}
-                            className="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-950 dark:text-slate-100 border border-slate-950 text-[11px] font-black flex items-center gap-1 cursor-pointer"
-                          >
-                            <Eye size={12} />
-                            <span>Lihat</span>
-                          </button>
-                        )}
-
-                        <a
-                          href={m.fileUrl || '#'}
-                          download={m.fileName || `${m.title}.pdf`}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="px-2.5 py-1 rounded-lg bg-[#ffe600] hover:bg-yellow-400 text-slate-950 border border-slate-950 text-[11px] font-black shadow-[1px_1px_0px_0px_#0f172a] flex items-center gap-1 cursor-pointer"
-                        >
-                          <Download size={12} />
-                          <span>Unduh</span>
-                        </a>
-                      </div>
                     </div>
                   </div>
-                );
-              })}
+
+                  {/* Actions for active chapter's file */}
+                  <div className="flex items-center gap-2">
+                    {currentChapter.fileUrl && (
+                      <button
+                        type="button"
+                        onClick={() => setPreviewItem({
+                          title: currentChapter.title,
+                          url: currentChapter.fileUrl!,
+                          type: isPdf ? 'pdf' : 'image',
+                          name: currentChapter.fileName
+                        })}
+                        className="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-950 dark:text-slate-100 border-2 border-slate-950 text-xs font-black shadow-[1.5px_1.5px_0px_0px_#0f172a] flex items-center gap-1.5 cursor-pointer"
+                      >
+                        <Eye size={13} />
+                        <span>Pratinjau Berkas</span>
+                      </button>
+                    )}
+
+                    <a
+                      href={currentChapter.fileUrl || '#'}
+                      download={currentChapter.fileName || `${currentChapter.title}.pdf`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="px-3 py-1.5 rounded-xl bg-[#ffe600] hover:bg-yellow-400 text-slate-950 border-2 border-slate-950 text-xs font-black shadow-[2px_2px_0px_0px_#0f172a] flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <Download size={13} />
+                      <span>Unduh File</span>
+                    </a>
+                  </div>
+                </div>
+
+                {/* Inline Image Thumbnail if image attached */}
+                {isImage && currentChapter.fileUrl && (
+                  <div
+                    onClick={() => setPreviewItem({ title: currentChapter.title, url: currentChapter.fileUrl!, type: 'image', name: currentChapter.fileName })}
+                    className="relative h-44 sm:h-52 rounded-xl overflow-hidden border-2 border-slate-950 bg-slate-900 group cursor-pointer shadow-inner"
+                  >
+                    <img
+                      src={currentChapter.fileUrl}
+                      alt={currentChapter.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                    <div className="absolute inset-0 bg-slate-950/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 text-white font-black text-xs">
+                      <Eye size={16} />
+                      <span>Klik untuk Perbesar Gambar Infografis</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Chapter Navigation Bar (Prev / Next Chapter) */}
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-5 border-t-3 border-slate-950/15 dark:border-slate-800">
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={activeTab === 0}
+                onClick={() => {
+                  soundService.click();
+                  setActiveTab(prev => Math.max(0, prev - 1));
+                }}
+                className="flex-1 sm:flex-initial font-black text-xs"
+              >
+                <ArrowLeft size={14} />
+                <span>Bab Sebelumnya</span>
+              </Button>
+
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={activeTab >= materials.length - 1}
+                onClick={() => {
+                  soundService.click();
+                  setActiveTab(prev => Math.min(materials.length - 1, prev + 1));
+                }}
+                className="flex-1 sm:flex-initial font-black text-xs"
+              >
+                <span>Bab Selanjutnya</span>
+                <ArrowRight size={14} />
+              </Button>
+            </div>
+
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              <Button
+                variant="secondary"
+                size="sm"
+                className="flex-1 sm:flex-initial font-black text-xs"
+                onClick={() => onNavigate('siswa/studio')}
+              >
+                <PieChart size={15} />
+                <span>Studio Pizza</span>
+              </Button>
+
+              <Button
+                variant="yellow"
+                size="sm"
+                className="flex-1 sm:flex-initial font-black text-xs"
+                onClick={() => onNavigate('siswa/lkpd')}
+              >
+                <span>LKPD Digital</span>
+                <ArrowRight size={15} />
+              </Button>
             </div>
           </div>
-        )}
 
-        {/* Action Buttons to next modules */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t-3 border-slate-950 dark:border-slate-800">
-          <Button
-            variant="secondary"
-            size="md"
-            className="w-full sm:w-auto font-black text-xs"
-            onClick={() => onNavigate('siswa/studio')}
-          >
-            <PieChart size={16} />
-            <span>Eksplorasi Studio Visual Pizza</span>
-          </Button>
-
-          <Button
-            variant="yellow"
-            size="md"
-            className="w-full sm:w-auto font-black text-xs"
-            onClick={() => onNavigate('siswa/lkpd')}
-          >
-            <span>Lanjut Kerjakan LKPD Digital</span>
-            <ArrowRight size={16} />
-          </Button>
         </div>
-
-      </div>
+      )}
 
       {/* Lightbox / Preview Modal for Students */}
       {previewItem && (
         <Modal
           isOpen={!!previewItem}
           onClose={() => setPreviewItem(null)}
-          title={`Pratinjau Materi: ${previewItem.title}`}
+          title={`Pratinjau: ${previewItem.title}`}
           maxWidth="max-w-4xl"
         >
           <div className="space-y-4">
@@ -500,4 +436,6 @@ export const SiswaMateri: React.FC<{
     </div>
   );
 };
+
+export default SiswaMateri;
 

@@ -25,9 +25,13 @@ export interface User {
 
 export interface Material {
   id: string;
+  chapterCode?: string;
   title: string;
   badge: string;
+  summary?: string;
   content: string;
+  formula?: string;
+  exampleCase?: string;
   fraction?: [number, number];
   fileUrl?: string;
   fileName?: string;

@@ -8,6 +8,7 @@ import {
   Video,
   Plus,
   Trash2,
+  Edit3,
   Clock,
   FileText,
   Image as ImageIcon,
@@ -16,7 +17,10 @@ import {
   Download,
   X,
   FileCheck2,
-  Sparkles
+  Sparkles,
+  Lightbulb,
+  CheckCircle2,
+  Layers
 } from 'lucide-react';
 import { Material } from '@/types';
 
@@ -45,11 +49,16 @@ export const GuruMateri: React.FC<{
   const [db, setDb] = useState(storageService.getState());
   const [activeTab, setActiveTab] = useState<'materi' | 'video'>('materi');
 
-  // Materi Form State
-  const [isAddMaterialOpen, setIsAddMaterialOpen] = useState(false);
+  // Chapter / Materi Form State
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [chapterCode, setChapterCode] = useState('BAB 1.5');
   const [materialTitle, setMaterialTitle] = useState('');
-  const [materialBadge, setMaterialBadge] = useState('Modul PDF');
+  const [materialBadge, setMaterialBadge] = useState('Operasi Lanjutan');
+  const [materialSummary, setMaterialSummary] = useState('');
   const [materialContent, setMaterialContent] = useState('');
+  const [materialFormula, setMaterialFormula] = useState('');
+  const [materialExample, setMaterialExample] = useState('');
   const [materialFile, setMaterialFile] = useState<{
     name: string;
     url: string;
@@ -64,7 +73,7 @@ export const GuruMateri: React.FC<{
   const [videoDuration, setVideoDuration] = useState('12');
   const [videoDesc, setVideoDesc] = useState('');
 
-  // Preview Modal State (for viewing image or PDF)
+  // Lightbox Preview Modal State
   const [previewItem, setPreviewItem] = useState<{
     title: string;
     url: string;
@@ -72,14 +81,55 @@ export const GuruMateri: React.FC<{
     name?: string;
   } | null>(null);
 
+  const chapterPresets = ['BAB 1.1', 'BAB 1.2', 'BAB 1.3', 'BAB 1.4', 'BAB 1.5', 'BAB 1.6', 'BAB 2.1'];
   const badgePresets = [
+    'Fondasi',
+    'Klasifikasi',
+    'Penyederhanaan',
+    'Operasi Hitung',
+    'Operasi Lanjutan',
+    'HOTS & Kontekstual',
     'Modul PDF',
-    'Infografis Gambar',
-    'Rangkuman Teori',
-    'Lembar Kerja Tambahan',
-    'Fondasi Pecahan',
-    'Operasi Hitung'
+    'Infografis Gambar'
   ];
+
+  const handleOpenAdd = () => {
+    soundService.click();
+    setEditingId(null);
+    const existingCount = db.materials.length;
+    setChapterCode(`BAB 1.${existingCount + 1}`);
+    setMaterialTitle('');
+    setMaterialBadge('Operasi Lanjutan');
+    setMaterialSummary('');
+    setMaterialContent('');
+    setMaterialFormula('');
+    setMaterialExample('');
+    setMaterialFile(null);
+    setIsFormOpen(true);
+  };
+
+  const handleOpenEdit = (m: Material) => {
+    soundService.click();
+    setEditingId(m.id);
+    setChapterCode(m.chapterCode || 'BAB 1.1');
+    setMaterialTitle(m.title);
+    setMaterialBadge(m.badge || 'Modul Pembelajaran');
+    setMaterialSummary(m.summary || '');
+    setMaterialContent(m.content || '');
+    setMaterialFormula(m.formula || '');
+    setMaterialExample(m.exampleCase || '');
+    if (m.fileName && m.fileUrl) {
+      setMaterialFile({
+        name: m.fileName,
+        url: m.fileUrl,
+        type: m.fileType || 'application/pdf',
+        size: m.fileSize
+      });
+    } else {
+      setMaterialFile(null);
+    }
+    setIsFormOpen(true);
+  };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -98,49 +148,60 @@ export const GuruMateri: React.FC<{
         size: formattedSize,
       });
 
-      // Auto-adjust badge if user hasn't changed it
-      if (fileType.includes('pdf')) {
-        setMaterialBadge('Modul PDF');
-      } else if (fileType.startsWith('image/')) {
-        setMaterialBadge('Infografis Gambar');
-      }
-
-      showToast(`Berkas "${file.name}" (${formattedSize}) siap diunggah!`, 'success');
+      showToast(`Berkas "${file.name}" (${formattedSize}) siap dilampirkan!`, 'success');
     };
     reader.readAsDataURL(file);
   };
 
-  const handleAddMaterial = (e: React.FormEvent) => {
+  const handleSaveMaterial = (e: React.FormEvent) => {
     e.preventDefault();
     soundService.click();
 
     if (!materialTitle.trim()) {
-      showToast('Judul materi wajib diisi!', 'error');
+      showToast('Judul materi/bab wajib diisi!', 'error');
       return;
     }
 
     storageService.update(draft => {
       if (!draft.materials) draft.materials = [];
-      draft.materials.push({
-        id: 'm_' + Date.now(),
-        title: materialTitle.trim(),
-        badge: materialBadge.trim() || 'Modul Pembelajaran',
-        content: materialContent.trim() || `Modul berkas materi: ${materialFile?.name || materialTitle}`,
-        fraction: [1, 2],
-        fileName: materialFile?.name,
-        fileUrl: materialFile?.url,
-        fileType: materialFile?.type,
-        fileSize: materialFile?.size,
-      });
+      if (editingId) {
+        const target = draft.materials.find(m => m.id === editingId);
+        if (target) {
+          target.chapterCode = chapterCode.trim() || target.chapterCode || 'BAB 1.1';
+          target.title = materialTitle.trim();
+          target.badge = materialBadge.trim() || 'Modul Pembelajaran';
+          target.summary = materialSummary.trim() || materialTitle.trim();
+          target.content = materialContent.trim() || target.summary;
+          target.formula = materialFormula.trim();
+          target.exampleCase = materialExample.trim();
+          target.fileName = materialFile?.name;
+          target.fileUrl = materialFile?.url;
+          target.fileType = materialFile?.type;
+          target.fileSize = materialFile?.size;
+        }
+      } else {
+        draft.materials.push({
+          id: 'm_' + Date.now(),
+          chapterCode: chapterCode.trim() || `BAB 1.${draft.materials.length + 1}`,
+          title: materialTitle.trim(),
+          badge: materialBadge.trim() || 'Modul Pembelajaran',
+          summary: materialSummary.trim() || materialTitle.trim(),
+          content: materialContent.trim() || materialSummary.trim() || materialTitle.trim(),
+          formula: materialFormula.trim(),
+          exampleCase: materialExample.trim(),
+          fraction: [1, 2],
+          fileName: materialFile?.name,
+          fileUrl: materialFile?.url,
+          fileType: materialFile?.type,
+          fileSize: materialFile?.size,
+        });
+      }
     });
 
     setDb(storageService.getState());
-    setIsAddMaterialOpen(false);
-    setMaterialTitle('');
-    setMaterialContent('');
-    setMaterialFile(null);
+    setIsFormOpen(false);
     soundService.success();
-    showToast('Subbab materi / berkas baru berhasil ditambahkan!', 'success');
+    showToast(editingId ? 'Materi bab berhasil diperbarui!' : 'Bab materi baru berhasil ditambahkan!', 'success');
   };
 
   const handleDeleteMaterial = (id: string) => {
@@ -150,7 +211,7 @@ export const GuruMateri: React.FC<{
     });
     setDb(storageService.getState());
     soundService.success();
-    showToast('Materi berhasil dihapus.', 'info');
+    showToast('Bab materi berhasil dihapus.', 'info');
   };
 
   const handleAddVideo = (e: React.FormEvent) => {
@@ -211,16 +272,16 @@ export const GuruMateri: React.FC<{
                 KURIKULUM MERDEKA FASE D
               </span>
               <span className="px-3 py-1 bg-[#ffe600] text-slate-950 border-2 border-slate-950 rounded-xl text-xs font-black shadow-[1.5px_1.5px_0px_0px_#0f172a]">
-                {db.materials.length} Modul Teori • {db.videos?.length || 0} Video
+                {db.materials.length} Bab Modul Teori • {db.videos?.length || 0} Video
               </span>
             </div>
 
             <h1 className="text-2xl sm:text-4xl font-black tracking-tight text-slate-950 leading-tight">
-              Kelola Modul Teori, Berkas PDF &amp; Media Guru
+              Kelola Bab Modul Teori &amp; Berkas Pembelajaran
             </h1>
 
             <p className="text-xs sm:text-sm text-slate-950 max-w-2xl leading-relaxed font-bold">
-              Unggah modul rangkuman PDF, infografis gambar pecahan, serta kelola video YouTube interaktif untuk diakses seluruh siswa kelas 7 SMP.
+              Buat bab baru, susun rumus matematika &amp; studi kasus, serta lampirkan berkas rangkuman PDF / gambar untuk setiap bab secara terpadu.
             </p>
           </div>
 
@@ -246,7 +307,7 @@ export const GuruMateri: React.FC<{
             }`}
           >
             <BookOpen size={15} />
-            <span>Modul &amp; Berkas ({db.materials.length})</span>
+            <span>Bab Materi ({db.materials.length})</span>
           </button>
           <button
             type="button"
@@ -268,14 +329,11 @@ export const GuruMateri: React.FC<{
         {activeTab === 'materi' ? (
           <button
             type="button"
-            onClick={() => {
-              soundService.click();
-              setIsAddMaterialOpen(true);
-            }}
+            onClick={handleOpenAdd}
             className="px-5 py-2.5 rounded-2xl bg-[#ffe600] hover:bg-yellow-400 text-slate-950 font-black text-xs uppercase tracking-wider border-3 border-slate-950 shadow-[4px_4px_0px_0px_#0f172a] active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer flex items-center gap-2"
           >
             <Plus size={16} />
-            <span>Unggah Modul / Berkas Baru</span>
+            <span>Tambah Bab Materi Baru</span>
           </button>
         ) : (
           <button
@@ -292,7 +350,7 @@ export const GuruMateri: React.FC<{
         )}
       </div>
 
-      {/* 3. TAB MATERI / BERKAS */}
+      {/* 3. TAB DAFTAR BAB MATERI */}
       {activeTab === 'materi' && (
         <div className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -309,28 +367,40 @@ export const GuruMateri: React.FC<{
                     {/* Top Badges & Actions */}
                     <div className="flex justify-between items-center gap-2 flex-wrap">
                       <div className="flex items-center gap-2">
-                        <span className="px-2.5 py-1 rounded-xl bg-[#ffe600] text-slate-950 border-2 border-slate-950 text-[11px] font-black shadow-[1.5px_1.5px_0px_0px_#0f172a]">
+                        <span className="px-2.5 py-1 rounded-xl bg-[#a3e635] text-slate-950 border-2 border-slate-950 text-[11px] font-black shadow-[1.5px_1.5px_0px_0px_#0f172a]">
+                          {m.chapterCode || 'BAB 1.1'}
+                        </span>
+                        <span className="px-2.5 py-1 rounded-xl bg-[#ffe600] text-slate-950 border-2 border-slate-950 text-[11px] font-black">
                           {m.badge}
                         </span>
                         {isPdf && (
-                          <span className="px-2.5 py-1 rounded-xl bg-rose-200 text-rose-950 border-2 border-slate-950 text-[11px] font-black flex items-center gap-1">
-                            <FileText size={12} /> PDF
+                          <span className="px-2 py-0.5 rounded-lg bg-rose-200 text-rose-950 border border-slate-950 text-[10px] font-black flex items-center gap-1">
+                            <FileText size={11} /> PDF
                           </span>
                         )}
                         {isImage && (
-                          <span className="px-2.5 py-1 rounded-xl bg-sky-200 text-sky-950 border-2 border-slate-950 text-[11px] font-black flex items-center gap-1">
-                            <ImageIcon size={12} /> GAMBAR
+                          <span className="px-2 py-0.5 rounded-lg bg-sky-200 text-sky-950 border border-slate-950 text-[10px] font-black flex items-center gap-1">
+                            <ImageIcon size={11} /> GAMBAR
                           </span>
                         )}
                       </div>
 
-                      <button
-                        onClick={() => handleDeleteMaterial(m.id)}
-                        className="p-1.5 px-2.5 rounded-xl bg-rose-100 hover:bg-rose-200 text-rose-950 border-2 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a] text-xs font-black flex items-center gap-1 cursor-pointer active:translate-x-0.5 active:translate-y-0.5 transition-all"
-                      >
-                        <Trash2 size={13} className="text-rose-700" />
-                        <span>Hapus</span>
-                      </button>
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          onClick={() => handleOpenEdit(m)}
+                          className="p-1.5 px-2 rounded-xl bg-amber-100 hover:bg-amber-200 text-slate-950 border-2 border-slate-950 text-xs font-black flex items-center gap-1 cursor-pointer"
+                        >
+                          <Edit3 size={13} />
+                          <span>Edit</span>
+                        </button>
+                        <button
+                          onClick={() => handleDeleteMaterial(m.id)}
+                          className="p-1.5 px-2 rounded-xl bg-rose-100 hover:bg-rose-200 text-rose-950 border-2 border-slate-950 text-xs font-black flex items-center gap-1 cursor-pointer"
+                        >
+                          <Trash2 size={13} className="text-rose-700" />
+                          <span>Hapus</span>
+                        </button>
+                      </div>
                     </div>
 
                     {/* Title */}
@@ -338,10 +408,23 @@ export const GuruMateri: React.FC<{
                       {m.title}
                     </h3>
 
-                    {/* Content text */}
-                    {m.content && (
-                      <div className="text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed font-bold bg-slate-50 dark:bg-slate-800/80 p-3.5 rounded-2xl border-2 border-slate-950/20 dark:border-slate-700">
-                        {renderFormattedMathText(m.content, 'xs')}
+                    {/* Summary / Content */}
+                    {m.summary && (
+                      <p className="text-xs text-slate-700 dark:text-slate-300 font-bold leading-relaxed">
+                        {m.summary}
+                      </p>
+                    )}
+
+                    {/* Formula Snippet */}
+                    {m.formula && (
+                      <div className="p-3 rounded-xl bg-amber-50 dark:bg-slate-800/90 border-2 border-slate-950 dark:border-slate-700 space-y-1">
+                        <div className="flex items-center gap-1.5 text-[10px] font-black text-amber-800 dark:text-amber-400 uppercase">
+                          <Lightbulb size={13} />
+                          <span>Rumus Kaidah:</span>
+                        </div>
+                        <div className="text-xs font-black text-slate-950 dark:text-slate-100">
+                          {renderFormattedMathText(m.formula, 'xs')}
+                        </div>
                       </div>
                     )}
 
@@ -349,12 +432,12 @@ export const GuruMateri: React.FC<{
                     {isImage && m.fileUrl && (
                       <div
                         onClick={() => setPreviewItem({ title: m.title, url: m.fileUrl!, type: 'image', name: m.fileName })}
-                        className="relative rounded-2xl overflow-hidden border-3 border-slate-950 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 group cursor-pointer shadow-[3px_3px_0px_0px_#0f172a]"
+                        className="relative rounded-2xl overflow-hidden border-2 border-slate-950 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 group cursor-pointer shadow-[2px_2px_0px_0px_#0f172a]"
                       >
                         <img
                           src={m.fileUrl}
                           alt={m.title}
-                          className="w-full h-44 object-cover group-hover:scale-105 transition-transform duration-300"
+                          className="w-full h-36 object-cover group-hover:scale-105 transition-transform duration-300"
                         />
                         <div className="absolute inset-0 bg-slate-950/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 text-white font-black text-xs">
                           <Eye size={16} />
@@ -393,7 +476,7 @@ export const GuruMateri: React.FC<{
                               type: isPdf ? 'pdf' : 'image',
                               name: m.fileName
                             })}
-                            className="px-3 py-1.5 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-950 dark:text-slate-100 border-2 border-slate-950 dark:border-slate-600 text-xs font-black shadow-[2px_2px_0px_0px_#0f172a] flex items-center gap-1.5 cursor-pointer"
+                            className="px-3 py-1.5 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-100 text-slate-950 dark:text-slate-100 border-2 border-slate-950 text-xs font-black shadow-[2px_2px_0px_0px_#0f172a] flex items-center gap-1.5 cursor-pointer"
                           >
                             <Eye size={13} />
                             <span>Lihat</span>
@@ -420,7 +503,7 @@ export const GuruMateri: React.FC<{
 
           {db.materials.length === 0 && (
             <div className="p-12 text-center text-slate-500 dark:text-slate-400 font-bold bg-white dark:bg-[#111827] rounded-3xl border-4 border-slate-950 dark:border-slate-700 shadow-[6px_6px_0px_0px_#0f172a]">
-              Belum ada materi atau berkas yang diunggah. Klik tombol "Unggah Modul / Berkas Baru" di atas.
+              Belum ada bab materi yang ditambahkan. Klik tombol "Tambah Bab Materi Baru" di atas.
             </div>
           )}
         </div>
@@ -477,76 +560,149 @@ export const GuruMateri: React.FC<{
         </div>
       )}
 
-      {/* Modal Tambah Subbab Materi / Upload PDF & Gambar */}
-      {isAddMaterialOpen && (
+      {/* Modal Tambah / Edit Bab Materi & Lampiran Berkas */}
+      {isFormOpen && (
         <Modal
-          isOpen={isAddMaterialOpen}
-          onClose={() => setIsAddMaterialOpen(false)}
-          title="Unggah Modul / Berkas Materi Baru"
+          isOpen={isFormOpen}
+          onClose={() => setIsFormOpen(false)}
+          title={editingId ? 'Edit Bab Modul Pembelajaran' : 'Tambah Bab Modul Baru'}
           maxWidth="max-w-2xl"
         >
-          <form onSubmit={handleAddMaterial} className="space-y-4 pt-1">
+          <form onSubmit={handleSaveMaterial} className="space-y-4 pt-1">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-black uppercase tracking-wider text-slate-950 dark:text-slate-200 mb-1.5">
+                  Kode Bab:
+                </label>
+                <div className="flex flex-wrap gap-1.5 mb-1.5">
+                  {chapterPresets.map(preset => (
+                    <button
+                      key={preset}
+                      type="button"
+                      onClick={() => setChapterCode(preset)}
+                      className={`px-2 py-0.5 rounded-lg text-[11px] font-black border border-slate-950 transition-all ${
+                        chapterCode === preset
+                          ? 'bg-[#a3e635] text-slate-950 shadow-[1px_1px_0px_0px_#0f172a]'
+                          : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
+                      }`}
+                    >
+                      {preset}
+                    </button>
+                  ))}
+                </div>
+                <input
+                  type="text"
+                  required
+                  value={chapterCode}
+                  onChange={e => setChapterCode(e.target.value)}
+                  placeholder="Contoh: BAB 1.5"
+                  className="w-full p-3 rounded-xl border-2 border-slate-950 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-950 dark:text-slate-100 text-xs font-black outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-black uppercase tracking-wider text-slate-950 dark:text-slate-200 mb-1.5">
+                  Kategori / Badge:
+                </label>
+                <div className="flex flex-wrap gap-1.5 mb-1.5">
+                  {badgePresets.slice(0, 4).map(preset => (
+                    <button
+                      key={preset}
+                      type="button"
+                      onClick={() => setMaterialBadge(preset)}
+                      className={`px-2 py-0.5 rounded-lg text-[11px] font-black border border-slate-950 transition-all ${
+                        materialBadge === preset
+                          ? 'bg-[#ffe600] text-slate-950 shadow-[1px_1px_0px_0px_#0f172a]'
+                          : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
+                      }`}
+                    >
+                      {preset}
+                    </button>
+                  ))}
+                </div>
+                <input
+                  type="text"
+                  required
+                  value={materialBadge}
+                  onChange={e => setMaterialBadge(e.target.value)}
+                  placeholder="Contoh: Operasi Lanjutan"
+                  className="w-full p-3 rounded-xl border-2 border-slate-950 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-950 dark:text-slate-100 text-xs font-black outline-none"
+                />
+              </div>
+            </div>
+
             <div>
               <label className="block text-xs font-black uppercase tracking-wider text-slate-950 dark:text-slate-200 mb-1.5">
-                Judul Modul / Materi:
+                Judul Bab Materi:
               </label>
               <input
                 type="text"
                 required
                 value={materialTitle}
                 onChange={e => setMaterialTitle(e.target.value)}
-                placeholder="Contoh: Modul Rangkuman Operasi Pecahan HOTS"
-                className="w-full p-3.5 rounded-2xl border-3 border-slate-950 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-950 dark:text-slate-100 text-sm font-bold shadow-[2px_2px_0px_0px_#0f172a] focus:bg-white dark:focus:bg-slate-700 outline-none"
+                placeholder="Contoh: Operasi Perkalian & Pembagian Pecahan"
+                className="w-full p-3.5 rounded-2xl border-3 border-slate-950 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-950 dark:text-slate-100 text-sm font-bold shadow-[2px_2px_0px_0px_#0f172a] outline-none"
               />
             </div>
 
             <div>
               <label className="block text-xs font-black uppercase tracking-wider text-slate-950 dark:text-slate-200 mb-1.5">
-                Kategori / Badge:
+                Ringkasan Cepat Bab:
               </label>
-              <div className="flex flex-wrap gap-2 mb-2">
-                {badgePresets.map(preset => (
-                  <button
-                    key={preset}
-                    type="button"
-                    onClick={() => setMaterialBadge(preset)}
-                    className={`px-3 py-1 rounded-xl text-xs font-black border-2 border-slate-950 transition-all cursor-pointer ${
-                      materialBadge === preset
-                        ? 'bg-[#ffe600] text-slate-950 shadow-[2px_2px_0px_0px_#0f172a]'
-                        : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
-                    }`}
-                  >
-                    {preset}
-                  </button>
-                ))}
-              </div>
               <input
                 type="text"
-                required
-                value={materialBadge}
-                onChange={e => setMaterialBadge(e.target.value)}
-                placeholder="Atau ketik kategori kustom..."
-                className="w-full p-3 rounded-xl border-2 border-slate-950 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-950 dark:text-slate-100 text-xs font-bold shadow-[1.5px_1.5px_0px_0px_#0f172a] outline-none"
+                value={materialSummary}
+                onChange={e => setMaterialSummary(e.target.value)}
+                placeholder="Ringkasan 1-2 kalimat mengenai fokus materi bab ini..."
+                className="w-full p-3 rounded-xl border-2 border-slate-950 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-950 dark:text-slate-100 text-xs font-bold outline-none"
               />
             </div>
 
             <div>
               <label className="block text-xs font-black uppercase tracking-wider text-slate-950 dark:text-slate-200 mb-1.5">
-                Catatan / Ringkasan Penjelasan (Opsional):
+                Uraian Konsep &amp; Penjelasan Teori:
               </label>
               <textarea
                 rows={3}
                 value={materialContent}
                 onChange={e => setMaterialContent(e.target.value)}
-                placeholder="Tuliskan catatan arahan guru atau poin penting untuk siswa..."
-                className="w-full p-3.5 rounded-2xl border-3 border-slate-950 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-950 dark:text-slate-100 text-xs sm:text-sm font-bold shadow-[2px_2px_0px_0px_#0f172a] focus:bg-white dark:focus:bg-slate-700 outline-none leading-relaxed"
+                placeholder="Tuliskan definisi, poin-poin penjelasan penting, atau kaidah konsep materi..."
+                className="w-full p-3.5 rounded-2xl border-3 border-slate-950 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-950 dark:text-slate-100 text-xs sm:text-sm font-bold shadow-[2px_2px_0px_0px_#0f172a] outline-none leading-relaxed"
               />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-black uppercase tracking-wider text-slate-950 dark:text-slate-200 mb-1.5">
+                  Rumus / Kaidah Matematis:
+                </label>
+                <input
+                  type="text"
+                  value={materialFormula}
+                  onChange={e => setMaterialFormula(e.target.value)}
+                  placeholder="Contoh: (a/b) × (c/d) = (a×c)/(b×d)"
+                  className="w-full p-3 rounded-xl border-2 border-slate-950 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-950 dark:text-slate-100 text-xs font-bold outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-black uppercase tracking-wider text-slate-950 dark:text-slate-200 mb-1.5">
+                  Contoh Kasus &amp; Penyelesaian:
+                </label>
+                <input
+                  type="text"
+                  value={materialExample}
+                  onChange={e => setMaterialExample(e.target.value)}
+                  placeholder="Contoh: 2/3 × 3/4 = 6/12 = 1/2"
+                  className="w-full p-3 rounded-xl border-2 border-slate-950 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-950 dark:text-slate-100 text-xs font-bold outline-none"
+                />
+              </div>
             </div>
 
             {/* Drag & Drop File Upload Box (PDF / Image) */}
             <div>
               <label className="block text-xs font-black uppercase tracking-wider text-slate-950 dark:text-slate-200 mb-1.5">
-                Unggah Berkas PDF / Gambar / Dokumen:
+                Lampiran Berkas Khusus Bab Ini (PDF / Gambar):
               </label>
               <div className="relative border-3 border-dashed border-slate-950 dark:border-slate-700 rounded-2xl p-4 bg-amber-50/60 dark:bg-slate-800/60 text-center hover:bg-amber-100/50 transition-colors">
                 <input
@@ -563,7 +719,7 @@ export const GuruMateri: React.FC<{
                     </div>
                     <div>
                       <p className="text-xs font-black text-slate-950 dark:text-slate-100">
-                        Klik atau seret file PDF / Gambar ke sini
+                        Klik atau seret file PDF / Gambar untuk bab ini
                       </p>
                       <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 mt-0.5">
                         Mendukung format PDF, PNG, JPG, JPEG, WebP, DOCX
@@ -613,7 +769,7 @@ export const GuruMateri: React.FC<{
               <button
                 type="button"
                 className="px-5 py-2.5 rounded-xl font-bold text-xs bg-slate-200 dark:bg-slate-800 border-2 border-slate-950 dark:border-slate-700 text-slate-950 dark:text-slate-200 cursor-pointer"
-                onClick={() => setIsAddMaterialOpen(false)}
+                onClick={() => setIsFormOpen(false)}
               >
                 Batal
               </button>
@@ -622,7 +778,7 @@ export const GuruMateri: React.FC<{
                 className="px-6 py-2.5 rounded-xl font-black text-xs uppercase bg-[#ffe600] text-slate-950 border-3 border-slate-950 shadow-[3px_3px_0px_0px_#0f172a] hover:bg-yellow-400 cursor-pointer active:translate-x-0.5 active:translate-y-0.5 transition-all flex items-center gap-1.5"
               >
                 <Sparkles size={14} />
-                <span>Simpan Modul / Berkas</span>
+                <span>{editingId ? 'Simpan Perubahan Bab' : 'Terbitkan Bab Materi Baru'}</span>
               </button>
             </div>
           </form>
@@ -772,4 +928,6 @@ export const GuruMateri: React.FC<{
     </div>
   );
 };
+
+export default GuruMateri;
 
