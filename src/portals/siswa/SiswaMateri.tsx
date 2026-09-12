@@ -128,15 +128,12 @@ export const SiswaMateri: React.FC<{
           )}
         >
           <div className="flex items-center gap-3.5 min-w-0">
-            <div className="w-10 h-10 rounded-xl bg-slate-950 text-[#ffe600] flex items-center justify-center shrink-0 font-black text-sm border-2 border-slate-950 shadow-[2px_2px_0px_0px_rgba(0,0,0,0.3)]">
-              {activeTab + 1}
-            </div>
             <div className="min-w-0">
-              <div className="flex items-center gap-2 flex-wrap mb-0.5">
-                <span className="px-2 py-0.5 rounded-md bg-[#a3e635] text-slate-950 border border-slate-950 text-[11px] font-black shadow-[1px_1px_0px_0px_#0f172a]">
+              <div className="flex items-center gap-2 flex-wrap mb-1">
+                <span className="px-2.5 py-0.5 rounded-md bg-[#a3e635] text-slate-950 border border-slate-950 text-xs font-black shadow-[1px_1px_0px_0px_#0f172a]">
                   {currentChapter?.chapterCode || `BAB 1.${activeTab + 1}`}
                 </span>
-                <span className="text-[11px] font-bold text-slate-600 dark:text-slate-300">
+                <span className="text-xs font-bold text-slate-600 dark:text-slate-300">
                   {currentChapter?.badge || 'Modul Pembelajaran'}
                 </span>
               </div>

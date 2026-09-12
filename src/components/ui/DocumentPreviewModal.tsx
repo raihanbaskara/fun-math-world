@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Modal } from '@/components/ui/modal';
 import { getSafePreviewUrl } from '@/utils/pdfUtils';
+import { PdfCanvasViewer } from '@/components/ui/PdfCanvasViewer';
 import {
   FileText,
   Download,
@@ -127,7 +128,7 @@ export const DocumentPreviewModal: React.FC<{
           </div>
         </div>
 
-        {/* Content Body: Direct Preview without dual tabs */}
+        {/* Content Body: Direct Canvas Preview for PDF without browser plugin issues */}
         {isImage ? (
           <div className="rounded-2xl overflow-hidden border-3 border-slate-950 dark:border-slate-700 bg-slate-950 flex items-center justify-center p-2 min-h-[50vh]">
             <img
@@ -137,15 +138,14 @@ export const DocumentPreviewModal: React.FC<{
             />
           </div>
         ) : (
-          <div className="relative rounded-2xl overflow-hidden border-3 border-slate-950 dark:border-slate-700 bg-slate-100 dark:bg-slate-900 shadow-inner">
-            {safeUrl ? (
-              <iframe
-                src={safeUrl}
+          <div>
+            {safeUrl || item.url ? (
+              <PdfCanvasViewer
+                url={safeUrl || item.url || ''}
                 title={item.title}
-                className="w-full h-[70vh] rounded-xl bg-white border-0"
               />
             ) : (
-              <div className="p-8 text-center space-y-4">
+              <div className="p-8 text-center space-y-4 rounded-2xl border-3 border-slate-950 bg-white dark:bg-slate-900">
                 <FileText size={48} className="mx-auto text-rose-500" />
                 <p className="text-sm font-black text-slate-800 dark:text-slate-200">
                   {item.name || item.title}
@@ -153,16 +153,6 @@ export const DocumentPreviewModal: React.FC<{
                 <p className="text-xs font-bold text-slate-500">
                   Pratinjau langsung tidak dapat dimuat di peramban ini. Silakan unduh berkas di bawah.
                 </p>
-                {item.url && (
-                  <a
-                    href={item.url}
-                    download={item.name || (item.title + '.pdf')}
-                    className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#ffe600] text-slate-950 border-2 border-slate-950 font-black text-xs shadow-[2px_2px_0px_0px_#0f172a]"
-                  >
-                    <Download size={14} />
-                    <span>Unduh File</span>
-                  </a>
-                )}
               </div>
             )}
           </div>
