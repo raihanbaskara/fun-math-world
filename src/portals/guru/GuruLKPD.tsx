@@ -5,7 +5,8 @@ import { storageService } from '@/services/storageService';
 import { soundService } from '@/services/soundService';
 import { evaluateLKPDWithAI } from '@/services/aiCorrectionService';
 import { LKPDSubmission, LKPDItem, EssayQuestion } from '@/types';
-import { FileText, Image as ImageIcon, Bot, ExternalLink, Plus, Trash2, Pencil, ChevronLeft, ChevronRight, CheckCircle2, Clock, Loader2, Sparkles, RefreshCw, BookOpen } from 'lucide-react';
+import { FileText, Image as ImageIcon, Bot, ExternalLink, Plus, Trash2, Pencil, ChevronLeft, ChevronRight, CheckCircle2, Clock, Loader2, Sparkles, RefreshCw, BookOpen, Download } from 'lucide-react';
+import { PdfCanvasViewer } from '@/components/ui/PdfCanvasViewer';
 
 export const GuruLKPD: React.FC<{
   showToast: (msg: string, type?: 'info' | 'success' | 'error') => void;
@@ -617,63 +618,65 @@ export const GuruLKPD: React.FC<{
           isOpen={!!previewLKPD}
           onClose={() => setPreviewLKPD(null)}
           title={`Pratinjau LKPD: ${previewLKPD.title}`}
-          maxWidth="max-w-3xl"
+          maxWidth="max-w-5xl"
         >
-          <div className="space-y-4">
+          <div className="space-y-4 font-sans">
             {previewLKPD.pdfUrl && (
-              <div className="flex items-center justify-between p-3 bg-[#ffe600] rounded-2xl border-2 border-slate-950 text-xs font-mono text-slate-950 font-black shadow-[2px_2px_0px_0px_#0f172a]">
-                <span>Dokumen PDF: {previewLKPD.pdfFilename}</span>
-                <a
-                  href={getPdfDisplayUrl(previewLKPD.pdfUrl)}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="px-3 py-1 bg-slate-950 hover:bg-slate-800 text-white rounded-xl font-bold transition flex items-center gap-1"
-                >
-                  <ExternalLink size={13} />
-                  <span>Buka Tab Baru</span>
-                </a>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 bg-[#ffe600] rounded-2xl border-3 border-slate-950 text-slate-950 font-black shadow-[3px_3px_0px_0px_#0f172a]">
+                <div className="flex items-center gap-2 min-w-0">
+                  <FileText size={18} className="shrink-0 text-rose-600" />
+                  <span className="text-xs truncate font-mono">
+                    Dokumen PDF: {previewLKPD.pdfFilename || `${previewLKPD.title}.pdf`}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <a
+                    href={previewLKPD.pdfUrl}
+                    download={previewLKPD.pdfFilename || `${previewLKPD.title}.pdf`}
+                    className="px-3 py-1.5 bg-white hover:bg-slate-100 text-slate-950 rounded-xl text-xs font-black transition border-2 border-slate-950 shadow-[1.5px_1.5px_0px_0px_#0f172a] flex items-center gap-1.5 cursor-pointer active:translate-x-0.5 active:translate-y-0.5"
+                  >
+                    <Download size={13} />
+                    <span>Unduh PDF</span>
+                  </a>
+                  <a
+                    href={previewLKPD.pdfUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="px-3 py-1.5 bg-slate-950 hover:bg-slate-800 text-white rounded-xl text-xs font-black transition border-2 border-slate-950 shadow-[1.5px_1.5px_0px_0px_#0f172a] flex items-center gap-1.5 cursor-pointer active:translate-x-0.5 active:translate-y-0.5"
+                  >
+                    <ExternalLink size={13} />
+                    <span>Buka Tab Baru</span>
+                  </a>
+                </div>
               </div>
             )}
 
             {previewLKPD.pdfUrl ? (
-              <div className="w-full h-[480px] rounded-2xl overflow-hidden border-3 border-slate-950 dark:border-slate-700 shadow-[4px_4px_0px_0px_#0f172a] dark:shadow-[4px_4px_0px_0px_#000000] bg-slate-900 relative">
-                <object
-                  data={getPdfDisplayUrl(previewLKPD.pdfUrl)}
-                  type="application/pdf"
-                  className="w-full h-full"
-                >
-                  <iframe
-                    src={getPdfDisplayUrl(previewLKPD.pdfUrl)}
-                    title={previewLKPD.title}
-                    className="w-full h-full border-0"
-                  >
-                    <div className="flex flex-col items-center justify-center h-full p-6 text-white text-center space-y-3 bg-slate-900">
-                      <FileText size={44} className="text-yellow-400" />
-                      <p className="text-sm font-bold">Dokumen PDF Terverifikasi</p>
-                      <a
-                        href={getPdfDisplayUrl(previewLKPD.pdfUrl)}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="px-4 py-2 bg-[#ffe600] text-slate-950 font-black rounded-xl text-xs transition border-2 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a]"
-                      >
-                        Buka & Baca Dokumen PDF (Tab Baru)
-                      </a>
-                    </div>
-                  </iframe>
-                </object>
-              </div>
-            ) : (
-              <div className="rounded-2xl overflow-hidden border-3 border-slate-950 dark:border-slate-700 shadow-[4px_4px_0px_0px_#0f172a] dark:shadow-[4px_4px_0px_0px_#000000] max-h-80 overflow-y-auto">
+              <PdfCanvasViewer
+                url={previewLKPD.pdfUrl}
+                title={previewLKPD.title}
+              />
+            ) : previewLKPD.imageUrl ? (
+              <div className="rounded-2xl overflow-hidden border-3 border-slate-950 dark:border-slate-700 shadow-[4px_4px_0px_0px_#0f172a] dark:shadow-[4px_4px_0px_0px_#000000] max-h-[60vh] overflow-y-auto bg-slate-950 flex items-center justify-center p-2">
                 <img
                   src={previewLKPD.imageUrl}
                   alt="LKPD Preview"
-                  className="w-full object-cover"
+                  className="max-h-[55vh] w-auto object-contain rounded-xl"
                 />
+              </div>
+            ) : (
+              <div className="p-8 text-center bg-slate-100 dark:bg-slate-800 rounded-2xl border-2 border-slate-950 space-y-2">
+                <FileText size={44} className="mx-auto text-amber-500" />
+                <p className="text-xs font-bold text-slate-600 dark:text-slate-400">
+                  Tidak ada berkas PDF terlampir untuk LKPD ini.
+                </p>
               </div>
             )}
 
-            <div className="p-4 bg-amber-50 dark:bg-slate-800/80 rounded-2xl text-xs space-y-1.5 border-2 border-slate-950 dark:border-slate-700 shadow-[2px_2px_0px_0px_#0f172a] dark:shadow-[2px_2px_0px_0px_#000000]">
-              <div className="font-black text-slate-950 dark:text-amber-400 font-mono uppercase">Tujuan Pembelajaran:</div>
+            <div className="p-4 bg-amber-50 dark:bg-slate-800/80 rounded-2xl text-xs space-y-1.5 border-3 border-slate-950 dark:border-slate-700 shadow-[3px_3px_0px_0px_#0f172a]">
+              <div className="font-black text-slate-950 dark:text-amber-400 uppercase tracking-wider">
+                Tujuan Pembelajaran:
+              </div>
               <p className="text-slate-800 dark:text-slate-200 font-bold whitespace-pre-line leading-relaxed">
                 {previewLKPD.objectives || previewLKPD.description}
               </p>

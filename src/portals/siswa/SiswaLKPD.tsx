@@ -28,6 +28,7 @@ import {
   ChevronDown
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
+import { PdfCanvasViewer } from '@/components/ui/PdfCanvasViewer';
 
 export const SiswaLKPD: React.FC<{
   currentUser: User;
@@ -475,19 +476,10 @@ export const SiswaLKPD: React.FC<{
           </div>
 
           {selectedLkpd?.pdfUrl ? (
-            <div className="w-full h-[540px] rounded-2xl overflow-hidden border-3 border-slate-950 dark:border-slate-700 shadow-[4px_4px_0px_0px_#0f172a] bg-slate-900 relative">
-              <object
-                data={getPdfDisplayUrl(selectedLkpd.pdfUrl)}
-                type="application/pdf"
-                className="w-full h-full"
-              >
-                <iframe
-                  src={getPdfDisplayUrl(selectedLkpd.pdfUrl)}
-                  title={selectedLkpd.title}
-                  className="w-full h-full border-0"
-                />
-              </object>
-            </div>
+            <PdfCanvasViewer
+              url={selectedLkpd.pdfUrl}
+              title={selectedLkpd.title}
+            />
           ) : (
             <div className="p-8 text-center bg-slate-100 dark:bg-slate-800 rounded-2xl border-2 border-slate-950 space-y-2">
               <FileText size={44} className="mx-auto text-amber-500" />
