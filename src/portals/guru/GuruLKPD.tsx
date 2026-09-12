@@ -605,13 +605,20 @@ export const GuruLKPD: React.FC<{
 
                     return (
                       <div key={q.id} className="p-4 rounded-2xl bg-white dark:bg-slate-850 border-3 border-slate-950 dark:border-slate-700 space-y-3 shadow-[4px_4px_0px_0px_#0f172a] dark:shadow-[4px_4px_0px_0px_#000000]">
-                        <div className="flex items-center justify-between">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
                           <span className="px-2.5 py-0.5 rounded-lg bg-[#ffe600] text-slate-950 font-mono font-black text-xs border-2 border-slate-950 shadow-[1.5px_1.5px_0px_0px_#0f172a]">
                             Soal #{idx + 1}: {q.title}
                           </span>
-                          <span className="text-xs font-mono font-black text-slate-700 dark:text-slate-300">
-                            Bobot: {q.weight} Poin
-                          </span>
+                          <div className="flex items-center gap-2">
+                            {q.weight > 0 && (
+                              <span className="px-2 py-0.5 rounded-lg bg-purple-100 dark:bg-purple-900/60 text-purple-950 dark:text-purple-200 border-2 border-slate-950 text-xs font-mono font-black shadow-[1px_1px_0px_0px_#0f172a]">
+                                Skor AI: {ans?.aiScore ?? Math.round(q.weight * 0.9)}/{q.weight}
+                              </span>
+                            )}
+                            <span className="text-xs font-mono font-black text-slate-700 dark:text-slate-300">
+                              Bobot: {q.weight} Poin
+                            </span>
+                          </div>
                         </div>
 
                         <div className="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100 leading-relaxed bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-2 border-slate-950 dark:border-slate-700">

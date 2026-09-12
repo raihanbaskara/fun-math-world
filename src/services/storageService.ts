@@ -1,11 +1,11 @@
 import { DatabaseState, User } from '@/types';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 
-const STORAGE_KEY = "FUN_MATH_WORLD_SMP7_DB_V5";
+const STORAGE_KEY = "FUN_MATH_WORLD_SMP7_DB_V6";
 
 export const defaultDatabaseState: DatabaseState = {
   system: {
-    version: "2.1.0",
+    version: "2.2.0",
     appName: "Fun Math World SMP 7",
     school: "SMP Negeri Malang",
     subject: "Matematika (Bilangan Pecahan)"
@@ -127,49 +127,39 @@ export const defaultDatabaseState: DatabaseState = {
   lkpdList: [
     {
       id: "lkpd_1",
-      title: "LKPD 1 — Eksplorasi Visual Pecahan Senilai & Model Konkrit",
-      description: "Peserta didik melakukan pemodelan pembagian kue dan petak sawah untuk menemukan pola pecahan senilai.",
+      title: "LKPD 1 — Operasi Pecahan: Menerapkan, Menganalisis & Mengevaluasi (HOTS)",
+      description: "Memecahkan masalah kontekstual tepung terigu, analisis sisa sirup Rani, dan evaluasi dua metode pengurangan pita Dina.",
       imageUrl: "https://images.unsplash.com/photo-1606326608606-aa0b62935f2b?auto=format&fit=crop&w=800&q=80",
-      pdfFilename: "LKPD_01_Pecahan_Senilai_SMP7.pdf",
-      objectives: "1. Siswa mampu memodelkan pecahan 1/2, 2/4, dan 4/8.\n2. Siswa mampu menyimpulkan aturan perkalian pecahan senilai.",
+      pdfFilename: "LEMBAR_KERJA_PESERTA_DIDIK_Pecahan_elearning.docx",
+      objectives: "1. Menerapkan konsep dan operasi pecahan dalam menyelesaikan permasalahan sehari-hari.\n2. Menganalisis permasalahan yang berkaitan dengan operasi pecahan.\n3. Mengevaluasi kebenaran suatu penyelesaian masalah pecahan.\n4. Menjelaskan langkah dan alasan penyelesaian secara logis.",
       questions: [
         {
-          id: "lkpd1_q1",
-          title: "Aktivitas 1: Pemodelan Pizza Pecahan Senilai",
-          prompt: "Dua loyang pizza berukuran sama dibagi dengan cara berbeda. Pizza A dipotong menjadi 4 bagian sama besar dan dimakan 2 potong (2/4). Pizza B dipotong menjadi 8 bagian sama besar dan dimakan 4 potong (4/8). Apakah jumlah pizza yang dimakan pada kedua loyang tersebut sama banyak? Jelaskan dengan konsep pecahan senilai dan FPB!",
-          discussion: "Langkah Pembahasan:\n1. Pecahan Pizza A = 2/4, Pizza B = 4/8.\n2. Bentuk paling sederhana dari 2/4 (dibagi FPB 2) = 1/2.\n3. Bentuk paling sederhana dari 4/8 (dibagi FPB 4) = 1/2.\n4. Kesimpulan: Keduanya senilai (2/4 = 4/8 = 1/2), sehingga jumlah pizza yang dimakan sama banyak.",
-          weight: 50
+          id: "lkpd_c3",
+          title: "Kegiatan 1: C3 — Menerapkan (Permasalahan Tepung Kue Ibu)",
+          prompt: "Perhatikan permasalahan berikut!\nIbu mempunyai 3/4 kg tepung. Untuk membuat kue pertama digunakan 1/4 kg tepung, sedangkan untuk membuat kue kedua digunakan 2/8 kg tepung.\n\nSoal:\na. Berapa kilogram tepung yang telah digunakan Ibu seluruhnya?\nb. Berapa kilogram tepung yang masih tersisa?\nc. Nyatakan sisa tepung dalam bentuk pecahan paling sederhana!\n\n(Tuliskan langkah-langkah penyelesaian, bukan hanya jawabannya!)",
+          discussion: "Langkah Pembahasan Resmi:\n1. Tepung Digunakan Seluruhnya:\nOperasikan: 1/4 + 2/8\nSederhanakan 2/8 = 1/4 (atau samakan penyebut 1/4 = 2/8).\nMaka: 1/4 + 1/4 = 2/4 = 1/2 kg tepung telah digunakan Ibu.\n\n2. Sisa Tepung Ibu:\nKurangkan tepung mula-mula dengan yang terpakai: 3/4 - 1/2\nSamakan penyebut: 1/2 = 2/4\nMaka: 3/4 - 2/4 = 1/4 kg tepung tersisa.\n\n3. Bentuk Pecahan Paling Sederhana:\nSisa tepung adalah 1/4 kg (sudah merupakan bentuk paling sederhana).",
+          weight: 30
         },
         {
-          id: "lkpd1_q2",
-          title: "Aktivitas 2: Menentukan Pecahan Senilai",
-          prompt: "Tentukan 3 pecahan yang senilai dengan 3/5 dengan cara mengalikan pembilang dan penyebut dengan bilangan bulat yang sama! Tuliskan langkah perhitungannya!",
-          discussion: "Langkah Pembahasan:\n1. Kalikan 2: (3×2)/(5×2) = 6/10.\n2. Kalikan 3: (3×3)/(5×3) = 9/15.\n3. Kalikan 4: (3×4)/(5×4) = 12/20.\nPecahan senilai: 6/10, 9/15, dan 12/20.",
-          weight: 50
-        }
-      ]
-    },
-    {
-      id: "lkpd_2",
-      title: "LKPD 2 — Pemecahan Masalah Operasi Penjumlahan Pecahan",
-      description: "Menganalisis resep masakan dan pembagian pita hiasan menggunakan operasi hitung pecahan.",
-      imageUrl: "https://images.unsplash.com/photo-1596495578065-6e0763fa1178?auto=format&fit=crop&w=800&q=80",
-      pdfFilename: "LKPD_02_Operasi_Pecahan_SMP7.pdf",
-      objectives: "1. Siswa mampu menyelesaikan soal kontekstual resep masakan.\n2. Siswa mampu menyamakan penyebut menggunakan KPK.",
-      questions: [
-        {
-          id: "lkpd2_q1",
-          title: "Aktivitas 1: Resep Adonan Roti",
-          prompt: "Siti mencampurkan 2/3 kg tepung gandum dan 1/4 kg tepung beras untuk membuat adonan roti. Berapa kg total berat tepung yang dicampurkan Siti? Tuliskan langkah penyamaan penyebut menggunakan KPK!",
-          discussion: "Langkah Pembahasan:\n1. Cari KPK dari penyebut 3 dan 4, yaitu 12.\n2. Ubah pecahan: 2/3 = 8/12 dan 1/4 = 3/12.\n3. Jumlahkan pembilang: 8/12 + 3/12 = 11/12 kg.\nTotal berat tepung adalah 11/12 kg.",
-          weight: 50
+          id: "lkpd_c4",
+          title: "Kegiatan 2: C4 — Menganalisis HOTS (Permasalahan Sirup Rani)",
+          prompt: "Perhatikan permasalahan berikut!\nRani memiliki 2/3 liter sirup. Ia menuangkan 1/4 liter sirup ke dalam gelas pertama dan 1/6 liter ke dalam gelas kedua.\nRani mengatakan: \"Sirup yang tersisa adalah 1/4 liter karena 2/3 - 1/4 - 1/6 = 1/4.\"\n\nSoal:\na. Analisislah apakah pernyataan Rani benar atau salah. Jelaskan alasanmu!\nb. Jika pernyataan Rani salah, tunjukkan letak kesalahannya!\nc. Tentukan jumlah sirup yang sebenarnya masih tersisa!\nd. Jelaskan langkah yang seharusnya dilakukan agar perhitungan Rani menjadi benar!",
+          discussion: "Langkah Pembahasan Resmi:\n1. Menyamakan Penyebut:\nPenyebut adalah 3, 4, dan 6. Cari KPK(3, 4, 6) = 12.\n- 2/3 = (2×4)/(3×4) = 8/12 liter\n- 1/4 = (1×3)/(4×3) = 3/12 liter\n- 1/6 = (1×2)/(6×2) = 2/12 liter\n\n2. Menghitung Sisa Sirup Sebenarnya:\nSisa = 8/12 - 3/12 - 2/12 = (8 - 3 - 2)/12 = 3/12 liter.\nSederhanakan dengan FPB 3: 3/12 = 1/4 liter.\n\n3. Kesimpulan Analisis:\na. Pernyataan Rani BENAR secara hasil akhir numerik (1/4 liter).\nb. Hasil numerik Rani benar, namun langkah perhitungan matematis harus dibuktikan melalui penyamaan penyebut ber-KPK 12.\nc. Jumlah sirup yang sebenarnya tersisa memang 1/4 liter (atau 3/12 liter).\nd. Rani harus mencari KPK dari ketiga penyebut (12), mengubah menjadi pecahan senilai, lalu mengurangkan pembilang.",
+          weight: 35
         },
         {
-          id: "lkpd2_q2",
-          title: "Aktivitas 2: Pita Prakarya",
-          prompt: "Budi memiliki pita sepanjang 5/6 meter. Ia memberikan 1/3 meter pita kepada adiknya. Berapakah sisa pita yang dimiliki Budi sekarang?",
-          discussion: "Langkah Pembahasan:\n1. Samakan penyebut: 1/3 = 2/6.\n2. Kurangkan: 5/6 - 2/6 = 3/6.\n3. Sederhanakan dengan FPB 3: 3/6 = 1/2 meter.\nSisa pita Budi adalah 1/2 meter.",
-          weight: 50
+          id: "lkpd_c5",
+          title: "Kegiatan 3: C5 — Mengevaluasi HOTS (Evaluasi Dua Cara Pengurangan Pita Dina)",
+          prompt: "Perhatikan dua cara penyelesaian berikut!\nDina mempunyai 5/6 meter pita. Ia menggunakan 1/3 meter untuk menghias sebuah buku.\n\nCara A: 5/6 - 1/3 = (5 - 1)/(6 - 3) = 4/3 meter\nCara B: 5/6 - 1/3 = 5/6 - 2/6 = 3/6 meter = 1/2 meter\n\nSoal:\na. Menurutmu, cara penyelesaian mana yang benar? Jelaskan alasanmu!\nb. Evaluasilah kesalahan pada cara penyelesaian yang salah!\nc. Dina ingin menggunakan sisa pita untuk membuat hiasan lain yang membutuhkan 2/5 meter pita. Apakah sisa pita Dina cukup? Berikan alasan berdasarkan perhitunganmu!\nd. Tuliskan kesimpulanmu tentang cara melakukan operasi pengurangan pecahan dengan penyebut berbeda!",
+          discussion: "Langkah Pembahasan Resmi:\n1. Evaluasi Cara Penyelesaian:\na. Cara B adalah cara yang BENAR, karena pada operasi pecahan berpenyebut berbeda, penyebut harus disamakan terlebih dahulu menggunakan KPK (1/3 diubah menjadi 2/6).\nb. Cara A SALAH BESAR karena mengurangkan langsung pembilang dan penyebut (5-1)/(6-3). Pengurangan penyebut menghasilkan 4/3 meter (1 1/3 meter), yang mustahil karena lebih panjang dari pita awal (5/6 meter).\n\n2. Uji Kecukupan Hiasan Lain:\nc. Sisa pita Dina adalah 1/2 meter. Kebutuhan pita hiasan lain = 2/5 meter.\nBandingkan 1/2 dan 2/5 (KPK 10):\n- 1/2 = 5/10 meter\n- 2/5 = 4/10 meter\nKarena 5/10 > 4/10 (1/2 > 2/5), maka sisa pita Dina CUKUP (bahkan masih bersisa 5/10 - 4/10 = 1/10 meter).\n\n3. Kesimpulan Aturan Pengurangan Pecahan:\nd. Untuk mengurangkan pecahan dengan penyebut berbeda: Cari KPK kedua penyebut, ubah menjadi pecahan senilai berpenyebut sama, kurangkan pembilang-pembilangnya, lalu sederhanakan jika memungkinkan.",
+          weight: 35
+        },
+        {
+          id: "lkpd_c_kesimpulan",
+          title: "Kegiatan 4: Kesimpulan & Refleksi Pembelajaran",
+          prompt: "Jawablah dengan bahasamu sendiri:\n1. Mengapa penyebut perlu disamakan ketika menjumlahkan atau mengurangkan pecahan dengan penyebut berbeda?\n2. Apa hal baru atau bagian yang paling menantang yang kamu pelajari setelah mengerjakan kegiatan LKPD ini?",
+          discussion: "Langkah Pembahasan Resmi:\n1. Penyebut menyatakan jumlah bagian yang sama dalam satu satuan utuh. Jika penyebut berbeda, ukuran masing-masing potongan pecahan belum setara sehingga pembilangnya tidak bisa dijumlahkan atau dikurangkan secara langsung. Penyetaraan penyebut menggunakan KPK memastikan ukuran satuan perbandingan menjadi sama rata.\n2. Bagian paling menantang biasanya adalah mengevaluasi kesalahan matematis orang lain dan menguji perbandingan dua pecahan pada situasi kehidupan sehari-hari.",
+          weight: 0
         }
       ]
     }
@@ -536,12 +526,14 @@ class StorageService {
         const remoteHasValidNewQuestions =
           (data.data.evaluationQuestions?.length === 5) &&
           (data.data.latsolRooms?.[0]?.questions?.length === 10);
+        const remoteHasValidLKPD = Boolean(data.data.lkpdList?.[0]?.questions?.some((q: { id: string }) => q.id === 'lkpd_c3'));
 
         this.state = {
           ...defaultDatabaseState,
           ...data.data,
           latsolRooms: remoteHasValidNewQuestions ? data.data.latsolRooms : defaultDatabaseState.latsolRooms,
           evaluationQuestions: remoteHasValidNewQuestions ? data.data.evaluationQuestions : defaultDatabaseState.evaluationQuestions,
+          lkpdList: remoteHasValidLKPD ? data.data.lkpdList : defaultDatabaseState.lkpdList,
           latsolSubmissions: data.data.latsolSubmissions || defaultDatabaseState.latsolSubmissions,
           schedules: data.data.schedules || defaultDatabaseState.schedules,
           reflections: data.data.reflections || defaultDatabaseState.reflections,
@@ -569,12 +561,14 @@ class StorageService {
               const remoteHasValidNewQuestions =
                 (remoteState.evaluationQuestions?.length === 5) &&
                 (remoteState.latsolRooms?.[0]?.questions?.length === 10);
+              const remoteHasValidLKPD = Boolean(remoteState.lkpdList?.[0]?.questions?.some((q: { id: string }) => q.id === 'lkpd_c3'));
 
               this.state = {
                 ...defaultDatabaseState,
                 ...remoteState,
                 latsolRooms: remoteHasValidNewQuestions ? remoteState.latsolRooms : defaultDatabaseState.latsolRooms,
                 evaluationQuestions: remoteHasValidNewQuestions ? remoteState.evaluationQuestions : defaultDatabaseState.evaluationQuestions,
+                lkpdList: remoteHasValidLKPD ? remoteState.lkpdList : defaultDatabaseState.lkpdList,
                 latsolSubmissions: remoteState.latsolSubmissions || defaultDatabaseState.latsolSubmissions,
                 schedules: remoteState.schedules || defaultDatabaseState.schedules,
                 reflections: remoteState.reflections || defaultDatabaseState.reflections,
@@ -601,6 +595,7 @@ class StorageService {
       const hasValidNewQuestions =
         (parsed.evaluationQuestions?.length === 5) &&
         (parsed.latsolRooms?.[0]?.questions?.length === 10);
+      const hasValidLKPD = Boolean(parsed.lkpdList?.[0]?.questions?.some(q => q.id === 'lkpd_c3'));
 
       // Merge with defaultDatabaseState to ensure all new keys exist and questions are up-to-date
       const merged: DatabaseState = {
@@ -608,10 +603,10 @@ class StorageService {
         ...parsed,
         latsolRooms: hasValidNewQuestions ? parsed.latsolRooms : defaultDatabaseState.latsolRooms,
         evaluationQuestions: hasValidNewQuestions ? parsed.evaluationQuestions : defaultDatabaseState.evaluationQuestions,
+        lkpdList: hasValidLKPD ? parsed.lkpdList : defaultDatabaseState.lkpdList,
         latsolSubmissions: parsed.latsolSubmissions || defaultDatabaseState.latsolSubmissions,
         schedules: parsed.schedules?.length ? parsed.schedules : defaultDatabaseState.schedules,
-        reflections: parsed.reflections?.length ? parsed.reflections : defaultDatabaseState.reflections,
-        lkpdList: parsed.lkpdList?.length && parsed.lkpdList[0].questions ? parsed.lkpdList : defaultDatabaseState.lkpdList
+        reflections: parsed.reflections?.length ? parsed.reflections : defaultDatabaseState.reflections
       };
       return merged;
     } catch {
