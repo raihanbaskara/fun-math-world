@@ -135,12 +135,10 @@ export const AdminUsers: React.FC<{
     showToast('Kunci sesi perangkat akun berhasil dilepas (Bebas Login).', 'success');
   };
 
-  const handleDeleteUser = (userId: string) => {
+  const handleDeleteUser = async (userId: string) => {
     soundService.click();
     if (confirm('Apakah Anda yakin ingin menghapus akun pengguna ini secara permanen dari sistem?')) {
-      storageService.update(draft => {
-        draft.users = draft.users.filter(u => u.id !== userId);
-      });
+      await storageService.removeUser(userId);
       setDbState(storageService.getState());
       soundService.success();
       showToast('Akun pengguna berhasil dihapus.', 'info');

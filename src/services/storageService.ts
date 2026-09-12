@@ -488,10 +488,57 @@ export const defaultDatabaseState: DatabaseState = {
 
 type Listener = (state: DatabaseState) => void;
 
+function mergeUsersList(primary: User[], secondary: User[]): User[] {
+  const map = new Map<string, User>();
+  // 1. Put default users
+  defaultDatabaseState.users.forEach(u => map.set(u.id, u));
+  // 2. Put secondary users
+  (secondary || []).forEach(u => {
+    if (u && u.id) {
+      map.set(u.id, u);
+    }
+  });
+  // 3. Put/overwrite with primary users
+  (primary || []).forEach(u => {
+    if (u && u.id) {
+      const exist = map.get(u.id);
+      map.set(u.id, exist ? { ...exist, ...u } : u);
+    }
+  });
+  return Array.from(map.values());
+}
+
+function mergeArrayById<T extends { id?: string }>(primary: T[], secondary: T[]): T[] {
+  const map = new Map<string, T>();
+  (secondary || []).forEach((item, idx) => {
+    const key = item.id || `item_${idx}`;
+    map.set(key, item);
+  });
+  (primary || []).forEach((item, idx) => {
+    const key = item.id || `item_${idx}`;
+    map.set(key, item);
+  });
+  return Array.from(map.values());
+}
+
+function mergeSubmissionsList<T extends { studentId: string; lkpdId?: string; id?: string }>(primary: T[], secondary: T[]): T[] {
+  const map = new Map<string, T>();
+  (secondary || []).forEach(s => {
+    const key = s.id || `${s.studentId}_${s.lkpdId || 'lkpd_1'}`;
+    map.set(key, s);
+  });
+  (primary || []).forEach(s => {
+    const key = s.id || `${s.studentId}_${s.lkpdId || 'lkpd_1'}`;
+    map.set(key, s);
+  });
+  return Array.from(map.values());
+}
+
 class StorageService {
   private state: DatabaseState;
   private listeners: Set<Listener> = new Set();
   private syncTimeout: number | null = null;
+  private isInitialSyncDone: boolean = false;
 
   constructor() {
     this.state = this.load();
@@ -528,17 +575,26 @@ class StorageService {
           (data.data.latsolRooms?.[0]?.questions?.length === 10);
         const remoteHasValidLKPD = Boolean(data.data.lkpdList?.[0]?.questions?.some((q: { id: string }) => q.id === 'lkpd_c3'));
 
+        const mergedUsers = mergeUsersList(data.data.users || [], this.state.users || []);
+        const mergedLkpdSub = mergeSubmissionsList(data.data.lkpdSubmissions || [], this.state.lkpdSubmissions || []);
+        const mergedLatsolSub = mergeArrayById(data.data.latsolSubmissions || [], this.state.latsolSubmissions || []);
+        const mergedEvalSub = mergeArrayById(data.data.evaluationSubmissions || [], this.state.evaluationSubmissions || []);
+
         this.state = this.sanitizeStudentProgress({
           ...defaultDatabaseState,
           ...data.data,
+          users: mergedUsers,
+          lkpdSubmissions: mergedLkpdSub,
+          latsolSubmissions: mergedLatsolSub,
+          evaluationSubmissions: mergedEvalSub,
           latsolRooms: remoteHasValidNewQuestions ? data.data.latsolRooms : defaultDatabaseState.latsolRooms,
           evaluationQuestions: remoteHasValidNewQuestions ? data.data.evaluationQuestions : defaultDatabaseState.evaluationQuestions,
           lkpdList: remoteHasValidLKPD ? data.data.lkpdList : defaultDatabaseState.lkpdList,
-          latsolSubmissions: data.data.latsolSubmissions || defaultDatabaseState.latsolSubmissions,
           schedules: data.data.schedules || defaultDatabaseState.schedules,
           reflections: data.data.reflections || defaultDatabaseState.reflections,
         });
         localStorage.setItem(STORAGE_KEY, JSON.stringify(this.state));
+        this.isInitialSyncDone = true;
         this.notify();
       } else {
         // Row doesn't exist yet, insert current local state to cloud
@@ -546,6 +602,7 @@ class StorageService {
         if (res.error) {
           console.error('[Supabase RLS Error]', res.error.message);
         }
+        this.isInitialSyncDone = true;
       }
 
       // 2. Real-time subscription for live sync between Teacher & Student devices!
@@ -563,13 +620,21 @@ class StorageService {
                 (remoteState.latsolRooms?.[0]?.questions?.length === 10);
               const remoteHasValidLKPD = Boolean(remoteState.lkpdList?.[0]?.questions?.some((q: { id: string }) => q.id === 'lkpd_c3'));
 
+              const mergedUsers = mergeUsersList(remoteState.users || [], this.state.users || []);
+              const mergedLkpdSub = mergeSubmissionsList(remoteState.lkpdSubmissions || [], this.state.lkpdSubmissions || []);
+              const mergedLatsolSub = mergeArrayById(remoteState.latsolSubmissions || [], this.state.latsolSubmissions || []);
+              const mergedEvalSub = mergeArrayById(remoteState.evaluationSubmissions || [], this.state.evaluationSubmissions || []);
+
               this.state = this.sanitizeStudentProgress({
                 ...defaultDatabaseState,
                 ...remoteState,
+                users: mergedUsers,
+                lkpdSubmissions: mergedLkpdSub,
+                latsolSubmissions: mergedLatsolSub,
+                evaluationSubmissions: mergedEvalSub,
                 latsolRooms: remoteHasValidNewQuestions ? remoteState.latsolRooms : defaultDatabaseState.latsolRooms,
                 evaluationQuestions: remoteHasValidNewQuestions ? remoteState.evaluationQuestions : defaultDatabaseState.evaluationQuestions,
                 lkpdList: remoteHasValidLKPD ? remoteState.lkpdList : defaultDatabaseState.lkpdList,
-                latsolSubmissions: remoteState.latsolSubmissions || defaultDatabaseState.latsolSubmissions,
                 schedules: remoteState.schedules || defaultDatabaseState.schedules,
                 reflections: remoteState.reflections || defaultDatabaseState.reflections,
               });
@@ -617,6 +682,7 @@ class StorageService {
       const merged: DatabaseState = {
         ...defaultDatabaseState,
         ...parsed,
+        users: mergeUsersList(parsed.users || [], defaultDatabaseState.users),
         latsolRooms: hasValidNewQuestions ? parsed.latsolRooms : defaultDatabaseState.latsolRooms,
         evaluationQuestions: hasValidNewQuestions ? parsed.evaluationQuestions : defaultDatabaseState.evaluationQuestions,
         lkpdList: hasValidLKPD ? parsed.lkpdList : defaultDatabaseState.lkpdList,
@@ -635,18 +701,71 @@ class StorageService {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(this.state));
     this.notify();
 
-    // Async save to Supabase cloud
+    // Async save to Supabase cloud with lossless remote merge
     if (isSupabaseConfigured && supabase) {
       if (this.syncTimeout) window.clearTimeout(this.syncTimeout);
       this.syncTimeout = window.setTimeout(async () => {
         try {
+          // Fetch latest cloud state to merge before writing
+          const { data: cloudData } = await supabase!
+            .from('app_state')
+            .select('data')
+            .eq('id', 'main')
+            .maybeSingle();
+
+          let stateToSave = this.state;
+          if (cloudData && cloudData.data) {
+            const mergedUsers = mergeUsersList(this.state.users || [], cloudData.data.users || []);
+            const mergedLkpd = mergeSubmissionsList(this.state.lkpdSubmissions || [], cloudData.data.lkpdSubmissions || []);
+            const mergedLatsol = mergeArrayById(this.state.latsolSubmissions || [], cloudData.data.latsolSubmissions || []);
+            const mergedEval = mergeArrayById(this.state.evaluationSubmissions || [], cloudData.data.evaluationSubmissions || []);
+
+            stateToSave = {
+              ...this.state,
+              users: mergedUsers,
+              lkpdSubmissions: mergedLkpd,
+              latsolSubmissions: mergedLatsol,
+              evaluationSubmissions: mergedEval
+            };
+            this.state = stateToSave;
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(this.state));
+            this.notify();
+          }
+
           await supabase!
             .from('app_state')
-            .upsert({ id: 'main', data: this.state, updated_at: new Date().toISOString() });
+            .upsert({ id: 'main', data: stateToSave, updated_at: new Date().toISOString() });
         } catch (err) {
           console.error('Failed to sync state to Supabase:', err);
         }
-      }, 300);
+      }, 100);
+    }
+  }
+
+  public async removeUser(userId: string): Promise<void> {
+    this.state.users = this.state.users.filter(u => u.id !== userId);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(this.state));
+    this.notify();
+
+    if (isSupabaseConfigured && supabase) {
+      try {
+        const { data: cloudData } = await supabase
+          .from('app_state')
+          .select('data')
+          .eq('id', 'main')
+          .maybeSingle();
+
+        if (cloudData?.data?.users) {
+          cloudData.data.users = cloudData.data.users.filter((u: User) => u.id !== userId);
+          this.state.users = cloudData.data.users;
+        }
+
+        await supabase
+          .from('app_state')
+          .upsert({ id: 'main', data: this.state, updated_at: new Date().toISOString() });
+      } catch (err) {
+        console.error('Failed to delete user in Supabase:', err);
+      }
     }
   }
 
