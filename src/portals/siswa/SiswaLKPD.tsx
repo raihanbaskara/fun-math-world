@@ -64,7 +64,7 @@ export const SiswaLKPD: React.FC<{
   useEffect(() => {
     if (existingSubmission && existingSubmission.answers) {
       setAnswers(existingSubmission.answers);
-      setAiDiscussionUnlocked(true);
+      setAiDiscussionUnlocked(false);
     } else {
       const initial: Record<string, LKPDEssayAnswer> = {};
       questions.forEach(q => {
@@ -260,11 +260,36 @@ export const SiswaLKPD: React.FC<{
           </div>
         </div>
 
-        {/* Review Per-Question */}
-        <div className="space-y-6">
-          <h2 className="text-lg font-black font-mono text-slate-950 dark:text-slate-100">
-            Tinjauan Jawaban &amp; Pembahasan Konsep Resmi:
-          </h2>
+        {/* Review Per-Question Header with Koreksi AI Button */}
+        <div className="space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white dark:bg-[#111827] border-4 border-slate-950 dark:border-slate-800 rounded-3xl p-5 shadow-[6px_6px_0px_0px_#0f172a] dark:shadow-[6px_6px_0px_0px_#000000]">
+            <div>
+              <h2 className="text-base sm:text-lg font-black font-mono text-slate-950 dark:text-slate-100">
+                Tinjauan Jawaban &amp; Pembahasan Soal
+              </h2>
+              <p className="text-xs font-bold text-slate-600 dark:text-slate-400">
+                {aiDiscussionUnlocked
+                  ? 'Langkah konsep pembahasan resmi per soal sedang terbuka.'
+                  : 'Klik tombol Koreksi AI untuk memunculkan langkah pembahasan konsep resmi per soal.'}
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                soundService.click();
+                setAiDiscussionUnlocked(prev => !prev);
+              }}
+              className={`px-5 py-3 rounded-2xl font-mono text-xs font-black border-3 border-slate-950 shadow-[4px_4px_0px_0px_#0f172a] dark:shadow-[4px_4px_0px_0px_#000000] transition-all cursor-pointer flex items-center justify-center gap-2 shrink-0 ${
+                aiDiscussionUnlocked
+                  ? 'bg-slate-200 dark:bg-slate-800 text-slate-900 dark:text-slate-100'
+                  : 'bg-[#a5f3fc] hover:bg-cyan-300 text-slate-950'
+              }`}
+            >
+              <Bot size={18} />
+              <span>{aiDiscussionUnlocked ? 'Sembunyikan Pembahasan' : 'Koreksi AI (Tampilkan Pembahasan)'}</span>
+            </button>
+          </div>
 
           {questions.map((q, idx) => {
             const ans = existingSubmission.answers?.[q.id] || { textAnswer: '' };
@@ -318,16 +343,24 @@ export const SiswaLKPD: React.FC<{
                   </div>
                 )}
 
-                {/* Official Step-by-Step Discussion (No Score Shown to Student) */}
-                <div className="p-4 bg-[#a5f3fc]/30 dark:bg-cyan-950/40 border-3 border-cyan-950 dark:border-cyan-800 rounded-2xl shadow-[3px_3px_0px_0px_#083344] dark:shadow-[3px_3px_0px_0px_#000000] space-y-2">
-                  <div className="flex items-center gap-2 text-cyan-950 dark:text-cyan-300 font-mono text-xs font-black">
-                    <Bot size={18} className="text-cyan-800 dark:text-cyan-400" />
-                    <span>LANGKAH PEMBAHASAN KONSEP RESMI:</span>
+                {/* Official Step-by-Step Discussion (Only shown if student pressed Koreksi AI button - NO score shown) */}
+                {aiDiscussionUnlocked ? (
+                  <div className="p-4 bg-[#a5f3fc]/30 dark:bg-cyan-950/40 border-3 border-cyan-950 dark:border-cyan-800 rounded-2xl shadow-[3px_3px_0px_0px_#083344] dark:shadow-[3px_3px_0px_0px_#000000] space-y-2 animate-in fade-in">
+                    <div className="flex items-center gap-2 text-cyan-950 dark:text-cyan-300 font-mono text-xs font-black">
+                      <Bot size={18} className="text-cyan-800 dark:text-cyan-400" />
+                      <span>LANGKAH PEMBAHASAN KONSEP RESMI:</span>
+                    </div>
+                    <pre className="font-sans whitespace-pre-line text-xs font-bold text-slate-900 dark:text-slate-100 leading-relaxed bg-white/80 dark:bg-slate-900/90 p-3.5 rounded-xl border border-cyan-950/20 dark:border-cyan-800/40">
+                      {q.discussion}
+                    </pre>
                   </div>
-                  <pre className="font-sans whitespace-pre-line text-xs font-bold text-slate-900 dark:text-slate-100 leading-relaxed bg-white/80 dark:bg-slate-900/90 p-3.5 rounded-xl border border-cyan-950/20 dark:border-cyan-800/40">
-                    {q.discussion}
-                  </pre>
-                </div>
+                ) : (
+                  <div className="p-3 bg-slate-50 dark:bg-slate-900/40 rounded-xl border border-dashed border-slate-300 dark:border-slate-800 text-center">
+                    <span className="text-xs font-bold text-slate-500 dark:text-slate-400">
+                      🔒 Pembahasan disembunyikan. Tekan tombol <strong className="text-cyan-700 dark:text-cyan-400">"Koreksi AI (Tampilkan Pembahasan)"</strong> di atas untuk memunculkan langkah resmi.
+                    </span>
+                  </div>
+                )}
               </div>
             );
           })}
@@ -503,16 +536,47 @@ export const SiswaLKPD: React.FC<{
             )}
           </div>
 
-          {/* AI Discussion Box (Unlocked after clicking Koreksi AI) - Only shows concept steps, NO score */}
-          {aiDiscussionUnlocked && (
+          {/* AI Discussion Box (Unlocked ONLY after clicking Koreksi AI) - Only shows concept steps, NO score */}
+          {aiDiscussionUnlocked ? (
             <div className="p-4 bg-[#a5f3fc]/30 dark:bg-cyan-950/40 border-3 border-cyan-950 dark:border-cyan-700 rounded-2xl shadow-[3px_3px_0px_0px_#083344] dark:shadow-[3px_3px_0px_0px_#000000] space-y-2 animate-in fade-in slide-in-from-top-2">
-              <div className="flex items-center gap-2 text-cyan-950 dark:text-cyan-300 font-mono text-xs font-black">
-                <Bot size={18} className="text-cyan-800 dark:text-cyan-400" />
-                <span>PEMBAHASAN ASISTEN AI (KEGIATAN {activeQuestionIdx + 1}):</span>
+              <div className="flex items-center justify-between text-cyan-950 dark:text-cyan-300 font-mono text-xs font-black">
+                <div className="flex items-center gap-2">
+                  <Bot size={18} className="text-cyan-800 dark:text-cyan-400" />
+                  <span>PEMBAHASAN ASISTEN AI (KEGIATAN {activeQuestionIdx + 1}):</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setAiDiscussionUnlocked(false)}
+                  className="text-[10px] underline hover:opacity-75 cursor-pointer font-bold"
+                >
+                  Tutup Pembahasan
+                </button>
               </div>
               <pre className="font-sans whitespace-pre-line text-xs font-bold text-slate-900 dark:text-slate-100 leading-relaxed bg-white/80 dark:bg-slate-900/90 p-3.5 rounded-xl border border-cyan-950/20 dark:border-cyan-700">
                 {currentQ.discussion}
               </pre>
+            </div>
+          ) : isAllAnswered ? (
+            <div className="p-3.5 bg-cyan-50 dark:bg-cyan-950/30 border-2 border-dashed border-cyan-600 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-in fade-in">
+              <div className="flex items-center gap-2 text-cyan-950 dark:text-cyan-300 font-mono text-xs font-bold">
+                <Bot size={18} className="shrink-0 text-cyan-700 dark:text-cyan-400" />
+                <span>Semua soal selesai dijawab! Kamu bisa memunculkan pembahasan AI sekarang.</span>
+              </div>
+              <button
+                type="button"
+                onClick={handleRunAiCorrection}
+                disabled={isAiLoading}
+                className="px-4 py-2 bg-[#a5f3fc] hover:bg-cyan-300 text-slate-950 font-mono text-xs font-black rounded-xl border-2 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a] cursor-pointer shrink-0 flex items-center justify-center gap-1.5"
+              >
+                <Bot size={14} />
+                <span>{isAiLoading ? 'Menganalisis...' : 'Koreksi AI (Lihat Pembahasan)'}</span>
+              </button>
+            </div>
+          ) : (
+            <div className="p-3 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-dashed border-slate-300 dark:border-slate-800 text-center">
+              <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400">
+                🔒 Tombol <strong>Koreksi AI</strong> akan aktif setelah semua ({answeredCount}/{totalQuestions}) kegiatan LKPD selesai dijawab.
+              </span>
             </div>
           )}
         </div>
