@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { renderFormattedMathText } from '@/components/ui/fraction';
 import { DocumentPreviewModal, DocumentPreviewItem } from '@/components/ui/DocumentPreviewModal';
@@ -16,13 +16,7 @@ import {
   Lightbulb,
   Image as ImageIcon,
   Eye,
-  Layers,
-  ChevronRight,
-  ChevronLeft,
-  GraduationCap,
-  ListFilter,
-  ScrollText,
-  LayoutGrid
+  GraduationCap
 } from 'lucide-react';
 import { Material } from '@/types';
 
@@ -30,11 +24,8 @@ export const SiswaMateri: React.FC<{
   onNavigate: (route: string) => void;
 }> = ({ onNavigate }) => {
   const [activeTab, setActiveTab] = useState<number>(0);
-  const [viewMode, setViewMode] = useState<'tabs' | 'continuous'>('tabs');
   const [materials, setMaterials] = useState<Material[]>(storageService.getState().materials || []);
   const [previewItem, setPreviewItem] = useState<DocumentPreviewItem | null>(null);
-
-  const scrollTrackRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const loadData = () => {
@@ -60,14 +51,6 @@ export const SiswaMateri: React.FC<{
 
     return () => unsub();
   }, []);
-
-  const handleScrollRail = (direction: 'left' | 'right') => {
-    soundService.click();
-    if (scrollTrackRef.current) {
-      const scrollAmount = direction === 'left' ? -280 : 280;
-      scrollTrackRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
-    }
-  };
 
   const currentChapter: Material | undefined = materials[activeTab] || materials[0];
 
@@ -106,468 +89,234 @@ export const SiswaMateri: React.FC<{
         </div>
       </div>
 
-      {/* 2. Top Navigation Bar: View Mode Switcher (Tab Mode vs Scroll Down Continuous Mode) */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white dark:bg-[#111827] p-3 sm:p-4 rounded-2xl border-3 border-slate-950 dark:border-slate-800 shadow-[4px_4px_0px_0px_#0f172a] dark:shadow-[4px_4px_0px_0px_#000000]">
-        <div className="flex items-center gap-2">
-          <span className="px-2.5 py-1 rounded-lg bg-[#a3e635] text-slate-950 border-2 border-slate-950 text-xs font-black shadow-[1.5px_1.5px_0px_0px_#0f172a]">
-            {materials.length} Bab
-          </span>
-          <span className="text-xs font-black text-slate-900 dark:text-slate-100">
-            Navigasi Modul Pembelajaran
-          </span>
-        </div>
-
-        {/* View Mode Toggle: Tab Focus vs Scroll Down All */}
-        <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border-2 border-slate-950 dark:border-slate-700">
-          <button
-            type="button"
-            onClick={() => {
-              soundService.click();
-              setViewMode('tabs');
-            }}
-            className={"px-3 py-1.5 rounded-lg text-xs font-black transition-all flex items-center gap-1.5 cursor-pointer " + (
-              viewMode === 'tabs'
-                ? 'bg-[#ffe600] text-slate-950 border border-slate-950 shadow-[1.5px_1.5px_0px_0px_#0f172a]'
-                : 'text-slate-700 dark:text-slate-300 hover:text-slate-950'
-            )}
-          >
-            <LayoutGrid size={13} />
-            <span>Fokus Per Bab</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => {
-              soundService.click();
-              setViewMode('continuous');
-            }}
-            className={"px-3 py-1.5 rounded-lg text-xs font-black transition-all flex items-center gap-1.5 cursor-pointer " + (
-              viewMode === 'continuous'
-                ? 'bg-[#ffe600] text-slate-950 border border-slate-950 shadow-[1.5px_1.5px_0px_0px_#0f172a]'
-                : 'text-slate-700 dark:text-slate-300 hover:text-slate-950'
-            )}
-          >
-            <ScrollText size={13} />
-            <span>Scroll Semua Bab</span>
-          </button>
-        </div>
-      </div>
-
-      {/* 3. MODE 1: TAB FOCUS MODE (With smooth, snapping horizontal rail - Zero orphaned cards!) */}
-      {viewMode === 'tabs' && (
-        <div className="space-y-6">
-          
-          {/* Horizontal Chapter Rail with Arrows */}
-          <div className="relative">
-            <div className="flex items-center justify-between gap-2 mb-2">
-              <span className="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300">
-                Pilih Bab Materi:
-              </span>
-
-              <div className="flex items-center gap-1.5">
-                <button
-                  type="button"
-                  onClick={() => handleScrollRail('left')}
-                  className="p-1.5 rounded-xl bg-white dark:bg-slate-800 border-2 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a] hover:bg-slate-100 cursor-pointer"
-                  title="Geser Kiri"
-                >
-                  <ChevronLeft size={16} />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleScrollRail('right')}
-                  className="p-1.5 rounded-xl bg-white dark:bg-slate-800 border-2 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a] hover:bg-slate-100 cursor-pointer"
-                  title="Geser Kanan"
-                >
-                  <ChevronRight size={16} />
-                </button>
-              </div>
-            </div>
-
-            <div
-              ref={scrollTrackRef}
-              className="flex items-stretch gap-3 overflow-x-auto pb-3 pt-1 scroll-smooth snap-x no-scrollbar"
-              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-            >
-              {materials.map((m, idx) => {
-                const isActive = activeTab === idx;
-                return (
-                  <button
-                    key={m.id || idx}
-                    type="button"
-                    onClick={() => {
-                      soundService.click();
-                      setActiveTab(idx);
-                    }}
-                    className={"p-4 rounded-2xl border-3 border-slate-950 dark:border-slate-700 text-left transition-all cursor-pointer flex flex-col justify-between gap-2.5 min-w-[220px] sm:min-w-[250px] shrink-0 snap-start " + (
-                      isActive
-                        ? 'bg-[#ffe600] text-slate-950 shadow-[5px_5px_0px_0px_#0f172a] dark:shadow-[5px_5px_0px_0px_#000000] -translate-x-0.5 -translate-y-0.5'
-                        : 'bg-white dark:bg-[#111827] text-slate-800 dark:text-slate-200 shadow-[3px_3px_0px_0px_#0f172a] dark:shadow-[3px_3px_0px_0px_#000000] hover:bg-amber-50 dark:hover:bg-slate-800'
-                    )}
-                  >
-                    <div className="flex items-center justify-between gap-1">
-                      <span className="px-2 py-0.5 rounded-md bg-white dark:bg-slate-800 border border-slate-950 dark:border-slate-700 text-[10px] font-black text-slate-950 dark:text-slate-100">
-                        {m.chapterCode || ("BAB 1." + (idx + 1))}
-                      </span>
-                      <span className="text-[10px] font-black text-slate-700 dark:text-slate-300">
-                        {m.badge || 'Modul'}
-                      </span>
-                    </div>
-                    <div className="font-black text-xs sm:text-sm text-slate-950 dark:text-slate-100 line-clamp-2 leading-snug">
-                      {m.title}
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Active Chapter Card */}
-          {currentChapter && (
-            <div className="rounded-3xl bg-white dark:bg-[#111827] border-4 border-slate-950 dark:border-slate-800 p-6 sm:p-8 shadow-[8px_8px_0px_0px_#0f172a] dark:shadow-[8px_8px_0px_0px_#000000] space-y-6">
-              
-              {/* Header Title & Badges */}
-              <div className="space-y-3 pb-5 border-b-3 border-slate-950/15 dark:border-slate-800">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="px-3 py-1 rounded-xl bg-[#a3e635] text-slate-950 font-black text-xs border-2 border-slate-950 shadow-[1.5px_1.5px_0px_0px_#0f172a]">
-                    {currentChapter.chapterCode || ("BAB 1." + (activeTab + 1))}
-                  </span>
-                  <span className="px-3 py-1 rounded-xl bg-[#ffe600] text-slate-950 font-black text-xs border-2 border-slate-950">
-                    {currentChapter.badge || 'Teori Inti'}
-                  </span>
-                  {currentChapter.fileName && (
-                    <span className="px-2.5 py-0.5 rounded-lg bg-rose-100 text-rose-950 border border-slate-950 text-[11px] font-black flex items-center gap-1">
-                      <FileText size={12} /> Berkas Modul Tersedia
-                    </span>
-                  )}
-                </div>
-
-                <h2 className="text-xl sm:text-2xl lg:text-3xl font-black text-slate-950 dark:text-slate-100 leading-tight">
-                  {currentChapter.title}
-                </h2>
-
-                {currentChapter.summary && (
-                  <p className="text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-300 leading-relaxed bg-amber-50/70 dark:bg-slate-800/60 p-3.5 rounded-2xl border border-slate-950/20">
-                    {currentChapter.summary}
-                  </p>
+      {/* 2. Sub-Topic Selection Pills (Dynamic Chapters) */}
+      {materials.length > 0 ? (
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+          {materials.map((m, idx) => {
+            const isActive = activeTab === idx;
+            return (
+              <button
+                key={m.id || idx}
+                type="button"
+                onClick={() => {
+                  soundService.click();
+                  setActiveTab(idx);
+                }}
+                className={"p-3.5 rounded-2xl border-3 border-slate-950 dark:border-slate-700 text-left transition-all cursor-pointer flex flex-col justify-between gap-2.5 " + (
+                  isActive
+                    ? 'bg-[#ffe600] text-slate-950 shadow-[5px_5px_0px_0px_#0f172a] dark:shadow-[5px_5px_0px_0px_#000000] -translate-x-0.5 -translate-y-0.5'
+                    : 'bg-white dark:bg-[#111827] text-slate-800 dark:text-slate-200 shadow-[3px_3px_0px_0px_#0f172a] dark:shadow-[3px_3px_0px_0px_#000000] hover:bg-amber-50 dark:hover:bg-slate-800'
                 )}
-              </div>
-
-              {/* Uraian Konsep & Teori */}
-              {currentChapter.content && (
-                <div className="p-5 sm:p-6 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border-3 border-slate-950 dark:border-slate-700 shadow-[3px_3px_0px_0px_#0f172a] space-y-2">
-                  <div className="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-slate-950 dark:text-slate-100">
-                    <GraduationCap size={16} className="text-[#38bdf8]" />
-                    <span>Uraian Penjelasan Konsep:</span>
-                  </div>
-                  <div className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 leading-relaxed whitespace-pre-line">
-                    {renderFormattedMathText(currentChapter.content, 'sm')}
-                  </div>
+              >
+                <div className="flex items-center justify-between gap-1 flex-wrap">
+                  <span className="px-2 py-0.5 rounded-md bg-white dark:bg-slate-800 border border-slate-950 dark:border-slate-700 text-[10px] font-black text-slate-950 dark:text-slate-100">
+                    {m.chapterCode || ("BAB 1." + (idx + 1))}
+                  </span>
+                  <span className="text-[10px] font-black text-slate-700 dark:text-slate-300">
+                    {m.badge || 'Modul'}
+                  </span>
                 </div>
-              )}
-
-              {/* Rumus Kaidah Matematis */}
-              {currentChapter.formula && (
-                <div className="p-5 rounded-2xl bg-[#fffdf5] dark:bg-amber-950/20 border-3 border-slate-950 dark:border-slate-700 shadow-[4px_4px_0px_0px_#0f172a] space-y-3">
-                  <div className="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-slate-950 dark:text-slate-100">
-                    <Lightbulb size={16} className="text-amber-500" />
-                    <span>Rumus &amp; Kaidah Matematis:</span>
-                  </div>
-
-                  <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border-2 border-slate-950 dark:border-slate-700 overflow-x-auto shadow-inner">
-                    <div className="text-sm sm:text-base font-black text-slate-950 dark:text-slate-100">
-                      {renderFormattedMathText(currentChapter.formula, 'md')}
-                    </div>
-                  </div>
+                <div className="font-black text-xs sm:text-sm text-slate-950 dark:text-slate-100 line-clamp-2 leading-snug">
+                  {m.title}
                 </div>
-              )}
-
-              {/* Contoh Kasus */}
-              {currentChapter.exampleCase && (
-                <div className="p-5 rounded-2xl bg-[#e0f2fe] dark:bg-sky-950/40 border-3 border-slate-950 dark:border-slate-700 shadow-[4px_4px_0px_0px_#0f172a] space-y-3">
-                  <div className="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-slate-950 dark:text-slate-100">
-                    <CheckCircle2 size={16} className="text-sky-600 dark:text-sky-400" />
-                    <span>Contoh Kasus &amp; Penyelesaian:</span>
-                  </div>
-
-                  <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border-2 border-slate-950 dark:border-slate-700 leading-relaxed">
-                    <div className="text-xs sm:text-sm font-bold text-slate-950 dark:text-slate-100">
-                      {renderFormattedMathText(currentChapter.exampleCase, 'sm')}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Berkas & Modul PDF/Gambar Khusus Bab Ini */}
-              {(currentChapter.fileName || currentChapter.fileUrl) && (
-                <div className="p-5 sm:p-6 rounded-2xl bg-[#fdf4ff] dark:bg-purple-950/30 border-3 border-slate-950 dark:border-slate-700 shadow-[4px_4px_0px_0px_#0f172a] space-y-4">
-                  <div className="flex items-center justify-between gap-2 flex-wrap">
-                    <div className="flex items-center gap-2.5">
-                      <div className="p-2 rounded-xl bg-purple-200 border-2 border-slate-950 text-slate-950 shadow-[1.5px_1.5px_0px_0px_#0f172a]">
-                        <FileText size={18} />
-                      </div>
-                      <div>
-                        <h3 className="text-xs sm:text-sm font-black text-slate-950 dark:text-slate-100">
-                          Lampiran Berkas Pendukung Bab Ini
-                        </h3>
-                        <p className="text-[11px] font-bold text-slate-600 dark:text-slate-400">
-                          Materi modul dan rangkuman khusus {currentChapter.chapterCode || 'bab ini'}
-                        </p>
-                      </div>
-                    </div>
-
-                    <span className="px-2.5 py-1 rounded-lg bg-purple-200 text-purple-950 border border-slate-950 text-[10px] font-black">
-                      {currentChapter.fileSize || 'Berkas Terlampir'}
-                    </span>
-                  </div>
-
-                  <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border-2 border-slate-950 dark:border-slate-700 shadow-[2px_2px_0px_0px_#0f172a] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-10 h-10 rounded-xl bg-amber-200 border-2 border-slate-950 flex items-center justify-center shrink-0">
-                        <FileText size={20} className="text-rose-600" />
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-xs sm:text-sm font-black text-slate-950 dark:text-slate-100 truncate max-w-[240px] sm:max-w-md">
-                          {currentChapter.fileName || (currentChapter.title + '.pdf')}
-                        </p>
-                        <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400">
-                          Klik pratinjau untuk membaca lembar digital
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-2 shrink-0">
-                      <button
-                        type="button"
-                        onClick={() => setPreviewItem({
-                          title: currentChapter.title,
-                          url: currentChapter.fileUrl,
-                          type: 'pdf',
-                          name: currentChapter.fileName,
-                          chapterCode: currentChapter.chapterCode,
-                          badge: currentChapter.badge,
-                          summary: currentChapter.summary,
-                          content: currentChapter.content,
-                          formula: currentChapter.formula,
-                          exampleCase: currentChapter.exampleCase,
-                          fileSize: currentChapter.fileSize
-                        })}
-                        className="px-3.5 py-1.5 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-100 text-slate-950 dark:text-slate-100 border-2 border-slate-950 text-xs font-black shadow-[2px_2px_0px_0px_#0f172a] flex items-center gap-1.5 cursor-pointer active:translate-x-0.5 active:translate-y-0.5 transition-all"
-                      >
-                        <Eye size={13} />
-                        <span>Pratinjau Modul</span>
-                      </button>
-
-                      {currentChapter.fileUrl && (
-                        <a
-                          href={currentChapter.fileUrl}
-                          download={currentChapter.fileName || (currentChapter.title + '.pdf')}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="px-3.5 py-1.5 rounded-xl bg-[#ffe600] hover:bg-yellow-400 text-slate-950 border-2 border-slate-950 text-xs font-black shadow-[2px_2px_0px_0px_#0f172a] flex items-center gap-1.5 cursor-pointer active:translate-x-0.5 active:translate-y-0.5 transition-all"
-                        >
-                          <Download size={13} />
-                          <span>Unduh</span>
-                        </a>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Prev / Next Chapter Footer */}
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-5 border-t-3 border-slate-950/15 dark:border-slate-800">
-                <div className="flex items-center gap-2 w-full sm:w-auto">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={activeTab === 0}
-                    onClick={() => {
-                      soundService.click();
-                      setActiveTab(prev => Math.max(0, prev - 1));
-                    }}
-                    className="flex-1 sm:flex-initial font-black text-xs"
-                  >
-                    <ArrowLeft size={14} />
-                    <span>Bab Sebelumnya</span>
-                  </Button>
-
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={activeTab >= materials.length - 1}
-                    onClick={() => {
-                      soundService.click();
-                      setActiveTab(prev => Math.min(materials.length - 1, prev + 1));
-                    }}
-                    className="flex-1 sm:flex-initial font-black text-xs"
-                  >
-                    <span>Bab Selanjutnya</span>
-                    <ArrowRight size={14} />
-                  </Button>
-                </div>
-
-                <div className="flex items-center gap-2 w-full sm:w-auto">
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    className="flex-1 sm:flex-initial font-black text-xs"
-                    onClick={() => onNavigate('siswa/studio')}
-                  >
-                    <PieChart size={15} />
-                    <span>Studio Pizza</span>
-                  </Button>
-
-                  <Button
-                    variant="yellow"
-                    size="sm"
-                    className="flex-1 sm:flex-initial font-black text-xs"
-                    onClick={() => onNavigate('siswa/lkpd')}
-                  >
-                    <span>LKPD Digital</span>
-                    <ArrowRight size={15} />
-                  </Button>
-                </div>
-              </div>
-
-            </div>
-          )}
+              </button>
+            );
+          })}
+        </div>
+      ) : (
+        <div className="p-8 text-center bg-white dark:bg-[#111827] rounded-3xl border-4 border-slate-950 dark:border-slate-700 shadow-[5px_5px_0px_0px_#0f172a]">
+          <p className="text-sm font-black text-slate-700 dark:text-slate-300">
+            Belum ada bab materi yang terdaftar.
+          </p>
         </div>
       )}
 
-      {/* 4. MODE 2: CONTINUOUS SCROLL DOWN MODE (All chapters cleanly stacked for continuous reading) */}
-      {viewMode === 'continuous' && (
-        <div className="space-y-8">
-          {materials.map((m, idx) => (
-            <div
-              key={m.id || idx}
-              id={"bab-" + (idx + 1)}
-              className="rounded-3xl bg-white dark:bg-[#111827] border-4 border-slate-950 dark:border-slate-800 p-6 sm:p-8 shadow-[8px_8px_0px_0px_#0f172a] dark:shadow-[8px_8px_0px_0px_#000000] space-y-6"
-            >
-              {/* Header Title & Badges */}
-              <div className="space-y-3 pb-4 border-b-3 border-slate-950/15 dark:border-slate-800">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div className="flex items-center gap-2">
-                    <span className="px-3 py-1 rounded-xl bg-[#a3e635] text-slate-950 font-black text-xs border-2 border-slate-950 shadow-[1.5px_1.5px_0px_0px_#0f172a]">
-                      {m.chapterCode || ("BAB 1." + (idx + 1))}
-                    </span>
-                    <span className="px-3 py-1 rounded-xl bg-[#ffe600] text-slate-950 font-black text-xs border-2 border-slate-950">
-                      {m.badge || 'Modul'}
-                    </span>
-                  </div>
+      {/* 3. Main Chapter Card */}
+      {currentChapter && (
+        <div className="rounded-3xl bg-white dark:bg-[#111827] border-4 border-slate-950 dark:border-slate-800 p-6 sm:p-8 shadow-[8px_8px_0px_0px_#0f172a] dark:shadow-[8px_8px_0px_0px_#000000] space-y-6">
+          
+          {/* Chapter Title, Badges & Summary */}
+          <div className="space-y-3 pb-5 border-b-3 border-slate-950/15 dark:border-slate-800">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="px-3 py-1 rounded-xl bg-[#a3e635] text-slate-950 font-black text-xs border-2 border-slate-950 shadow-[1.5px_1.5px_0px_0px_#0f172a]">
+                {currentChapter.chapterCode || ("BAB 1." + (activeTab + 1))}
+              </span>
+              <span className="px-3 py-1 rounded-xl bg-[#ffe600] text-slate-950 font-black text-xs border-2 border-slate-950">
+                {currentChapter.badge || 'Teori Inti'}
+              </span>
+              {currentChapter.fileName && (
+                <span className="px-2.5 py-0.5 rounded-lg bg-rose-100 text-rose-950 border border-slate-950 text-[11px] font-black flex items-center gap-1">
+                  <FileText size={12} /> Modul Terlampir
+                </span>
+              )}
+            </div>
 
-                  <span className="text-xs font-bold text-slate-500 dark:text-slate-400">
-                    Bagian {idx + 1} dari {materials.length}
-                  </span>
-                </div>
+            <h2 className="text-xl sm:text-2xl lg:text-3xl font-black text-slate-950 dark:text-slate-100 leading-tight">
+              {currentChapter.title}
+            </h2>
 
-                <h2 className="text-xl sm:text-2xl lg:text-3xl font-black text-slate-950 dark:text-slate-100 leading-tight">
-                  {m.title}
-                </h2>
+            {currentChapter.summary && (
+              <p className="text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-300 leading-relaxed bg-amber-50/70 dark:bg-slate-800/60 p-3.5 rounded-2xl border border-slate-950/20">
+                {currentChapter.summary}
+              </p>
+            )}
+          </div>
 
-                {m.summary && (
-                  <p className="text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-300 leading-relaxed bg-amber-50/70 dark:bg-slate-800/60 p-3 rounded-xl border border-slate-950/20">
-                    {m.summary}
-                  </p>
-                )}
+          {/* Uraian Teori & Penjelasan Konsep */}
+          {currentChapter.content && (
+            <div className="p-5 sm:p-6 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border-3 border-slate-950 dark:border-slate-700 shadow-[3px_3px_0px_0px_#0f172a] space-y-2">
+              <div className="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-slate-950 dark:text-slate-100">
+                <GraduationCap size={16} className="text-[#38bdf8]" />
+                <span>Uraian Penjelasan Konsep:</span>
+              </div>
+              <div className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 leading-relaxed whitespace-pre-line">
+                {renderFormattedMathText(currentChapter.content, 'sm')}
+              </div>
+            </div>
+          )}
+
+          {/* Formula / Concept Rule Box */}
+          {currentChapter.formula && (
+            <div className="p-5 rounded-2xl bg-[#fffdf5] dark:bg-amber-950/20 border-3 border-slate-950 dark:border-slate-700 shadow-[4px_4px_0px_0px_#0f172a] space-y-3">
+              <div className="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-slate-950 dark:text-slate-100">
+                <Lightbulb size={16} className="text-amber-500" />
+                <span>Rumus &amp; Kaidah Matematis:</span>
               </div>
 
-              {/* Uraian Teori */}
-              {m.content && (
-                <div className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border-2 border-slate-950 dark:border-slate-700 space-y-2">
-                  <div className="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-slate-950 dark:text-slate-100">
-                    <GraduationCap size={15} className="text-[#38bdf8]" />
-                    <span>Uraian Penjelasan Konsep:</span>
+              <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border-2 border-slate-950 dark:border-slate-700 overflow-x-auto shadow-inner">
+                <div className="text-sm sm:text-base font-black text-slate-950 dark:text-slate-100">
+                  {renderFormattedMathText(currentChapter.formula, 'md')}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Concrete Example Box */}
+          {currentChapter.exampleCase && (
+            <div className="p-5 rounded-2xl bg-[#e0f2fe] dark:bg-sky-950/40 border-3 border-slate-950 dark:border-slate-700 shadow-[4px_4px_0px_0px_#0f172a] space-y-3">
+              <div className="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-slate-950 dark:text-slate-100">
+                <CheckCircle2 size={16} className="text-sky-600 dark:text-sky-400" />
+                <span>Contoh Kasus &amp; Penyelesaian:</span>
+              </div>
+
+              <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border-2 border-slate-950 dark:border-slate-700 leading-relaxed">
+                <div className="text-xs sm:text-sm font-bold text-slate-950 dark:text-slate-100">
+                  {renderFormattedMathText(currentChapter.exampleCase, 'sm')}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Dedicated File Attachment for THIS chapter */}
+          {(currentChapter.fileName || currentChapter.fileUrl) && (
+            <div className="p-5 sm:p-6 rounded-2xl bg-[#fdf4ff] dark:bg-purple-950/30 border-3 border-slate-950 dark:border-slate-700 shadow-[4px_4px_0px_0px_#0f172a] space-y-4">
+              <div className="flex items-center justify-between gap-2 flex-wrap">
+                <div className="flex items-center gap-2.5">
+                  <div className="p-2 rounded-xl bg-purple-200 border-2 border-slate-950 text-slate-950 shadow-[1.5px_1.5px_0px_0px_#0f172a]">
+                    <FileText size={18} />
                   </div>
-                  <div className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 leading-relaxed whitespace-pre-line">
-                    {renderFormattedMathText(m.content, 'sm')}
+                  <div>
+                    <h3 className="text-xs sm:text-sm font-black text-slate-950 dark:text-slate-100">
+                      Lampiran Berkas Pendukung Bab Ini
+                    </h3>
+                    <p className="text-[11px] font-bold text-slate-600 dark:text-slate-400">
+                      Materi dan berkas referensi khusus {currentChapter.chapterCode || 'bab ini'}
+                    </p>
                   </div>
                 </div>
-              )}
 
-              {/* Rumus Kaidah */}
-              {m.formula && (
-                <div className="p-5 rounded-2xl bg-[#fffdf5] dark:bg-amber-950/20 border-2 border-slate-950 dark:border-slate-700 space-y-2">
-                  <div className="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-slate-950 dark:text-slate-100">
-                    <Lightbulb size={15} className="text-amber-500" />
-                    <span>Rumus &amp; Kaidah:</span>
-                  </div>
-                  <div className="p-3.5 rounded-xl bg-white dark:bg-slate-900 border-2 border-slate-950 text-sm font-black text-slate-950 dark:text-slate-100 shadow-[2px_2px_0px_0px_#0f172a]">
-                    {renderFormattedMathText(m.formula, 'md')}
-                  </div>
-                </div>
-              )}
+                <span className="px-2.5 py-1 rounded-lg bg-purple-200 text-purple-950 border border-slate-950 text-[10px] font-black">
+                  {currentChapter.fileSize || 'Berkas Terlampir'}
+                </span>
+              </div>
 
-              {/* Contoh Kasus */}
-              {m.exampleCase && (
-                <div className="p-5 rounded-2xl bg-[#e0f2fe] dark:bg-sky-950/40 border-2 border-slate-950 dark:border-slate-700 space-y-2">
-                  <div className="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-slate-950 dark:text-slate-100">
-                    <CheckCircle2 size={15} className="text-sky-600" />
-                    <span>Contoh Kasus &amp; Penyelesaian:</span>
+              <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border-2 border-slate-950 dark:border-slate-700 shadow-[2px_2px_0px_0px_#0f172a] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-10 h-10 rounded-xl bg-amber-200 border-2 border-slate-950 flex items-center justify-center shrink-0">
+                    <FileText size={20} className="text-rose-600" />
                   </div>
-                  <div className="p-3.5 rounded-xl bg-white dark:bg-slate-900 border-2 border-slate-950 text-xs sm:text-sm font-bold text-slate-950 dark:text-slate-100 leading-relaxed shadow-[2px_2px_0px_0px_#0f172a]">
-                    {renderFormattedMathText(m.exampleCase, 'sm')}
+                  <div className="min-w-0">
+                    <p className="text-xs sm:text-sm font-black text-slate-950 dark:text-slate-100 truncate max-w-[240px] sm:max-w-md">
+                      {currentChapter.fileName || (currentChapter.title + '.pdf')}
+                    </p>
+                    <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400">
+                      Klik pratinjau untuk membuka lembar modul
+                    </p>
                   </div>
                 </div>
-              )}
 
-              {/* Footer Berkas Preview Button */}
-              <div className="pt-3 border-t-2 border-slate-950/15 dark:border-slate-800 flex items-center justify-between flex-wrap gap-2">
-                <div className="text-xs font-bold text-slate-600 dark:text-slate-400">
-                  {m.fileName || 'Modul Digital Resmi'}
-                </div>
-
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 shrink-0">
                   <button
                     type="button"
                     onClick={() => setPreviewItem({
-                      title: m.title,
-                      url: m.fileUrl,
+                      title: currentChapter.title,
+                      url: currentChapter.fileUrl,
                       type: 'pdf',
-                      name: m.fileName,
-                      chapterCode: m.chapterCode,
-                      badge: m.badge,
-                      summary: m.summary,
-                      content: m.content,
-                      formula: m.formula,
-                      exampleCase: m.exampleCase,
-                      fileSize: m.fileSize
+                      name: currentChapter.fileName,
+                      chapterCode: currentChapter.chapterCode,
+                      badge: currentChapter.badge,
+                      summary: currentChapter.summary,
+                      content: currentChapter.content,
+                      formula: currentChapter.formula,
+                      exampleCase: currentChapter.exampleCase,
+                      fileSize: currentChapter.fileSize
                     })}
                     className="px-3.5 py-1.5 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-100 text-slate-950 dark:text-slate-100 border-2 border-slate-950 text-xs font-black shadow-[2px_2px_0px_0px_#0f172a] flex items-center gap-1.5 cursor-pointer active:translate-x-0.5 active:translate-y-0.5 transition-all"
                   >
                     <Eye size={13} />
-                    <span>Pratinjau Modul Lengkap</span>
+                    <span>Pratinjau Modul</span>
                   </button>
 
-                  {m.fileUrl && (
+                  {currentChapter.fileUrl && (
                     <a
-                      href={m.fileUrl}
-                      download={m.fileName || (m.title + '.pdf')}
+                      href={currentChapter.fileUrl}
+                      download={currentChapter.fileName || (currentChapter.title + '.pdf')}
                       target="_blank"
                       rel="noreferrer"
                       className="px-3.5 py-1.5 rounded-xl bg-[#ffe600] hover:bg-yellow-400 text-slate-950 border-2 border-slate-950 text-xs font-black shadow-[2px_2px_0px_0px_#0f172a] flex items-center gap-1.5 cursor-pointer active:translate-x-0.5 active:translate-y-0.5 transition-all"
                     >
                       <Download size={13} />
-                      <span>Unduh PDF</span>
+                      <span>Unduh</span>
                     </a>
                   )}
                 </div>
               </div>
             </div>
-          ))}
+          )}
 
-          {/* Bottom Action Cards */}
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-6 rounded-3xl bg-white dark:bg-[#111827] border-4 border-slate-950 dark:border-slate-800 shadow-[6px_6px_0px_0px_#0f172a]">
-            <div>
-              <h4 className="font-black text-sm text-slate-950 dark:text-slate-100">
-                Selesai Membaca Seluruh Materi?
-              </h4>
-              <p className="text-xs font-bold text-slate-600 dark:text-slate-400">
-                Lanjutkan pemahamanmu dengan mencoba visualisasi pizza interaktif atau mengerjakan LKPD Digital.
-              </p>
+          {/* Chapter Navigation Bar */}
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-5 border-t-3 border-slate-950/15 dark:border-slate-800">
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={activeTab === 0}
+                onClick={() => {
+                  soundService.click();
+                  setActiveTab(prev => Math.max(0, prev - 1));
+                }}
+                className="flex-1 sm:flex-initial font-black text-xs"
+              >
+                <ArrowLeft size={14} />
+                <span>Bab Sebelumnya</span>
+              </Button>
+
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={activeTab >= materials.length - 1}
+                onClick={() => {
+                  soundService.click();
+                  setActiveTab(prev => Math.min(materials.length - 1, prev + 1));
+                }}
+                className="flex-1 sm:flex-initial font-black text-xs"
+              >
+                <span>Bab Selanjutnya</span>
+                <ArrowRight size={14} />
+              </Button>
             </div>
 
-            <div className="flex items-center gap-2.5 w-full sm:w-auto">
+            <div className="flex items-center gap-2 w-full sm:w-auto">
               <Button
                 variant="secondary"
                 size="sm"
@@ -593,7 +342,7 @@ export const SiswaMateri: React.FC<{
         </div>
       )}
 
-      {/* Lightbox / Document Preview Modal for Students */}
+      {/* Lightbox / Document Preview Modal */}
       <DocumentPreviewModal
         item={previewItem}
         onClose={() => setPreviewItem(null)}
