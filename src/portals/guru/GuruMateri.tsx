@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Modal } from '@/components/ui/modal';
+import { DocumentPreviewModal, DocumentPreviewItem } from '@/components/ui/DocumentPreviewModal';
 import { storageService } from '@/services/storageService';
 import { soundService } from '@/services/soundService';
 import { renderFormattedMathText } from '@/components/ui/fraction';
@@ -73,13 +74,8 @@ export const GuruMateri: React.FC<{
   const [videoDuration, setVideoDuration] = useState('12');
   const [videoDesc, setVideoDesc] = useState('');
 
-  // Lightbox Preview Modal State
-  const [previewItem, setPreviewItem] = useState<{
-    title: string;
-    url: string;
-    type: string;
-    name?: string;
-  } | null>(null);
+  // Lightbox / Document Preview Modal State
+  const [previewItem, setPreviewItem] = useState<DocumentPreviewItem | null>(null);
 
   const chapterPresets = ['BAB 1.1', 'BAB 1.2', 'BAB 1.3', 'BAB 1.4', 'BAB 1.5', 'BAB 1.6', 'BAB 2.1'];
   const badgePresets = [
@@ -431,7 +427,19 @@ export const GuruMateri: React.FC<{
                     {/* Image Preview Thumbnail if attached */}
                     {isImage && m.fileUrl && (
                       <div
-                        onClick={() => setPreviewItem({ title: m.title, url: m.fileUrl!, type: 'image', name: m.fileName })}
+                        onClick={() => setPreviewItem({
+                          title: m.title,
+                          url: m.fileUrl,
+                          type: 'image',
+                          name: m.fileName,
+                          chapterCode: m.chapterCode,
+                          badge: m.badge,
+                          summary: m.summary,
+                          content: m.content,
+                          formula: m.formula,
+                          exampleCase: m.exampleCase,
+                          fileSize: m.fileSize
+                        })}
                         className="relative rounded-2xl overflow-hidden border-2 border-slate-950 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 group cursor-pointer shadow-[2px_2px_0px_0px_#0f172a]"
                       >
                         <img
@@ -467,21 +475,26 @@ export const GuruMateri: React.FC<{
                       </div>
 
                       <div className="flex items-center gap-2">
-                        {m.fileUrl && (
-                          <button
-                            type="button"
-                            onClick={() => setPreviewItem({
-                              title: m.title,
-                              url: m.fileUrl!,
-                              type: isPdf ? 'pdf' : 'image',
-                              name: m.fileName
-                            })}
-                            className="px-3 py-1.5 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-100 text-slate-950 dark:text-slate-100 border-2 border-slate-950 text-xs font-black shadow-[2px_2px_0px_0px_#0f172a] flex items-center gap-1.5 cursor-pointer"
-                          >
-                            <Eye size={13} />
-                            <span>Lihat</span>
-                          </button>
-                        )}
+                        <button
+                          type="button"
+                          onClick={() => setPreviewItem({
+                            title: m.title,
+                            url: m.fileUrl,
+                            type: isPdf ? 'pdf' : 'image',
+                            name: m.fileName,
+                            chapterCode: m.chapterCode,
+                            badge: m.badge,
+                            summary: m.summary,
+                            content: m.content,
+                            formula: m.formula,
+                            exampleCase: m.exampleCase,
+                            fileSize: m.fileSize
+                          })}
+                          className="px-3 py-1.5 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-100 text-slate-950 dark:text-slate-100 border-2 border-slate-950 text-xs font-black shadow-[2px_2px_0px_0px_#0f172a] flex items-center gap-1.5 cursor-pointer"
+                        >
+                          <Eye size={13} />
+                          <span>Lihat</span>
+                        </button>
 
                         <a
                           href={m.fileUrl || '#'}
@@ -868,62 +881,10 @@ export const GuruMateri: React.FC<{
       )}
 
       {/* Lightbox / Preview Modal for PDF and Images */}
-      {previewItem && (
-        <Modal
-          isOpen={!!previewItem}
-          onClose={() => setPreviewItem(null)}
-          title={`Pratinjau: ${previewItem.title}`}
-          maxWidth="max-w-4xl"
-        >
-          <div className="space-y-4">
-            {previewItem.type === 'image' ? (
-              <div className="rounded-2xl overflow-hidden border-3 border-slate-950 dark:border-slate-700 bg-slate-950 flex items-center justify-center p-2">
-                <img
-                  src={previewItem.url}
-                  alt={previewItem.title}
-                  className="max-h-[70vh] w-auto object-contain rounded-xl"
-                />
-              </div>
-            ) : (
-              <div className="space-y-3">
-                <div className="p-4 rounded-2xl bg-amber-50 dark:bg-slate-800 border-2 border-slate-950 dark:border-slate-700 flex items-center justify-between flex-wrap gap-2">
-                  <div className="flex items-center gap-2">
-                    <FileText size={20} className="text-rose-600" />
-                    <span className="text-xs font-black text-slate-900 dark:text-slate-100">
-                      {previewItem.name || 'Dokumen PDF'}
-                    </span>
-                  </div>
-                  <a
-                    href={previewItem.url}
-                    download={previewItem.name || 'modul-materi.pdf'}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="px-3 py-1.5 rounded-xl bg-[#ffe600] text-slate-950 font-black text-xs border-2 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a] hover:bg-yellow-400 flex items-center gap-1.5"
-                  >
-                    <Download size={13} />
-                    <span>Buka / Unduh File Penuh</span>
-                  </a>
-                </div>
-                <iframe
-                  src={previewItem.url}
-                  title={previewItem.title}
-                  className="w-full h-[65vh] rounded-2xl border-3 border-slate-950 dark:border-slate-700 bg-white"
-                />
-              </div>
-            )}
-
-            <div className="flex justify-end pt-2">
-              <button
-                type="button"
-                onClick={() => setPreviewItem(null)}
-                className="px-5 py-2 rounded-xl bg-slate-950 text-white font-black text-xs border-2 border-slate-950 cursor-pointer hover:bg-slate-800"
-              >
-                Tutup Pratinjau
-              </button>
-            </div>
-          </div>
-        </Modal>
-      )}
+      <DocumentPreviewModal
+        item={previewItem}
+        onClose={() => setPreviewItem(null)}
+      />
 
     </div>
   );

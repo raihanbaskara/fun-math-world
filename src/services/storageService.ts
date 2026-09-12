@@ -1,5 +1,6 @@
-import { DatabaseState, User } from '@/types';
+import { DatabaseState, User, Material } from '@/types';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
+import { generateChapterPdfDataUri } from '@/utils/pdfUtils';
 
 const STORAGE_KEY = "FUN_MATH_WORLD_SMP7_DB_V6";
 
@@ -91,7 +92,16 @@ export const defaultDatabaseState: DatabaseState = {
       fraction: [3, 8],
       fileName: "Modul_1_Konsep_Dasar_Pecahan.pdf",
       fileType: "application/pdf",
-      fileSize: "1.2 MB"
+      fileSize: "1.2 MB",
+      fileUrl: generateChapterPdfDataUri({
+        title: "Konsep Dasar & Arti Pecahan",
+        chapterCode: "BAB 1.1",
+        badge: "Fondasi",
+        summary: "Pecahan merepresentasikan bagian dari keseluruhan atau perbandingan bagian terhadap himpunan utuh dengan syarat penyebut b ≠ 0.",
+        content: "Pecahan adalah bilangan yang merepresentasikan bagian dari keseluruhan atau perbandingan bagian terhadap himpunan utuh. Pada pecahan a/b: a = Pembilang, b = Penyebut (b ≠ 0).",
+        formula: "Bentuk Umum: a/b (a = Pembilang, b = Penyebut, b ≠ 0)",
+        exampleCase: "Jika 1 loyang pizza dipotong menjadi 8 bagian dan dimakan 3 potong, maka bagian pizza yang dimakan adalah 3/8 bagian."
+      })
     },
     {
       id: "m2",
@@ -120,7 +130,16 @@ export const defaultDatabaseState: DatabaseState = {
       fraction: [4, 6],
       fileName: "Rangkuman_Pecahan_Senilai_FPB.pdf",
       fileType: "application/pdf",
-      fileSize: "950 KB"
+      fileSize: "950 KB",
+      fileUrl: generateChapterPdfDataUri({
+        title: "Pecahan Senilai & Menyederhanakan",
+        chapterCode: "BAB 1.3",
+        badge: "Penyederhanaan",
+        summary: "Pecahan senilai memiliki rasio perbandingan yang setara melalui perkalian atau pembagian faktor pengali yang sama.",
+        content: "Pecahan senilai diperoleh dengan mengalikan atau membagi pembilang dan penyebut dengan k ≠ 0. Menyederhanakan pecahan dilakukan membagi dengan FPB.",
+        formula: "Pecahan Senilai: (a × k) / (b × k) = a / b (k ≠ 0)",
+        exampleCase: "2/3 = 4/6 = 8/12 (hasil pengali 2 dan 4)."
+      })
     },
     {
       id: "m4",
@@ -134,7 +153,16 @@ export const defaultDatabaseState: DatabaseState = {
       fraction: [5, 6],
       fileName: "Panduan_Operasi_Hitung_KPK.pdf",
       fileType: "application/pdf",
-      fileSize: "1.5 MB"
+      fileSize: "1.5 MB",
+      fileUrl: generateChapterPdfDataUri({
+        title: "Operasi Penjumlahan & Pengurangan Pecahan",
+        chapterCode: "BAB 1.4",
+        badge: "Operasi Hitung",
+        summary: "Menyamakan penyebut berbeda menggunakan KPK sebelum menjumlahkan atau mengurangkan pembilang pecahan.",
+        content: "Jika penyebut sama: a/c ± b/c = (a ± b)/c. Jika penyebut berbeda: samakan menggunakan KPK penyebut terlebih dahulu.",
+        formula: "a/c ± b/d = (a × k₁ ± b × k₂) / KPK(c, d)",
+        exampleCase: "1/2 + 1/3 = 3/6 + 2/6 = 5/6."
+      })
     }
   ],
   videos: [
@@ -563,6 +591,26 @@ function mergeSubmissionsList<T extends { studentId: string; lkpdId?: string; id
   return Array.from(map.values());
 }
 
+function ensureMaterialsHaveUrl(materials: Material[]): Material[] {
+  return (materials || []).map(m => {
+    if (!m.fileUrl && (m.fileType?.includes('pdf') || m.fileName?.endsWith('.pdf') || !m.fileType)) {
+      return {
+        ...m,
+        fileUrl: generateChapterPdfDataUri({
+          title: m.title,
+          chapterCode: m.chapterCode,
+          badge: m.badge,
+          summary: m.summary,
+          content: m.content,
+          formula: m.formula,
+          exampleCase: m.exampleCase
+        })
+      };
+    }
+    return m;
+  });
+}
+
 class StorageService {
   private state: DatabaseState;
   private listeners: Set<Listener> = new Set();
@@ -715,6 +763,7 @@ class StorageService {
         latsolRooms: hasValidNewQuestions ? parsed.latsolRooms : defaultDatabaseState.latsolRooms,
         evaluationQuestions: hasValidNewQuestions ? parsed.evaluationQuestions : defaultDatabaseState.evaluationQuestions,
         lkpdList: hasValidLKPD ? parsed.lkpdList : defaultDatabaseState.lkpdList,
+        materials: ensureMaterialsHaveUrl(parsed.materials?.length ? parsed.materials : defaultDatabaseState.materials),
         latsolSubmissions: parsed.latsolSubmissions || defaultDatabaseState.latsolSubmissions,
         schedules: parsed.schedules?.length ? parsed.schedules : defaultDatabaseState.schedules,
         reflections: parsed.reflections?.length ? parsed.reflections : defaultDatabaseState.reflections
