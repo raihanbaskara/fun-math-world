@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { ArrowFillButton } from '@/components/ui/arrow-fill-button';
 import { Fraction } from '@/components/ui/fraction';
+import { storageService } from '@/services/storageService';
 import { soundService } from '@/services/soundService';
 import {
   FlaskConical,
@@ -19,6 +20,19 @@ import {
 
 export const SiswaStudio: React.FC = () => {
   const [studioMode, setStudioMode] = useState<'pizza' | 'chocolate' | 'compare'>('pizza');
+
+  useEffect(() => {
+    const user = storageService.getCurrentSessionUser();
+    if (user && user.role === 'siswa') {
+      storageService.update(draft => {
+        const u = draft.users.find(usr => usr.id === user.id);
+        if (u) {
+          if (!u.progress) u.progress = { materi: 0, video: 0, lkpd: 0, latsol: 0, evaluasi: 0 };
+          u.progress.video = 100;
+        }
+      });
+    }
+  }, []);
 
   // Fraction 1 state
   const [num, setNum] = useState<number>(3);

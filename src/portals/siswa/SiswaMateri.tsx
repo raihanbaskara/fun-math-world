@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { ArrowFillButton } from '@/components/ui/arrow-fill-button';
 import { Fraction, renderFormattedMathText } from '@/components/ui/fraction';
@@ -22,6 +22,19 @@ export const SiswaMateri: React.FC<{
 }> = ({ onNavigate }) => {
   const [activeTab, setActiveTab] = useState<number>(0);
   const materials = storageService.getState().materials;
+
+  useEffect(() => {
+    const user = storageService.getCurrentSessionUser();
+    if (user && user.role === 'siswa') {
+      storageService.update(draft => {
+        const u = draft.users.find(usr => usr.id === user.id);
+        if (u) {
+          if (!u.progress) u.progress = { materi: 0, video: 0, lkpd: 0, latsol: 0, evaluasi: 0 };
+          u.progress.materi = 100;
+        }
+      });
+    }
+  }, []);
 
   const topicsDetail = [
     {

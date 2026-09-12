@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Modal } from '@/components/ui/modal';
 import { storageService } from '@/services/storageService';
 import { soundService } from '@/services/soundService';
@@ -31,16 +31,44 @@ export const SiswaProfil: React.FC<{
   const [isEditOpen, setIsEditOpen] = useState<boolean>(false);
   const [nameInput, setNameInput] = useState<string>(currentUser.name);
 
-  const db = storageService.getState();
-  const lkpdSubmissions = db.lkpdSubmissions.filter(s => s.studentId === currentUser.id);
-  const latsolSubmissions = (db.latsolSubmissions || []).filter(s => s.studentId === currentUser.id);
-  const evalSubmissions = (db.evaluationSubmissions || []).filter(s => s.studentId === currentUser.id);
+  // Reactive DB subscription
+  const [db, setDb] = useState(storageService.getState());
+  useEffect(() => {
+    const unsub = storageService.subscribe(newDb => {
+      setDb({ ...newDb });
+    });
+    return () => unsub();
+  }, []);
 
-  const p = currentUser.progress || { materi: 85, video: 70, lkpd: 100, evaluasi: 90 };
+  const activeUser = db.users.find(u => u.id === currentUser.id) || currentUser;
 
-  // Calculate overall average progress
+  // Real-time submissions by this student
+  const lkpdSubmissions = db.lkpdSubmissions.filter(s => s.studentId === activeUser.id);
+  const latsolSubmissions = (db.latsolSubmissions || []).filter(s => s.studentId === activeUser.id);
+  const evalSubmissions = (db.evaluationSubmissions || []).filter(s => s.studentId === activeUser.id);
+  const totalLkpd = Math.max(db.lkpdList?.length || 2, 1);
+
+  // 1. LKPD Score & Progress (% of total available LKPD completed)
+  const lkpdDoneCount = lkpdSubmissions.length;
+  const lkpdScore = Math.min(100, Math.round((lkpdDoneCount / totalLkpd) * 100));
+
+  // 2. Evaluasi & Latihan Score
+  const allQuizScores: number[] = [
+    ...latsolSubmissions.map(s => s.score ?? 0),
+    ...evalSubmissions.map(s => s.score ?? 0)
+  ];
+  const evalScore = allQuizScores.length > 0
+    ? Math.round(allQuizScores.reduce((a, b) => a + b, 0) / allQuizScores.length)
+    : 0;
+
+  // 3. Materi & Studio Progress (from user.progress if marked, otherwise 0 if nothing done)
+  const p = activeUser.progress;
+  const materiScore = p?.materi ?? (lkpdDoneCount > 0 ? 100 : 0);
+  const videoScore = p?.video ?? (lkpdDoneCount > 0 ? 100 : 0);
+
+  // Overall average progress across all 4 pillars
   const totalAvg = Math.round(
-    ((p.materi || 0) + (p.video || 0) + (p.lkpd || 0) + (p.evaluasi || 0)) / 4
+    (materiScore + videoScore + lkpdScore + evalScore) / 4
   );
 
   const handleSaveName = (e: React.FormEvent) => {
@@ -53,9 +81,9 @@ export const SiswaProfil: React.FC<{
     }
 
     storageService.update(draft => {
-      const user = draft.users.find(u => u.id === currentUser.id);
-      if (user) {
-        user.name = nameInput.trim();
+      const u = draft.users.find(usr => usr.id === activeUser.id);
+      if (u) {
+        u.name = nameInput.trim();
       }
     });
 
@@ -68,7 +96,7 @@ export const SiswaProfil: React.FC<{
     {
       title: 'Materi & Konsep Visual',
       desc: 'Pemahaman materi pecahan & modul teori',
-      score: p.materi || 85,
+      score: materiScore,
       icon: BookOpen,
       bg: 'bg-[#38bdf8]',
       badge: 'MODUL TEORI'
@@ -76,7 +104,7 @@ export const SiswaProfil: React.FC<{
     {
       title: 'Studio & Video Interaktif',
       desc: 'Eksperimen pizza, balok, & peraga pecahan',
-      score: p.video || 80,
+      score: videoScore,
       icon: Layers,
       bg: 'bg-[#a3e635]',
       badge: 'SIMULASI'
@@ -84,15 +112,15 @@ export const SiswaProfil: React.FC<{
     {
       title: 'LKPD Digital AI',
       desc: 'Penyelesaian lembar kerja & koreksi AI per soal',
-      score: p.lkpd || 100,
+      score: lkpdScore,
       icon: FileText,
       bg: 'bg-[#ffe600]',
-      badge: 'LKPD 1 & 2'
+      badge: totalLkpd > 1 ? `LKPD 1 - ${totalLkpd}` : 'LKPD'
     },
     {
       title: 'Evaluasi Sumatif & Latihan',
       desc: 'Kuis Latihan Soal & Evaluasi Essai Kurikulum',
-      score: p.evaluasi || 90,
+      score: evalScore,
       icon: Trophy,
       bg: 'bg-[#ff94e8]',
       badge: 'UJIAN AKHIR'
@@ -106,7 +134,7 @@ export const SiswaProfil: React.FC<{
       <div className="relative rounded-3xl bg-[#ffe600] border-4 border-slate-950 dark:border-slate-800 p-6 sm:p-8 shadow-[8px_8px_0px_0px_#0f172a] dark:shadow-[8px_8px_0px_0px_#000000] overflow-hidden text-slate-950">
         {/* Subtle geometric watermark */}
         <div className="absolute right-4 bottom-0 text-slate-950/10 font-mono text-8xl font-black pointer-events-none select-none tracking-tighter leading-none">
-          100%
+          {totalAvg}%
         </div>
 
         <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 relative z-10">
@@ -193,7 +221,7 @@ export const SiswaProfil: React.FC<{
               Tugas LKPD
             </span>
             <span className="text-xl font-black font-mono text-slate-950 dark:text-slate-100">
-              {lkpdSubmissions.length} Selesai
+              {lkpdDoneCount} / {totalLkpd} Selesai ({lkpdScore}%)
             </span>
           </div>
         </div>
@@ -207,7 +235,7 @@ export const SiswaProfil: React.FC<{
               Latihan Soal
             </span>
             <span className="text-xl font-black font-mono text-slate-950 dark:text-slate-100">
-              {latsolSubmissions.length} Kuis Diikuti
+              {latsolSubmissions.length > 0 ? `${latsolSubmissions.length} Kuis (Skor ${latsolSubmissions[0].score})` : '0 Kuis Diikuti'}
             </span>
           </div>
         </div>
@@ -221,7 +249,7 @@ export const SiswaProfil: React.FC<{
               Evaluasi Sumatif
             </span>
             <span className="text-xl font-black font-mono text-slate-950 dark:text-slate-100">
-              {evalSubmissions.length > 0 ? 'Terselesaikan' : 'Belum Mulai'}
+              {evalSubmissions.length > 0 ? `Selesai (${evalSubmissions[0].score}/100)` : 'Belum Mulai'}
             </span>
           </div>
         </div>
@@ -311,23 +339,27 @@ export const SiswaProfil: React.FC<{
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
-          <div className="flex items-center gap-3 p-3.5 bg-[#fffdf5] dark:bg-slate-900 rounded-2xl border-3 border-slate-950 dark:border-slate-800 shadow-[3px_3px_0px_0px_#0f172a] dark:shadow-[3px_3px_0px_0px_#000000]">
-            <div className="w-9 h-9 rounded-xl bg-[#ffe600] border-2 border-slate-950 dark:border-slate-800 flex items-center justify-center shrink-0">
-              <CheckCircle2 size={18} className="text-slate-950 stroke-[2.5]" />
+          <div className={`flex items-center gap-3 p-3.5 rounded-2xl border-3 border-slate-950 dark:border-slate-800 shadow-[3px_3px_0px_0px_#0f172a] dark:shadow-[3px_3px_0px_0px_#000000] ${materiScore >= 80 ? 'bg-[#fffdf5] dark:bg-slate-900' : 'bg-slate-100 dark:bg-slate-800 opacity-70'}`}>
+            <div className={`w-9 h-9 rounded-xl border-2 border-slate-950 dark:border-slate-800 flex items-center justify-center shrink-0 ${materiScore >= 80 ? 'bg-[#ffe600]' : 'bg-slate-200 dark:bg-slate-700 text-slate-500'}`}>
+              {materiScore >= 80 ? <CheckCircle2 size={18} className="text-slate-950 stroke-[2.5]" /> : <Clock size={16} />}
             </div>
             <div>
               <span className="text-xs font-black font-mono text-slate-950 dark:text-slate-100 block">Master Pecahan</span>
-              <span className="text-[10px] font-bold text-slate-600 dark:text-slate-400">Modul Teori Tuntas</span>
+              <span className="text-[10px] font-bold text-slate-600 dark:text-slate-400">
+                {materiScore >= 80 ? 'Modul Teori Tuntas' : 'Pelajari Modul Teori'}
+              </span>
             </div>
           </div>
 
-          <div className="flex items-center gap-3 p-3.5 bg-[#fffdf5] dark:bg-slate-900 rounded-2xl border-3 border-slate-950 dark:border-slate-800 shadow-[3px_3px_0px_0px_#0f172a] dark:shadow-[3px_3px_0px_0px_#000000]">
-            <div className="w-9 h-9 rounded-xl bg-[#38bdf8] border-2 border-slate-950 dark:border-slate-800 flex items-center justify-center shrink-0">
-              <CheckCircle2 size={18} className="text-slate-950 stroke-[2.5]" />
+          <div className={`flex items-center gap-3 p-3.5 rounded-2xl border-3 border-slate-950 dark:border-slate-800 shadow-[3px_3px_0px_0px_#0f172a] dark:shadow-[3px_3px_0px_0px_#000000] ${lkpdDoneCount > 0 ? 'bg-[#fffdf5] dark:bg-slate-900' : 'bg-slate-100 dark:bg-slate-800 opacity-70'}`}>
+            <div className={`w-9 h-9 rounded-xl border-2 border-slate-950 dark:border-slate-800 flex items-center justify-center shrink-0 ${lkpdDoneCount > 0 ? 'bg-[#38bdf8]' : 'bg-slate-200 dark:bg-slate-700 text-slate-500'}`}>
+              {lkpdDoneCount > 0 ? <CheckCircle2 size={18} className="text-slate-950 stroke-[2.5]" /> : <Clock size={16} />}
             </div>
             <div>
               <span className="text-xs font-black font-mono text-slate-950 dark:text-slate-100 block">Disiplin LKPD AI</span>
-              <span className="text-[10px] font-bold text-slate-600 dark:text-slate-400">Koreksi Instan Aktif</span>
+              <span className="text-[10px] font-bold text-slate-600 dark:text-slate-400">
+                {lkpdDoneCount > 0 ? `${lkpdDoneCount} LKPD Terkirim` : 'Belum Ada LKPD'}
+              </span>
             </div>
           </div>
 

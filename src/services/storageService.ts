@@ -51,7 +51,7 @@ export const defaultDatabaseState: DatabaseState = {
       avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=Citra",
       sessionToken: null,
       deviceId: null,
-      progress: { materi: 100, video: 100, lkpd: 100, latsol: 100, evaluasi: 95 },
+      progress: { materi: 0, video: 0, lkpd: 0, latsol: 0, evaluasi: 0 },
       readAnnouncements: []
     },
     {
@@ -528,7 +528,7 @@ class StorageService {
           (data.data.latsolRooms?.[0]?.questions?.length === 10);
         const remoteHasValidLKPD = Boolean(data.data.lkpdList?.[0]?.questions?.some((q: { id: string }) => q.id === 'lkpd_c3'));
 
-        this.state = {
+        this.state = this.sanitizeStudentProgress({
           ...defaultDatabaseState,
           ...data.data,
           latsolRooms: remoteHasValidNewQuestions ? data.data.latsolRooms : defaultDatabaseState.latsolRooms,
@@ -537,7 +537,7 @@ class StorageService {
           latsolSubmissions: data.data.latsolSubmissions || defaultDatabaseState.latsolSubmissions,
           schedules: data.data.schedules || defaultDatabaseState.schedules,
           reflections: data.data.reflections || defaultDatabaseState.reflections,
-        };
+        });
         localStorage.setItem(STORAGE_KEY, JSON.stringify(this.state));
         this.notify();
       } else {
@@ -563,7 +563,7 @@ class StorageService {
                 (remoteState.latsolRooms?.[0]?.questions?.length === 10);
               const remoteHasValidLKPD = Boolean(remoteState.lkpdList?.[0]?.questions?.some((q: { id: string }) => q.id === 'lkpd_c3'));
 
-              this.state = {
+              this.state = this.sanitizeStudentProgress({
                 ...defaultDatabaseState,
                 ...remoteState,
                 latsolRooms: remoteHasValidNewQuestions ? remoteState.latsolRooms : defaultDatabaseState.latsolRooms,
@@ -572,7 +572,7 @@ class StorageService {
                 latsolSubmissions: remoteState.latsolSubmissions || defaultDatabaseState.latsolSubmissions,
                 schedules: remoteState.schedules || defaultDatabaseState.schedules,
                 reflections: remoteState.reflections || defaultDatabaseState.reflections,
-              };
+              });
               localStorage.setItem(STORAGE_KEY, JSON.stringify(this.state));
               this.notify();
             }
@@ -582,6 +582,22 @@ class StorageService {
     } catch (err) {
       console.warn('Supabase sync initialization warning:', err);
     }
+  }
+
+  private sanitizeStudentProgress(state: DatabaseState): DatabaseState {
+    if (!state.users) return state;
+    state.users = state.users.map(u => {
+      if (u.role === 'siswa') {
+        const hasLkpd = (state.lkpdSubmissions || []).some(s => s.studentId === u.id);
+        const hasLatsol = (state.latsolSubmissions || []).some(s => s.studentId === u.id);
+        const hasEval = (state.evaluationSubmissions || []).some(s => s.studentId === u.id);
+        if (u.username === 'citra' && !hasLkpd && !hasLatsol && !hasEval) {
+          return { ...u, progress: { materi: 0, video: 0, lkpd: 0, latsol: 0, evaluasi: 0 } };
+        }
+      }
+      return u;
+    });
+    return state;
   }
 
   public load(): DatabaseState {
@@ -608,7 +624,8 @@ class StorageService {
         schedules: parsed.schedules?.length ? parsed.schedules : defaultDatabaseState.schedules,
         reflections: parsed.reflections?.length ? parsed.reflections : defaultDatabaseState.reflections
       };
-      return merged;
+
+      return this.sanitizeStudentProgress(merged);
     } catch {
       return JSON.parse(JSON.stringify(defaultDatabaseState));
     }

@@ -311,7 +311,11 @@ export const SiswaLKPD: React.FC<{
       const user = draft.users.find(u => u.id === currentUser.id);
       if (user) {
         if (!user.progress) user.progress = { materi: 100, video: 100, lkpd: 0, latsol: 0, evaluasi: 0 };
-        user.progress.lkpd = 100;
+        const totalLkpd = Math.max(draft.lkpdList?.length || 2, 1);
+        const mySubCount = draft.lkpdSubmissions.filter(s => s.studentId === currentUser.id).length;
+        user.progress.lkpd = Math.min(100, Math.round((mySubCount / totalLkpd) * 100));
+        user.progress.materi = 100;
+        user.progress.video = 100;
       }
     });
 
