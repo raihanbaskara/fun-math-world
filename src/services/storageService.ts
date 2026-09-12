@@ -638,9 +638,24 @@ class StorageService {
     this.save();
   }
 
-  public reset(): void {
+  public async reset(): Promise<void> {
+    if (this.syncTimeout) {
+      window.clearTimeout(this.syncTimeout);
+      this.syncTimeout = null;
+    }
     this.state = JSON.parse(JSON.stringify(defaultDatabaseState));
-    this.save();
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(this.state));
+    this.notify();
+
+    if (isSupabaseConfigured && supabase) {
+      try {
+        await supabase
+          .from('app_state')
+          .upsert({ id: 'main', data: this.state, updated_at: new Date().toISOString() });
+      } catch (err) {
+        console.error('Failed to reset cloud state in Supabase:', err);
+      }
+    }
   }
 
   public getCurrentSessionUser(): User | null {

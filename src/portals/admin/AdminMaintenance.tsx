@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { storageService } from '@/services/storageService';
 import { soundService } from '@/services/soundService';
-import { Database, Download, Upload, AlertTriangle, RefreshCw, FileJson, HardDriveDownload, ShieldAlert } from 'lucide-react';
+import { Database, Download, Upload, AlertTriangle, RefreshCw, FileJson, HardDriveDownload, ShieldAlert, Loader2 } from 'lucide-react';
 
 export const AdminMaintenance: React.FC<{
   showToast: (msg: string, type?: 'info' | 'success' | 'error') => void;
@@ -46,14 +46,22 @@ export const AdminMaintenance: React.FC<{
     reader.readAsText(file);
   };
 
-  const handleFactoryReset = () => {
+  const [isResetting, setIsResetting] = useState(false);
+
+  const handleFactoryReset = async () => {
     soundService.click();
     if (confirm("PERINGATAN SISTEM: Apakah Anda yakin ingin mengembalikan seluruh data pengguna, tugas, dan nilai ke setelan awal pabrik?")) {
-      storageService.reset();
-      sessionStorage.clear();
-      soundService.alert();
-      showToast("Sistem telah di-reset ke kondisi awal pabrik.", "info");
-      setTimeout(() => window.location.reload(), 1000);
+      setIsResetting(true);
+      try {
+        await storageService.reset();
+        sessionStorage.clear();
+        soundService.alert();
+        showToast("Sistem & Cloud Database telah berhasil di-reset ke kondisi awal pabrik.", "info");
+        setTimeout(() => window.location.reload(), 1000);
+      } catch (err) {
+        showToast("Gagal mereset database: " + (err as Error).message, "error");
+        setIsResetting(false);
+      }
     }
   };
 
@@ -193,10 +201,20 @@ export const AdminMaintenance: React.FC<{
             <button
               type="button"
               onClick={handleFactoryReset}
-              className="w-full sm:w-auto px-6 py-3 rounded-2xl bg-rose-400 hover:bg-rose-500 text-slate-950 font-mono font-black text-xs sm:text-sm uppercase tracking-wider border-3 border-slate-950 shadow-[4px_4px_0px_0px_#0f172a] active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer flex items-center justify-center gap-2.5"
+              disabled={isResetting}
+              className="w-full sm:w-auto px-6 py-3 rounded-2xl bg-rose-400 hover:bg-rose-500 disabled:opacity-60 disabled:cursor-not-allowed text-slate-950 font-mono font-black text-xs sm:text-sm uppercase tracking-wider border-3 border-slate-950 shadow-[4px_4px_0px_0px_#0f172a] active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer flex items-center justify-center gap-2.5"
             >
-              <AlertTriangle size={18} />
-              <span>Reset Sistem ke Setelan Awal Pabrik</span>
+              {isResetting ? (
+                <>
+                  <Loader2 size={18} className="animate-spin" />
+                  <span>Mereset Basis Data Cloud...</span>
+                </>
+              ) : (
+                <>
+                  <AlertTriangle size={18} />
+                  <span>Reset Sistem ke Setelan Awal Pabrik</span>
+                </>
+              )}
             </button>
           </div>
         </div>
