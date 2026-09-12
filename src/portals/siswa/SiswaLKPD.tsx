@@ -4,7 +4,7 @@ import { soundService } from '@/services/soundService';
 import { User, LKPDItem, LKPDSubmission, LKPDEssayAnswer } from '@/types';
 import { compressImage } from '@/lib/utils';
 import { useAntiCheat } from '@/lib/useAntiCheat';
-import { evaluateLKPDWithRubric } from '@/services/aiCorrectionService';
+import { evaluateLKPDWithAI, LKPDOverallEvaluation } from '@/services/aiCorrectionService';
 import {
   FileText,
   Upload,
@@ -49,6 +49,7 @@ export const SiswaLKPD: React.FC<{
   const [answers, setAnswers] = useState<Record<string, LKPDEssayAnswer>>({});
   const [isAiLoading, setIsAiLoading] = useState<boolean>(false);
   const [aiDiscussionUnlocked, setAiDiscussionUnlocked] = useState<boolean>(false);
+  const [aiEvaluationResult, setAiEvaluationResult] = useState<LKPDOverallEvaluation | null>(null);
   const [activePhotoModal, setActivePhotoModal] = useState<string | null>(null);
 
   // Anti-Cheat Monitor Active while solving
@@ -71,6 +72,7 @@ export const SiswaLKPD: React.FC<{
       });
       setAnswers(initial);
       setAiDiscussionUnlocked(false);
+      setAiEvaluationResult(null);
       resetReport();
     }
   }, [selectedLkpd?.id, existingSubmission]);
@@ -124,8 +126,8 @@ export const SiswaLKPD: React.FC<{
   const answeredCount = Object.values(answers).filter(a => (a?.textAnswer || '').trim().length > 0).length;
   const isAllAnswered = totalQuestions > 0 && answeredCount >= totalQuestions;
 
-  // Koreksi AI action: Only unlocks step-by-step discussion, NO score shown to student
-  const handleRunAiCorrection = () => {
+  // Koreksi AI action: Evaluates with real AI (OpenRouter LLM), unlocks discussion for student (NO score shown to student)
+  const handleRunAiCorrection = async () => {
     soundService.click();
     if (!isAllAnswered) {
       soundService.alert();
@@ -134,19 +136,24 @@ export const SiswaLKPD: React.FC<{
     }
 
     setIsAiLoading(true);
-    showToast("Asisten AI sedang menelaah langkah konsep LKPD...", "info");
+    showToast("Asisten AI sedang menelaah langkah konsep matematika...", "info");
 
-    setTimeout(() => {
+    try {
+      const evalResult = await evaluateLKPDWithAI(questions, answers);
+      setAiEvaluationResult(evalResult);
       setIsAiLoading(false);
       setAiDiscussionUnlocked(true);
       soundService.success();
       confetti({ particleCount: 60, spread: 70 });
       showToast("Pembahasan Koreksi AI Berhasil Dibuka! Cermati langkah perhitungannya.", "success");
-    }, 1200);
+    } catch {
+      setIsAiLoading(false);
+      setAiDiscussionUnlocked(true);
+    }
   };
 
   // Submit LKPD to Teacher
-  const handleSubmitLKPD = () => {
+  const handleSubmitLKPD = async () => {
     soundService.click();
     if (!isAllAnswered) {
       soundService.alert();
@@ -154,20 +161,23 @@ export const SiswaLKPD: React.FC<{
       return;
     }
 
+    showToast("Memproses evaluasi akhir AI dan mengirim ke Guru...", "info");
     const antiCheatReport = getReport();
-    // Run AI Evaluation in background to compute score & feedback for Teacher Portal
-    const aiEval = evaluateLKPDWithRubric(questions, answers);
 
-    // Merge AI question feedbacks into answers record
+    // Use cached AI evaluation or compute now with real LLM
+    const aiEval = aiEvaluationResult || await evaluateLKPDWithAI(questions, answers);
+
+    // Merge AI question feedbacks and detailed diagnostic into answers record
     const finalAnswers: Record<string, LKPDEssayAnswer> = {};
     questions.forEach(q => {
       const studentAns = answers[q.id] || { textAnswer: '', photoUrl: '' };
       const qEval = aiEval.perQuestion[q.id];
+      const diagnosaNote = qEval?.diagnosa ? `${qEval.diagnosa} (${qEval.conceptFeedback})` : qEval?.conceptFeedback || "Jawaban telah diperiksa AI.";
       finalAnswers[q.id] = {
         textAnswer: studentAns.textAnswer,
         photoUrl: studentAns.photoUrl || '',
-        aiScore: qEval?.score || Math.round((q.weight || 30) * 0.9),
-        aiFeedback: qEval?.conceptFeedback || "Jawaban telah diperiksa."
+        aiScore: qEval?.score ?? 0,
+        aiFeedback: diagnosaNote
       };
     });
 
