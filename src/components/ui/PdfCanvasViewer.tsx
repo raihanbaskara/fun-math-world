@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import * as pdfjsLib from 'pdfjs-dist';
-import pdfjsWorker from 'pdfjs-dist/build/pdf.worker.mjs?url';
+import pdfjsWorker from 'pdfjs-dist/build/pdf.worker.min.js?url';
 import {
   ZoomIn,
   ZoomOut,
@@ -103,7 +103,8 @@ export const PdfCanvasViewer: React.FC<PdfCanvasViewerProps> = ({ url, title }) 
         if (!ctx) return;
 
         const viewport = page.getViewport({ scale });
-        const pixelRatio = window.devicePixelRatio || 1;
+        // Safe pixelRatio: Cap at 2 to prevent iOS Safari memory exhaustion on 3x retina screens
+        const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
 
         canvas.width = Math.floor(viewport.width * pixelRatio);
         canvas.height = Math.floor(viewport.height * pixelRatio);
@@ -123,6 +124,7 @@ export const PdfCanvasViewer: React.FC<PdfCanvasViewerProps> = ({ url, title }) 
       } catch (err: any) {
         if (err?.name !== 'RenderingCancelledException') {
           console.error("PDF render page error:", err);
+          setError("Peramban mengalami kendala saat merender halaman PDF. Anda dapat membuka atau mengunduh berkas langsung.");
         }
       }
     };
@@ -245,6 +247,28 @@ export const PdfCanvasViewer: React.FC<PdfCanvasViewerProps> = ({ url, title }) 
             <p className="text-xs font-bold text-slate-600 dark:text-slate-400">
               {error}
             </p>
+            <div className="pt-2 flex flex-col sm:flex-row gap-2 justify-center">
+              {url && (
+                <button
+                  type="button"
+                  onClick={() => window.open(url, '_blank')}
+                  className="px-4 py-2 rounded-xl bg-[#ffe600] hover:bg-yellow-400 text-slate-950 border-2 border-slate-950 text-xs font-black shadow-[2px_2px_0px_0px_#0f172a] cursor-pointer"
+                >
+                  Buka di Tab Baru
+                </button>
+              )}
+              {url && (
+                <a
+                  href={url}
+                  download={title ? `${title}.pdf` : 'dokumen.pdf'}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="px-4 py-2 rounded-xl bg-white dark:bg-slate-800 text-slate-950 dark:text-slate-100 border-2 border-slate-950 text-xs font-black shadow-[2px_2px_0px_0px_#0f172a] cursor-pointer"
+                >
+                  Unduh Berkas PDF
+                </a>
+              )}
+            </div>
           </div>
         )}
 

@@ -16,6 +16,40 @@
         font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
       }
     </style>
+    <script>
+      // iOS Safari Polyfills for modern JavaScript APIs
+      if (typeof Promise.withResolvers === 'undefined') {
+        Promise.withResolvers = function () {
+          var resolve, reject;
+          var promise = new Promise(function (res, rej) {
+            resolve = res;
+            reject = rej;
+          });
+          return { promise: promise, resolve: resolve, reject: reject };
+        };
+      }
+      if (typeof Promise.try === 'undefined') {
+        Promise.try = function (fn) {
+          var args = Array.prototype.slice.call(arguments, 1);
+          return new Promise(function (resolve) {
+            resolve(fn.apply(null, args));
+          });
+        };
+      }
+      if (typeof Object.hasOwn === 'undefined') {
+        Object.hasOwn = function (obj, prop) {
+          return Object.prototype.hasOwnProperty.call(obj, prop);
+        };
+      }
+      if (typeof Array.prototype.at === 'undefined') {
+        Array.prototype.at = function (n) {
+          n = Math.trunc(n) || 0;
+          if (n < 0) n += this.length;
+          if (n < 0 || n >= this.length) return undefined;
+          return this[n];
+        };
+      }
+    </script>
   </head>
   <body class="bg-[#FFFBEB] text-slate-900 min-h-screen">
     <div id="root"></div>

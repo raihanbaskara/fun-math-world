@@ -1,14 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { Modal } from '@/components/ui/modal';
 import { getSafePreviewUrl } from '@/utils/pdfUtils';
-import { PdfCanvasViewer } from '@/components/ui/PdfCanvasViewer';
 import {
   FileText,
   Download,
   ExternalLink,
   Image as ImageIcon,
-  Printer
+  Printer,
+  Loader2
 } from 'lucide-react';
+
+const PdfCanvasViewer = React.lazy(() => import('@/components/ui/PdfCanvasViewer'));
 
 export interface DocumentPreviewItem {
   title: string;
@@ -99,6 +101,13 @@ export const DocumentPreviewModal: React.FC<{
                 download={item.name || (item.title + '.' + (isPdf ? 'pdf' : 'png'))}
                 target="_blank"
                 rel="noreferrer"
+                onClick={(e) => {
+                  const isIOS = typeof navigator !== 'undefined' && (/iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1));
+                  if (isIOS) {
+                    // On iOS, direct navigation to blob/data URL opens native PDF reader with share/save
+                    window.open(safeUrl, '_blank');
+                  }
+                }}
                 className="px-3.5 py-1.5 rounded-xl bg-[#ffe600] hover:bg-yellow-400 text-slate-950 border-2 border-slate-950 text-xs font-black shadow-[2px_2px_0px_0px_#0f172a] flex items-center gap-1.5 cursor-pointer active:translate-x-0.5 active:translate-y-0.5 transition-all"
               >
                 <Download size={14} />
@@ -140,10 +149,21 @@ export const DocumentPreviewModal: React.FC<{
         ) : (
           <div>
             {safeUrl || item.url ? (
-              <PdfCanvasViewer
-                url={safeUrl || item.url || ''}
-                title={item.title}
-              />
+              <Suspense
+                fallback={
+                  <div className="min-h-[50vh] flex flex-col items-center justify-center space-y-3 bg-slate-100 dark:bg-slate-900 rounded-2xl border-3 border-slate-950 p-8 text-center">
+                    <Loader2 size={36} className="animate-spin text-amber-500" />
+                    <p className="text-xs font-black text-slate-800 dark:text-slate-200">
+                      Memuat Modul Pratinjau PDF...
+                    </p>
+                  </div>
+                }
+              >
+                <PdfCanvasViewer
+                  url={safeUrl || item.url || ''}
+                  title={item.title}
+                />
+              </Suspense>
             ) : (
               <div className="p-8 text-center space-y-4 rounded-2xl border-3 border-slate-950 bg-white dark:bg-slate-900">
                 <FileText size={48} className="mx-auto text-rose-500" />
@@ -151,7 +171,7 @@ export const DocumentPreviewModal: React.FC<{
                   {item.name || item.title}
                 </p>
                 <p className="text-xs font-bold text-slate-500">
-                  Pratinjau langsung tidak dapat dimuat di peramban ini. Silakan unduh berkas di bawah.
+                  Pratinjau langsung tidak dapat dimuat di peramban ini. Silakan unduh berkas di atas.
                 </p>
               </div>
             )}
