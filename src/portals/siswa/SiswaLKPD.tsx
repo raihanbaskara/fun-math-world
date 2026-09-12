@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { storageService } from '@/services/storageService';
 import { soundService } from '@/services/soundService';
 import { User, LKPDItem, LKPDSubmission, LKPDEssayAnswer } from '@/types';
@@ -19,14 +19,13 @@ import {
   Camera,
   Sparkles,
   Trophy,
-  HelpCircle,
-  Clock,
   Loader2,
   RefreshCw,
   Eye,
   Download,
   BookOpen,
-  ExternalLink
+  ExternalLink,
+  ChevronDown
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
@@ -52,6 +51,10 @@ export const SiswaLKPD: React.FC<{
     s => s.studentId === currentUser.id && s.lkpdId === selectedLkpd?.id
   );
 
+  // Dropdown selector open/closed state
+  const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
   // Solving mode state: false = Intro/PDF/Instructions View; true = Solving Questions View
   const [isSolvingMode, setIsSolvingMode] = useState<boolean>(false);
   const [isPdfModalOpen, setIsPdfModalOpen] = useState<boolean>(false);
@@ -62,6 +65,19 @@ export const SiswaLKPD: React.FC<{
   const [isAiLoading, setIsAiLoading] = useState<boolean>(false);
   const [aiDiscussionUnlocked, setAiDiscussionUnlocked] = useState<boolean>(false);
   const [aiEvaluationResult, setAiEvaluationResult] = useState<LKPDOverallEvaluation | null>(null);
+
+  // Click-outside listener to close dropdown
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   const getPdfDisplayUrl = (url?: string): string => {
     if (!url) return '';
@@ -84,8 +100,15 @@ export const SiswaLKPD: React.FC<{
   };
 
   const handleSelectLkpd = (id: string) => {
+    if (isSolvingMode && id !== (selectedLkpd?.id || selectedLkpdId)) {
+      const confirmLeave = window.confirm(
+        "Kamu sedang dalam lembar pengerjaan kegiatan. Beralih ke LKPD lain akan menutup pengerjaan ini. Lanjutkan?"
+      );
+      if (!confirmLeave) return;
+    }
     soundService.click();
     setSelectedLkpdId(id);
+    setIsDropdownOpen(false);
     setIsSolvingMode(false);
     setActiveQuestionIdx(0);
     setAiDiscussionUnlocked(false);
@@ -158,91 +181,102 @@ export const SiswaLKPD: React.FC<{
         photoUrl: ''
       }
     }));
-    showToast("Foto berhasil dihapus.", "info");
+    showToast("Foto pengerjaan telah dihapus.", "info");
   };
 
-  // Completion check
-  const totalQuestions = questions.length;
-  const answeredCount = Object.values(answers).filter(a => (a?.textAnswer || '').trim().length > 0).length;
-  const isAllAnswered = totalQuestions > 0 && answeredCount >= totalQuestions;
-
-  // Live On-Demand AI Evaluation for Student (NO score shown to student)
-  const handleRunAiCorrection = async (force: boolean = false) => {
-    soundService.click();
-    if (!isAllAnswered) {
-      soundService.alert();
-      showToast(`Harap lengkapi semua ${totalQuestions} butir kegiatan LKPD sebelum meminta koreksi AI!`, "error");
+  const handleRunAiCorrection = async (forceReEvaluate: boolean = false) => {
+    if (aiDiscussionUnlocked && !forceReEvaluate) {
+      setAiDiscussionUnlocked(false);
+      showToast("Pembahasan AI disembunyikan.", "info");
       return;
     }
 
-    // Toggle hide if already unlocked and not forcing re-evaluation
-    if (!force && aiDiscussionUnlocked && aiEvaluationResult) {
-      setAiDiscussionUnlocked(false);
+    if (!forceReEvaluate && aiEvaluationResult) {
+      setAiDiscussionUnlocked(true);
+      soundService.success();
+      showToast("Langkah pembahasan konsep resmi ditampilkan!", "success");
+      return;
+    }
+
+    const answeredCount = questions.filter(q => (answers[q.id]?.textAnswer || '').trim().length > 0).length;
+    if (answeredCount === 0) {
+      showToast("Tuliskan minimal 1 jawaban sebelum menjalankan koreksi AI.", "error");
       return;
     }
 
     setIsAiLoading(true);
-    showToast("Asisten AI sedang menelaah langkah jawaban & lembar coretanmu (OpenRouter)...", "info");
+    soundService.click();
+    showToast("Menghubungi AI untuk menganalisis pemahaman konsep...", "info");
 
     try {
       const evalResult = await evaluateLKPDWithAI(questions, answers);
       setAiEvaluationResult(evalResult);
-      setIsAiLoading(false);
       setAiDiscussionUnlocked(true);
       soundService.success();
-      confetti({ particleCount: 70, spread: 80 });
-      showToast("Evaluasi AI Live Selesai! Cermati analisis dan langkah pembahasan konsep resmi.", "success");
-    } catch {
+      showToast("Analisis AI selesai! Langkah pembahasan resmi terbuka.", "success");
+    } catch (err: any) {
+      console.error(err);
+      showToast("Gagal memanggil AI: " + (err.message || 'Koneksi bermasalah'), "error");
+    } finally {
       setIsAiLoading(false);
-      setAiDiscussionUnlocked(true);
-      showToast("Langkah pembahasan konsep resmi dibuka.", "info");
     }
   };
 
-  // Live AI Evaluation for Submitted Review View
-  const handleRunAiCorrectionForReview = async (force: boolean = false) => {
-    soundService.click();
-
-    if (!force && aiDiscussionUnlocked && aiEvaluationResult) {
+  const handleRunAiCorrectionForReview = async (forceReEvaluate: boolean = false) => {
+    if (aiDiscussionUnlocked && !forceReEvaluate) {
       setAiDiscussionUnlocked(false);
+      showToast("Pembahasan konsep disembunyikan.", "info");
+      return;
+    }
+
+    if (!forceReEvaluate && aiEvaluationResult) {
+      setAiDiscussionUnlocked(true);
+      soundService.success();
+      showToast("Langkah konsep pembahasan resmi ditampilkan!", "success");
+      return;
+    }
+
+    if (!existingSubmission || !existingSubmission.answers) {
+      setAiDiscussionUnlocked(true);
       return;
     }
 
     setIsAiLoading(true);
-    showToast("Asisten AI sedang menelaah kembali jawaban yang telah dikirim...", "info");
+    soundService.click();
+    showToast("Menghubungi AI untuk menelaah jawabanmu...", "info");
 
     try {
-      const submissionAnswers = existingSubmission?.answers || answers;
-      const evalResult = await evaluateLKPDWithAI(questions, submissionAnswers);
+      const evalResult = await evaluateLKPDWithAI(questions, existingSubmission.answers);
       setAiEvaluationResult(evalResult);
-      setIsAiLoading(false);
       setAiDiscussionUnlocked(true);
       soundService.success();
-      confetti({ particleCount: 60, spread: 70 });
-      showToast("Evaluasi AI Live Selesai! Cermati langkah pembahasan konsep resmi.", "success");
-    } catch {
-      setIsAiLoading(false);
+      showToast("Analisis AI selesai! Pembahasan konsep resmi siap dipelajari.", "success");
+    } catch (err: any) {
+      console.error(err);
       setAiDiscussionUnlocked(true);
-      showToast("Langkah pembahasan konsep resmi dibuka.", "info");
+      showToast("Pembahasan resmi dibuka (AI offline).", "info");
+    } finally {
+      setIsAiLoading(false);
     }
   };
 
-  // Submit LKPD to Teacher
   const handleSubmitLKPD = async () => {
-    soundService.click();
-    if (!isAllAnswered) {
-      soundService.alert();
-      showToast("Ketikkan jawaban untuk semua kegiatan sebelum mengirim ke Guru!", "error");
-      return;
+    const answeredCount = questions.filter(q => (answers[q.id]?.textAnswer || '').trim().length > 0).length;
+    if (answeredCount < questions.length) {
+      const confirmSubmit = window.confirm(
+        `Kamu baru menjawab ${answeredCount} dari ${questions.length} kegiatan. Yakin ingin mengirim sekarang?`
+      );
+      if (!confirmSubmit) return;
+    } else {
+      const confirmSubmit = window.confirm(
+        "Apakah kamu sudah yakin dengan semua jawabanmu? Jawaban akan dikirimkan kepada guru."
+      );
+      if (!confirmSubmit) return;
     }
 
-    showToast("Memproses evaluasi akhir AI dan mengirim ke Guru...", "info");
     const antiCheatReport = getReport();
-
-    // Use cached AI evaluation or compute now with real LLM
     const aiEval = aiEvaluationResult || await evaluateLKPDWithAI(questions, answers);
 
-    // Merge AI question feedbacks and detailed diagnostic into answers record
     const finalAnswers: Record<string, LKPDEssayAnswer> = {};
     questions.forEach(q => {
       const studentAns = answers[q.id] || { textAnswer: '', photoUrl: '' };
@@ -282,7 +316,6 @@ export const SiswaLKPD: React.FC<{
       );
       draft.lkpdSubmissions.push(newSubmission);
 
-      // Mark student progress
       const user = draft.users.find(u => u.id === currentUser.id);
       if (user) {
         if (!user.progress) user.progress = { materi: 100, video: 100, lkpd: 0, latsol: 0, evaluasi: 0 };
@@ -296,52 +329,153 @@ export const SiswaLKPD: React.FC<{
     showToast("LKPD Digital Berhasil Dikirim ke Guru! Tahap Latihan Soal kini terbuka.", "success");
   };
 
-  const renderLkpdSelector = () => (
-    <div className="flex flex-wrap items-center justify-between gap-3 bg-white dark:bg-[#111827] border-4 border-slate-950 dark:border-slate-800 rounded-3xl p-3 sm:p-4 shadow-[6px_6px_0px_0px_#0f172a] dark:shadow-[6px_6px_0px_0px_#000000]">
-      <div className="flex items-center gap-2.5">
-        <div className="w-8 h-8 rounded-xl bg-[#ffe600] border-2 border-slate-950 flex items-center justify-center font-mono font-black text-xs text-slate-950 shadow-[1.5px_1.5px_0px_0px_#0f172a]">
-          <BookOpen size={16} />
-        </div>
-        <div>
-          <span className="font-mono text-xs font-black uppercase text-slate-950 dark:text-slate-100 block">
-            PILIH TUGAS LKPD:
-          </span>
-          <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400">
-            Tersedia {lkpdList.length} tugas LKPD dari guru
-          </span>
-        </div>
-      </div>
+  // Modern Chevron Dropdown LKPD Selector
+  const renderLkpdSelector = () => {
+    const currentSub = db.lkpdSubmissions.find(
+      s => s.studentId === currentUser.id && s.lkpdId === selectedLkpd?.id
+    );
+    const isDone = Boolean(currentSub);
+    const selectedIdx = lkpdList.findIndex(l => l.id === selectedLkpd?.id);
 
-      <div className="flex flex-wrap items-center gap-2">
-        {lkpdList.map((item, idx) => {
-          const isSelected = item.id === (selectedLkpd?.id || selectedLkpdId);
-          const sub = db.lkpdSubmissions.find(s => s.studentId === currentUser.id && s.lkpdId === item.id);
-          const isDone = Boolean(sub);
+    return (
+      <div className="relative z-30 font-sans" ref={dropdownRef}>
+        <div className="bg-white dark:bg-[#111827] border-4 border-slate-950 dark:border-slate-800 rounded-3xl p-3.5 sm:p-4 shadow-[6px_6px_0px_0px_#0f172a] dark:shadow-[6px_6px_0px_0px_#000000] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          {/* Left Title & Status Info */}
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-[#ffe600] border-3 border-slate-950 flex items-center justify-center font-mono font-black text-slate-950 shadow-[2px_2px_0px_0px_#0f172a] shrink-0">
+              <BookOpen size={18} />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="font-mono text-xs font-black uppercase tracking-wider text-slate-950 dark:text-slate-100">
+                  PILIH TUGAS LKPD:
+                </span>
+                <span className="text-[10px] font-mono font-black px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-950/20">
+                  {lkpdList.length} Tersedia
+                </span>
+              </div>
+              <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400">
+                Pilih atau beralih lembar kerja melalui tombol dropdown berikut
+              </p>
+            </div>
+          </div>
 
-          return (
+          {/* Dropdown Button Trigger */}
+          <div className="relative">
             <button
-              key={item.id}
               type="button"
-              onClick={() => handleSelectLkpd(item.id)}
-              className={`px-4 py-2 rounded-2xl border-3 border-slate-950 dark:border-slate-800 font-mono font-black text-xs uppercase tracking-wider transition-all cursor-pointer flex items-center gap-2 ${
-                isSelected
-                  ? 'bg-[#ffe600] text-slate-950 shadow-[3px_3px_0px_0px_#0f172a] dark:shadow-[3px_3px_0px_0px_#000000] -translate-y-0.5'
-                  : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 shadow-[2px_2px_0px_0px_#0f172a] dark:shadow-[2px_2px_0px_0px_#000000]'
+              onClick={() => {
+                soundService.click();
+                setIsDropdownOpen(prev => !prev);
+              }}
+              className={`w-full sm:w-auto min-w-[280px] sm:min-w-[340px] px-4 py-2.5 rounded-2xl border-3 border-slate-950 dark:border-slate-700 font-mono font-black text-xs transition-all cursor-pointer flex items-center justify-between gap-3 shadow-[3px_3px_0px_0px_#0f172a] dark:shadow-[3px_3px_0px_0px_#000000] active:translate-x-0.5 active:translate-y-0.5 ${
+                isDropdownOpen
+                  ? 'bg-[#ffe600] text-slate-950'
+                  : 'bg-white dark:bg-slate-800 text-slate-950 dark:text-slate-100 hover:bg-slate-50 dark:hover:bg-slate-750'
               }`}
             >
-              <FileText size={15} />
-              <span>LKPD #{idx + 1}</span>
-              {isDone && (
-                <span className="px-1.5 py-0.5 rounded-md bg-emerald-500 text-white text-[10px] font-mono font-black">
-                  ✓ Selesai
+              <div className="flex items-center gap-2.5 truncate">
+                <span className="px-2.5 py-0.5 rounded-lg bg-[#a5f3fc] text-slate-950 border-2 border-slate-950 text-[11px] font-black shrink-0 shadow-[1.5px_1.5px_0px_0px_#0f172a]">
+                  LKPD #{selectedIdx >= 0 ? selectedIdx + 1 : 1}
                 </span>
-              )}
+                <span className="truncate text-left text-xs font-black">
+                  {selectedLkpd?.title || 'Pilih Lembar Kerja'}
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2 shrink-0">
+                {isDone ? (
+                  <span className="px-2 py-0.5 rounded-lg bg-emerald-500 text-white text-[10px] font-mono font-black border border-slate-950 shadow-[1px_1px_0px_0px_#0f172a] flex items-center gap-1">
+                    <CheckCircle2 size={11} />
+                    <span>Selesai</span>
+                  </span>
+                ) : (
+                  <span className="px-2 py-0.5 rounded-lg bg-amber-100 text-amber-950 border border-slate-950 text-[10px] font-mono font-black">
+                    Belum
+                  </span>
+                )}
+
+                {/* Chevron Down Button with Cyan Neo-brutalist Badge */}
+                <div
+                  className={`w-6 h-6 rounded-lg bg-[#a5f3fc] border-2 border-slate-950 flex items-center justify-center text-slate-950 shadow-[1px_1px_0px_0px_#0f172a] transition-transform duration-200 ${
+                    isDropdownOpen ? 'rotate-180 bg-[#ffe600]' : ''
+                  }`}
+                >
+                  <ChevronDown size={14} className="stroke-[2.5]" />
+                </div>
+              </div>
             </button>
-          );
-        })}
+
+            {/* Dropdown Menu Panel (Opens right underneath) */}
+            {isDropdownOpen && (
+              <div className="absolute right-0 mt-2 w-full sm:w-[380px] bg-white dark:bg-[#111827] border-4 border-slate-950 dark:border-slate-800 rounded-2xl shadow-[8px_8px_0px_0px_#0f172a] dark:shadow-[8px_8px_0px_0px_#000000] p-2 space-y-1.5 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
+                <div className="px-3 py-1.5 border-b-2 border-slate-200 dark:border-slate-800 flex items-center justify-between text-[10px] font-mono font-black text-slate-500 uppercase">
+                  <span>Daftar Tugas LKPD Guru</span>
+                  <span>{lkpdList.length} Tugas Tersedia</span>
+                </div>
+
+                <div className="max-h-72 overflow-y-auto space-y-1.5 pr-1">
+                  {lkpdList.map((item, idx) => {
+                    const isCurrent = item.id === (selectedLkpd?.id || selectedLkpdId);
+                    const sub = db.lkpdSubmissions.find(
+                      s => s.studentId === currentUser.id && s.lkpdId === item.id
+                    );
+                    const itemDone = Boolean(sub);
+                    const itemQCount = item.questions?.length || 0;
+                    const itemPoints = (item.questions || []).reduce((a, q) => a + (q.weight || 0), 0);
+
+                    return (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() => handleSelectLkpd(item.id)}
+                        className={`w-full text-left p-3 rounded-xl border-2 transition-all cursor-pointer flex items-center justify-between gap-3 ${
+                          isCurrent
+                            ? 'bg-[#ffe600] border-slate-950 text-slate-950 shadow-[2px_2px_0px_0px_#0f172a] -translate-y-0.5'
+                            : 'bg-slate-50 dark:bg-slate-850 border-slate-300 dark:border-slate-700 hover:border-slate-950 hover:bg-white dark:hover:bg-slate-800 text-slate-900 dark:text-slate-100'
+                        }`}
+                      >
+                        <div className="space-y-0.5 truncate">
+                          <div className="flex items-center gap-2">
+                            <span
+                              className={`px-2 py-0.5 rounded-md font-mono text-[10px] font-black border border-slate-950 ${
+                                isCurrent ? 'bg-white text-slate-950' : 'bg-[#a5f3fc] text-slate-950'
+                              }`}
+                            >
+                              LKPD #{idx + 1}
+                            </span>
+                            <span className="font-mono font-black text-xs truncate">
+                              {item.title}
+                            </span>
+                          </div>
+                          <div className="text-[10px] font-bold text-slate-600 dark:text-slate-400 truncate pl-0.5">
+                            {itemQCount} Butir Kegiatan • Bobot: {itemPoints} Poin
+                          </div>
+                        </div>
+
+                        <div className="shrink-0 flex items-center gap-1.5">
+                          {itemDone ? (
+                            <span className="px-2 py-0.5 rounded-lg bg-emerald-500 text-white font-mono text-[10px] font-black border border-slate-950 shadow-[1px_1px_0px_0px_#0f172a] flex items-center gap-1">
+                              <CheckCircle2 size={11} />
+                              <span>Selesai</span>
+                            </span>
+                          ) : (
+                            <span className="px-2 py-0.5 rounded-lg bg-amber-100 text-amber-950 border border-slate-950 font-mono text-[10px] font-black">
+                              Belum
+                            </span>
+                          )}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   const renderPdfModal = () => (
     isPdfModalOpen ? (
@@ -352,16 +486,17 @@ export const SiswaLKPD: React.FC<{
         maxWidth="max-w-4xl"
       >
         <div className="space-y-4">
-          <div className="flex items-center justify-between p-3 bg-[#ffe600] rounded-2xl border-2 border-slate-950 text-xs font-mono text-slate-950 font-black shadow-[2px_2px_0px_0px_#0f172a]">
-            <div className="truncate pr-2">
-              <span>Berkas: {selectedLkpd?.pdfFilename || 'Dokumen Lembar Kerja.pdf'}</span>
+          <div className="flex items-center justify-between p-3.5 bg-[#ffe600] rounded-2xl border-2 border-slate-950 text-xs font-mono text-slate-950 font-black shadow-[2px_2px_0px_0px_#0f172a]">
+            <div className="truncate pr-2 flex items-center gap-2">
+              <FileText size={16} />
+              <span className="truncate">Berkas: {selectedLkpd?.pdfFilename || 'Dokumen Lembar Kerja.pdf'}</span>
             </div>
             <div className="flex items-center gap-2 shrink-0">
               {selectedLkpd?.pdfUrl && (
                 <a
                   href={getPdfDisplayUrl(selectedLkpd.pdfUrl)}
                   download={selectedLkpd.pdfFilename || 'LKPD_Pecahan.pdf'}
-                  className="px-3 py-1 bg-white hover:bg-slate-100 text-slate-950 border border-slate-950 rounded-xl font-bold transition flex items-center gap-1 cursor-pointer"
+                  className="px-3.5 py-1.5 bg-white hover:bg-slate-100 text-slate-950 border-2 border-slate-950 rounded-xl font-bold transition flex items-center gap-1.5 cursor-pointer shadow-[1px_1px_0px_0px_#0f172a]"
                 >
                   <Download size={13} />
                   <span>Unduh</span>
@@ -372,7 +507,7 @@ export const SiswaLKPD: React.FC<{
                   href={getPdfDisplayUrl(selectedLkpd.pdfUrl)}
                   target="_blank"
                   rel="noreferrer"
-                  className="px-3 py-1 bg-slate-950 hover:bg-slate-800 text-white rounded-xl font-bold transition flex items-center gap-1 cursor-pointer"
+                  className="px-3.5 py-1.5 bg-slate-950 hover:bg-slate-800 text-white rounded-xl font-bold transition flex items-center gap-1.5 cursor-pointer"
                 >
                   <ExternalLink size={13} />
                   <span>Tab Baru</span>
@@ -382,7 +517,7 @@ export const SiswaLKPD: React.FC<{
           </div>
 
           {selectedLkpd?.pdfUrl ? (
-            <div className="w-full h-[520px] rounded-2xl overflow-hidden border-3 border-slate-950 dark:border-slate-700 shadow-[4px_4px_0px_0px_#0f172a] bg-slate-900 relative">
+            <div className="w-full h-[540px] rounded-2xl overflow-hidden border-3 border-slate-950 dark:border-slate-700 shadow-[4px_4px_0px_0px_#0f172a] bg-slate-900 relative">
               <object
                 data={getPdfDisplayUrl(selectedLkpd.pdfUrl)}
                 type="application/pdf"
@@ -421,11 +556,11 @@ export const SiswaLKPD: React.FC<{
         <div className="rounded-3xl bg-[#ffe600] border-4 border-slate-950 dark:border-slate-800 p-6 sm:p-8 shadow-[8px_8px_0px_0px_#0f172a] dark:shadow-[8px_8px_0px_0px_#000000] text-slate-950 space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b-3 border-slate-950 dark:border-slate-800 pb-4">
             <div className="flex items-center gap-3">
-              <div className="p-3 bg-white border-3 border-slate-950 dark:border-slate-800 rounded-2xl shadow-[3px_3px_0px_0px_#0f172a] dark:shadow-[3px_3px_0px_0px_#000000]">
+              <div className="p-3 bg-white border-3 border-slate-950 dark:border-slate-800 rounded-2xl shadow-[3px_3px_0px_0px_#0f172a]">
                 <Trophy size={32} className="text-amber-500" />
               </div>
               <div>
-                <span className="text-xs font-mono font-black uppercase bg-white px-3 py-1 rounded-xl border-2 border-slate-950 dark:border-slate-800 shadow-[2px_2px_0px_0px_#0f172a] dark:shadow-[2px_2px_0px_0px_#000000] text-slate-950">
+                <span className="text-xs font-mono font-black uppercase bg-white px-3 py-1 rounded-xl border-2 border-slate-950 dark:border-slate-800 shadow-[2px_2px_0px_0px_#0f172a] text-slate-950">
                   LKPD DIGITAL SELESAI
                 </span>
                 <h1 className="text-2xl font-black font-mono mt-1 text-slate-950">
@@ -582,7 +717,7 @@ export const SiswaLKPD: React.FC<{
                   </div>
                 )}
 
-                {/* Official Step-by-Step Discussion (Only shown if student pressed Koreksi AI button - NO score shown) */}
+                {/* Official Step-by-Step Discussion (Only shown if student pressed Koreksi AI button) */}
                 {aiDiscussionUnlocked ? (
                   <div className="p-4 bg-[#a5f3fc]/30 dark:bg-cyan-950/40 border-3 border-cyan-950 dark:border-cyan-800 rounded-2xl shadow-[3px_3px_0px_0px_#083344] dark:shadow-[3px_3px_0px_0px_#000000] space-y-3 animate-in fade-in">
                     <div className="flex items-center gap-2 text-cyan-950 dark:text-cyan-300 font-mono text-xs font-black">
@@ -612,7 +747,7 @@ export const SiswaLKPD: React.FC<{
         </div>
 
         {/* CTA Next: Latihan Soal */}
-        <div className="flex justify-between items-center bg-white dark:bg-[#111827] border-3 border-slate-950 dark:border-slate-800 rounded-3xl p-6 shadow-[6px_6px_0px_0px_#0f172a] dark:shadow-[6px_6px_0px_0px_#000000]">
+        <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3 bg-white dark:bg-[#111827] border-3 border-slate-950 dark:border-slate-800 rounded-3xl p-6 shadow-[6px_6px_0px_0px_#0f172a] dark:shadow-[6px_6px_0px_0px_#000000]">
           <div>
             <span className="font-mono text-xs font-black text-slate-950 dark:text-slate-100 block">
               Tahap 1 Selesai! Lanjutkan ke Tahap 2
@@ -625,7 +760,7 @@ export const SiswaLKPD: React.FC<{
           {onNavigate && (
             <button
               onClick={() => onNavigate('siswa/latsol')}
-              className="px-6 py-3 bg-[#a5f3fc] hover:bg-cyan-300 text-slate-950 font-mono text-xs font-black rounded-2xl border-3 border-slate-950 dark:border-slate-800 shadow-[4px_4px_0px_0px_#0f172a] dark:shadow-[4px_4px_0px_0px_#000000] transition-all cursor-pointer flex items-center gap-2"
+              className="px-6 py-3 bg-[#a5f3fc] hover:bg-cyan-300 text-slate-950 font-mono text-xs font-black rounded-2xl border-3 border-slate-950 dark:border-slate-800 shadow-[4px_4px_0px_0px_#0f172a] dark:shadow-[4px_4px_0px_0px_#000000] transition-all cursor-pointer flex items-center justify-center gap-2 shrink-0 active:translate-x-0.5 active:translate-y-0.5"
             >
               <span>Lanjut ke Latihan Soal</span>
               <ArrowRight size={16} />
@@ -640,6 +775,8 @@ export const SiswaLKPD: React.FC<{
 
   // 2. COVER / INTRO & PDF VIEW (If student hasn't entered solving mode yet)
   if (!isSolvingMode) {
+    const totalPoints = questions.reduce((a, q) => a + (q.weight || 0), 0);
+
     return (
       <div className="space-y-6 max-w-4xl mx-auto font-sans pb-12 animate-in fade-in">
         {renderLkpdSelector()}
@@ -647,20 +784,20 @@ export const SiswaLKPD: React.FC<{
         {/* Hero Banner LKPD Cover */}
         <div className="relative rounded-3xl bg-[#ffe600] border-4 border-slate-950 dark:border-slate-800 p-6 sm:p-8 shadow-[8px_8px_0px_0px_#0f172a] dark:shadow-[8px_8px_0px_0px_#000000] text-slate-950 space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b-3 border-slate-950 dark:border-slate-800 pb-4">
-            <div className="flex items-center gap-3">
-              <div className="p-3 bg-white border-3 border-slate-950 rounded-2xl shadow-[3px_3px_0px_0px_#0f172a]">
-                <BookOpen size={32} className="text-slate-950" />
+            <div className="flex items-center gap-3.5">
+              <div className="p-3.5 bg-white border-3 border-slate-950 rounded-2xl shadow-[3px_3px_0px_0px_#0f172a]">
+                <BookOpen size={30} className="text-slate-950" />
               </div>
               <div>
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="text-[11px] font-mono font-black uppercase bg-white px-3 py-1 rounded-xl border-2 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a]">
+                  <span className="text-[11px] font-mono font-black uppercase bg-white px-3 py-1 rounded-xl border-2 border-slate-950 shadow-[1.5px_1.5px_0px_0px_#0f172a]">
                     LEMBAR KERJA PESERTA DIDIK
                   </span>
                   <span className="text-[11px] font-mono font-black uppercase bg-[#a5f3fc] px-2.5 py-1 rounded-xl border-2 border-slate-950 shadow-[1.5px_1.5px_0px_0px_#0f172a]">
                     TAHAP 1
                   </span>
                 </div>
-                <h1 className="text-xl sm:text-2xl font-black font-mono">
+                <h1 className="text-xl sm:text-2xl font-black font-mono tracking-tight">
                   {selectedLkpd?.title || 'LKPD Digital'}
                 </h1>
               </div>
@@ -677,23 +814,23 @@ export const SiswaLKPD: React.FC<{
 
           <div className="flex flex-wrap items-center gap-2.5 text-xs font-mono font-bold pt-1">
             <span className="px-3 py-1 bg-white text-slate-950 rounded-xl border-2 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a]">
-              🎯 Total Bobot: {questions.reduce((a, q) => a + (q.weight || 0), 0)} Poin
+              🎯 Total Bobot: {totalPoints} Poin
             </span>
             <span className="px-3 py-1 bg-sky-200 text-sky-950 rounded-xl border-2 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a]">
               🛡 Anti-Cheat System
             </span>
-            <span className="px-3 py-1 bg-amber-100 text-amber-950 rounded-xl border-2 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a]">
+            <span className="px-3 py-1 bg-emerald-100 text-emerald-950 rounded-xl border-2 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a]">
               Status: Siap Dikerjakan
             </span>
           </div>
         </div>
 
-        {/* Grid 2 Kartu: Tujuan & Berkas PDF */}
+        {/* Bento 2 Kolom: Langkah 1 & Langkah 2 */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Kartu 1: Tujuan Pembelajaran & Petunjuk */}
-          <div className="rounded-3xl bg-white dark:bg-[#111827] border-4 border-slate-950 dark:border-slate-800 p-6 shadow-[6px_6px_0px_0px_#0f172a] dark:shadow-[6px_6px_0px_0px_#000000] space-y-4 flex flex-col justify-between">
+          <div className="rounded-3xl bg-white dark:bg-[#111827] border-4 border-slate-950 dark:border-slate-800 p-6 sm:p-7 shadow-[6px_6px_0px_0px_#0f172a] dark:shadow-[6px_6px_0px_0px_#000000] space-y-4 flex flex-col justify-between">
             <div className="space-y-3">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2.5">
                 <span className="px-2.5 py-1 rounded-xl bg-[#ffe600] text-slate-950 font-mono font-black text-xs border-2 border-slate-950 shadow-[1.5px_1.5px_0px_0px_#0f172a]">
                   LANGKAH 1
                 </span>
@@ -713,9 +850,9 @@ export const SiswaLKPD: React.FC<{
           </div>
 
           {/* Kartu 2: Berkas Dokumen PDF Resmi Guru */}
-          <div className="rounded-3xl bg-white dark:bg-[#111827] border-4 border-slate-950 dark:border-slate-800 p-6 shadow-[6px_6px_0px_0px_#0f172a] dark:shadow-[6px_6px_0px_0px_#000000] space-y-4 flex flex-col justify-between">
+          <div className="rounded-3xl bg-white dark:bg-[#111827] border-4 border-slate-950 dark:border-slate-800 p-6 sm:p-7 shadow-[6px_6px_0px_0px_#0f172a] dark:shadow-[6px_6px_0px_0px_#000000] space-y-4 flex flex-col justify-between">
             <div className="space-y-3">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2.5">
                 <span className="px-2.5 py-1 rounded-xl bg-sky-200 text-slate-950 font-mono font-black text-xs border-2 border-slate-950 shadow-[1.5px_1.5px_0px_0px_#0f172a]">
                   LANGKAH 2
                 </span>
@@ -775,8 +912,8 @@ export const SiswaLKPD: React.FC<{
           </div>
         </div>
 
-        {/* Tombol CTA Masuk ke Lembar Pengerjaan Kegiatan */}
-        <div className="rounded-3xl bg-white dark:bg-[#111827] border-4 border-slate-950 dark:border-slate-800 p-6 sm:p-7 shadow-[8px_8px_0px_0px_#0f172a] dark:shadow-[8px_8px_0px_0px_#000000] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        {/* Tombol CTA Masuk ke Lembar Pengerjaan Kegiatan (Button-in-Button Architecture) */}
+        <div className="rounded-3xl bg-white dark:bg-[#111827] border-4 border-slate-950 dark:border-slate-800 p-6 sm:p-8 shadow-[8px_8px_0px_0px_#0f172a] dark:shadow-[8px_8px_0px_0px_#000000] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h3 className="font-mono font-black text-base sm:text-lg text-slate-950 dark:text-slate-100">
               Siap Memulai Pengerjaan?
@@ -793,10 +930,12 @@ export const SiswaLKPD: React.FC<{
               setIsSolvingMode(true);
               setActiveQuestionIdx(0);
             }}
-            className="px-6 py-4 rounded-2xl bg-[#ffe600] hover:bg-yellow-400 text-slate-950 font-mono font-black text-xs sm:text-sm uppercase tracking-wider border-3 border-slate-950 shadow-[4px_4px_0px_0px_#0f172a] cursor-pointer shrink-0 flex items-center justify-center gap-2.5 active:translate-x-0.5 active:translate-y-0.5 transition-all"
+            className="group px-6 py-4 rounded-2xl bg-[#ffe600] hover:bg-yellow-400 text-slate-950 font-mono font-black text-xs sm:text-sm uppercase tracking-wider border-3 border-slate-950 shadow-[4px_4px_0px_0px_#0f172a] cursor-pointer shrink-0 flex items-center justify-center gap-3 active:translate-x-0.5 active:translate-y-0.5 transition-all"
           >
-            <span>🚀 Mulai Kerjakan Kegiatan LKPD</span>
-            <ArrowRight size={18} />
+            <span>Mulai Kerjakan Kegiatan LKPD</span>
+            <div className="w-8 h-8 rounded-full bg-slate-950 text-white flex items-center justify-center group-hover:translate-x-1 transition-transform">
+              <ArrowRight size={16} />
+            </div>
           </button>
         </div>
 
@@ -808,13 +947,17 @@ export const SiswaLKPD: React.FC<{
   // 3. ACTIVE QUIZ-STYLE STEPPER VIEW (When isSolvingMode === true)
   const currentQ = questions[activeQuestionIdx] || questions[0];
   const currentAns = answers[currentQ?.id] || { textAnswer: '', photoUrl: '' };
+  const answeredCount = questions.filter(q => (answers[q.id]?.textAnswer || '').trim().length > 0).length;
+  const totalQuestions = questions.length;
+  const isAllAnswered = answeredCount === totalQuestions && totalQuestions > 0;
+  const progressPercent = totalQuestions > 0 ? (answeredCount / totalQuestions) * 100 : 0;
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto font-sans pb-12">
       {renderLkpdSelector()}
 
-      {/* Top Solving Navigation Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white dark:bg-[#111827] border-4 border-slate-950 dark:border-slate-800 rounded-3xl p-4 sm:p-5 shadow-[6px_6px_0px_0px_#0f172a] dark:shadow-[6px_6px_0px_0px_#000000]">
+      {/* Top Solving Navigation Bar with Linear Progress Indicator */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-[#111827] border-4 border-slate-950 dark:border-slate-800 rounded-3xl p-4 sm:p-5 shadow-[6px_6px_0px_0px_#0f172a] dark:shadow-[6px_6px_0px_0px_#000000]">
         <div className="flex flex-wrap items-center gap-2">
           <button
             type="button"
@@ -838,9 +981,17 @@ export const SiswaLKPD: React.FC<{
           </button>
         </div>
 
-        <div className="flex items-center gap-2 self-start sm:self-auto">
+        {/* Visual Linear Progress Bar */}
+        <div className="flex items-center gap-3 self-start sm:self-auto">
+          <div className="w-28 sm:w-40 bg-slate-200 dark:bg-slate-800 h-3 rounded-full border-2 border-slate-950 overflow-hidden shadow-[1px_1px_0px_0px_#0f172a]">
+            <div
+              className="bg-[#ffe600] h-full transition-all duration-300 border-r-2 border-slate-950"
+              style={{ width: `${progressPercent}%` }}
+            />
+          </div>
+
           <span className="font-mono text-xs font-black bg-[#ffe600] px-3 py-1.5 rounded-xl border-2 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a] text-slate-950">
-            Progres: {answeredCount}/{totalQuestions} Selesai
+            {answeredCount}/{totalQuestions} Selesai
           </span>
         </div>
       </div>
@@ -946,57 +1097,25 @@ export const SiswaLKPD: React.FC<{
                 />
               </div>
             ) : (
-              <label className="flex items-center justify-center gap-2 p-3 bg-slate-50 dark:bg-slate-900 border-2 border-dashed border-slate-950 dark:border-slate-700 rounded-2xl cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition text-xs font-mono font-bold text-slate-700 dark:text-slate-300">
+              <label className="flex items-center justify-center gap-2 p-3.5 bg-slate-50 dark:bg-slate-900 border-2 border-dashed border-slate-950 dark:border-slate-700 rounded-2xl cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition text-xs font-mono font-bold text-slate-700 dark:text-slate-300 active:translate-y-0.5">
                 <Upload size={16} />
-                <span>Pilih Foto Lembar Coretan dari Galeri / Kamera</span>
+                <span>Unggah Foto Lembar Coretan Soal Ini</span>
                 <input
                   type="file"
                   accept="image/*"
-                  className="hidden"
                   onChange={(e) => handlePhotoUpload(currentQ.id, e)}
+                  className="hidden"
                 />
               </label>
             )}
           </div>
 
-          {/* AI Discussion Box (Unlocked ONLY after clicking Koreksi AI) - Only shows concept steps & student diagnostic, NO score */}
-          {isAiLoading ? (
-            <div className="flex items-center gap-3 p-4 rounded-2xl bg-cyan-100/80 dark:bg-cyan-950/60 border-3 border-cyan-800 dark:border-cyan-600 shadow-[4px_4px_0px_0px_#083344] animate-pulse">
-              <Loader2 size={24} className="animate-spin text-cyan-800 dark:text-cyan-300 shrink-0" />
-              <div>
-                <span className="font-mono text-xs font-black block text-cyan-950 dark:text-cyan-100">
-                  ASISTEN AI SEDANG MENELAAH LANGKAH PENGERJAANMU (OPENROUTER)...
-                </span>
-                <span className="text-[11px] font-bold text-cyan-800 dark:text-cyan-300">
-                  Menganalisis penalaran aljabar pecahan, penyamaan penyebut KPK, dan menyiapkan bimbingan bertahap.
-                </span>
-              </div>
-            </div>
-          ) : aiDiscussionUnlocked ? (
-            <div className="p-4 bg-[#a5f3fc]/30 dark:bg-cyan-950/40 border-3 border-cyan-950 dark:border-cyan-700 rounded-2xl shadow-[3px_3px_0px_0px_#083344] dark:shadow-[3px_3px_0px_0px_#000000] space-y-3 animate-in fade-in slide-in-from-top-2">
-              <div className="flex items-center justify-between text-cyan-950 dark:text-cyan-300 font-mono text-xs font-black border-b border-cyan-950/20 pb-2">
-                <div className="flex items-center gap-2">
-                  <Bot size={18} className="text-cyan-800 dark:text-cyan-400" />
-                  <span>PEMBAHASAN &amp; BIMBINGAN ASISTEN AI (KEGIATAN {activeQuestionIdx + 1}):</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => handleRunAiCorrection(true)}
-                    className="text-[11px] font-bold font-mono text-cyan-900 dark:text-cyan-300 hover:underline flex items-center gap-1 cursor-pointer"
-                    title="Koreksi ulang dengan AI"
-                  >
-                    <RefreshCw size={12} />
-                    <span>Koreksi Ulang</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setAiDiscussionUnlocked(false)}
-                    className="text-[10px] underline hover:opacity-75 cursor-pointer font-bold"
-                  >
-                    Tutup Pembahasan
-                  </button>
-                </div>
+          {/* Official Step-by-Step Discussion (Only shown if student pressed Koreksi AI button) */}
+          {aiDiscussionUnlocked ? (
+            <div className="p-4 bg-[#a5f3fc]/30 dark:bg-cyan-950/40 border-3 border-cyan-950 dark:border-cyan-800 rounded-2xl shadow-[3px_3px_0px_0px_#083344] dark:shadow-[3px_3px_0px_0px_#000000] space-y-3 animate-in fade-in">
+              <div className="flex items-center gap-2 text-cyan-950 dark:text-cyan-300 font-mono text-xs font-black">
+                <Bot size={18} className="text-cyan-800 dark:text-cyan-400" />
+                <span>PEMBAHASAN &amp; BIMBINGAN ASISTEN AI (KEGIATAN {activeQuestionIdx + 1}):</span>
               </div>
 
               <div className="space-y-1">
@@ -1018,7 +1137,7 @@ export const SiswaLKPD: React.FC<{
                 type="button"
                 onClick={() => handleRunAiCorrection(false)}
                 disabled={isAiLoading}
-                className="px-4 py-2 bg-[#a5f3fc] hover:bg-cyan-300 text-slate-950 font-mono text-xs font-black rounded-xl border-2 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a] cursor-pointer shrink-0 flex items-center justify-center gap-1.5"
+                className="px-4 py-2 bg-[#a5f3fc] hover:bg-cyan-300 text-slate-950 font-mono text-xs font-black rounded-xl border-2 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a] cursor-pointer shrink-0 flex items-center justify-center gap-1.5 active:translate-x-0.5 active:translate-y-0.5 transition-all"
               >
                 <Sparkles size={14} />
                 <span>Jalankan Koreksi AI (Live)</span>
@@ -1044,7 +1163,7 @@ export const SiswaLKPD: React.FC<{
               setActiveQuestionIdx(prev => Math.max(0, prev - 1));
             }}
             disabled={activeQuestionIdx === 0}
-            className="px-4 py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-40 text-slate-950 dark:text-slate-200 font-mono text-xs font-black rounded-2xl border-3 border-slate-950 dark:border-slate-800 shadow-[3px_3px_0px_0px_#0f172a] dark:shadow-[3px_3px_0px_0px_#000000] transition-all cursor-pointer flex items-center gap-1.5"
+            className="px-4 py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-40 text-slate-950 dark:text-slate-200 font-mono text-xs font-black rounded-2xl border-3 border-slate-950 dark:border-slate-800 shadow-[3px_3px_0px_0px_#0f172a] dark:shadow-[3px_3px_0px_0px_#000000] transition-all cursor-pointer flex items-center gap-1.5 active:translate-x-0.5 active:translate-y-0.5"
           >
             <ArrowLeft size={14} />
             <span>Sebelumnya</span>
@@ -1056,7 +1175,7 @@ export const SiswaLKPD: React.FC<{
               setActiveQuestionIdx(prev => Math.min(totalQuestions - 1, prev + 1));
             }}
             disabled={activeQuestionIdx === totalQuestions - 1}
-            className="px-4 py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-40 text-slate-950 dark:text-slate-200 font-mono text-xs font-black rounded-2xl border-3 border-slate-950 dark:border-slate-800 shadow-[3px_3px_0px_0px_#0f172a] dark:shadow-[3px_3px_0px_0px_#000000] transition-all cursor-pointer flex items-center gap-1.5"
+            className="px-4 py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-40 text-slate-950 dark:text-slate-200 font-mono text-xs font-black rounded-2xl border-3 border-slate-950 dark:border-slate-800 shadow-[3px_3px_0px_0px_#0f172a] dark:shadow-[3px_3px_0px_0px_#000000] transition-all cursor-pointer flex items-center gap-1.5 active:translate-x-0.5 active:translate-y-0.5"
           >
             <span>Berikutnya</span>
             <ArrowRight size={14} />
@@ -1065,7 +1184,7 @@ export const SiswaLKPD: React.FC<{
 
         {/* AI Correction & Submit Buttons */}
         <div className="flex flex-wrap items-center gap-3">
-          {/* Koreksi AI Button: Active when all questions are answered */}
+          {/* Koreksi AI Button */}
           {isAllAnswered && (
             <div className="flex items-center gap-2">
               {aiDiscussionUnlocked && (
@@ -1073,7 +1192,7 @@ export const SiswaLKPD: React.FC<{
                   type="button"
                   onClick={() => handleRunAiCorrection(true)}
                   disabled={isAiLoading}
-                  className="px-3.5 py-3 bg-white dark:bg-slate-800 text-slate-950 dark:text-slate-100 border-3 border-slate-950 rounded-2xl font-mono text-xs font-black shadow-[3px_3px_0px_0px_#0f172a] dark:shadow-[3px_3px_0px_0px_#000000] hover:bg-slate-50 cursor-pointer flex items-center gap-1.5"
+                  className="px-3.5 py-3 bg-white dark:bg-slate-800 text-slate-950 dark:text-slate-100 border-3 border-slate-950 rounded-2xl font-mono text-xs font-black shadow-[3px_3px_0px_0px_#0f172a] dark:shadow-[3px_3px_0px_0px_#000000] hover:bg-slate-50 cursor-pointer flex items-center gap-1.5 active:translate-x-0.5 active:translate-y-0.5"
                   title="Koreksi ulang dengan AI"
                 >
                   <RefreshCw size={14} />
@@ -1085,7 +1204,7 @@ export const SiswaLKPD: React.FC<{
                 type="button"
                 onClick={() => handleRunAiCorrection(false)}
                 disabled={isAiLoading}
-                className="px-5 py-3 bg-[#a5f3fc] hover:bg-cyan-300 text-slate-950 border-3 border-slate-950 rounded-2xl font-mono text-xs font-black shadow-[4px_4px_0px_0px_#0f172a] dark:shadow-[4px_4px_0px_0px_#000000] transition-all cursor-pointer flex items-center gap-2"
+                className="px-5 py-3 bg-[#a5f3fc] hover:bg-cyan-300 text-slate-950 border-3 border-slate-950 rounded-2xl font-mono text-xs font-black shadow-[4px_4px_0px_0px_#0f172a] dark:shadow-[4px_4px_0px_0px_#000000] transition-all cursor-pointer flex items-center gap-2 active:translate-x-0.5 active:translate-y-0.5"
               >
                 <Sparkles size={16} />
                 <span>
@@ -1103,7 +1222,7 @@ export const SiswaLKPD: React.FC<{
           <button
             onClick={handleSubmitLKPD}
             disabled={!isAllAnswered || isAiLoading}
-            className="px-6 py-3 bg-[#ffe600] hover:bg-yellow-400 disabled:opacity-50 text-slate-950 border-3 border-slate-950 rounded-2xl font-mono text-xs font-black shadow-[4px_4px_0px_0px_#0f172a] dark:shadow-[4px_4px_0px_0px_#000000] transition-all cursor-pointer flex items-center gap-2"
+            className="px-6 py-3 bg-[#ffe600] hover:bg-yellow-400 disabled:opacity-50 text-slate-950 border-3 border-slate-950 rounded-2xl font-mono text-xs font-black shadow-[4px_4px_0px_0px_#0f172a] dark:shadow-[4px_4px_0px_0px_#000000] transition-all cursor-pointer flex items-center gap-2 active:translate-x-0.5 active:translate-y-0.5"
           >
             <Send size={16} />
             <span>Kirim LKPD ke Guru</span>
