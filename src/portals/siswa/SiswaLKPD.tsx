@@ -5,6 +5,7 @@ import { User, LKPDItem, LKPDSubmission, LKPDEssayAnswer } from '@/types';
 import { compressImage } from '@/lib/utils';
 import { useAntiCheat } from '@/lib/useAntiCheat';
 import { evaluateLKPDWithAI, LKPDOverallEvaluation } from '@/services/aiCorrectionService';
+import { Modal } from '@/components/ui/modal';
 import {
   FileText,
   Upload,
@@ -21,7 +22,11 @@ import {
   HelpCircle,
   Clock,
   Loader2,
-  RefreshCw
+  RefreshCw,
+  Eye,
+  Download,
+  BookOpen,
+  ExternalLink
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
@@ -39,12 +44,17 @@ export const SiswaLKPD: React.FC<{
   }, []);
 
   const lkpdList = db.lkpdList || [];
-  const selectedLkpd = lkpdList[0]; // Active LKPD Bab Pecahan
+  const [selectedLkpdId, setSelectedLkpdId] = useState<string>(() => lkpdList[0]?.id || 'lkpd_1');
+  const selectedLkpd = lkpdList.find(l => l.id === selectedLkpdId) || lkpdList[0];
   const questions = selectedLkpd?.questions || [];
 
   const existingSubmission = db.lkpdSubmissions.find(
     s => s.studentId === currentUser.id && s.lkpdId === selectedLkpd?.id
   );
+
+  // Solving mode state: false = Intro/PDF/Instructions View; true = Solving Questions View
+  const [isSolvingMode, setIsSolvingMode] = useState<boolean>(false);
+  const [isPdfModalOpen, setIsPdfModalOpen] = useState<boolean>(false);
 
   // Stepper state
   const [activeQuestionIdx, setActiveQuestionIdx] = useState<number>(0);
@@ -52,11 +62,39 @@ export const SiswaLKPD: React.FC<{
   const [isAiLoading, setIsAiLoading] = useState<boolean>(false);
   const [aiDiscussionUnlocked, setAiDiscussionUnlocked] = useState<boolean>(false);
   const [aiEvaluationResult, setAiEvaluationResult] = useState<LKPDOverallEvaluation | null>(null);
-  const [activePhotoModal, setActivePhotoModal] = useState<string | null>(null);
 
-  // Anti-Cheat Monitor Active while solving
+  const getPdfDisplayUrl = (url?: string): string => {
+    if (!url) return '';
+    if (url.startsWith('data:application/pdf;base64,')) {
+      try {
+        const base64Data = url.split(',')[1];
+        const byteCharacters = atob(base64Data);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray], { type: 'application/pdf' });
+        return URL.createObjectURL(blob);
+      } catch {
+        return url;
+      }
+    }
+    return url;
+  };
+
+  const handleSelectLkpd = (id: string) => {
+    soundService.click();
+    setSelectedLkpdId(id);
+    setIsSolvingMode(false);
+    setActiveQuestionIdx(0);
+    setAiDiscussionUnlocked(false);
+    setAiEvaluationResult(null);
+  };
+
+  // Anti-Cheat Monitor Active while actively solving
   const { switchCount, getReport, resetReport } = useAntiCheat({
-    active: !existingSubmission,
+    active: !existingSubmission && isSolvingMode,
     onViolation: (msg) => {
       showToast(msg, 'error');
     }
@@ -254,13 +292,131 @@ export const SiswaLKPD: React.FC<{
 
     soundService.success();
     confetti({ particleCount: 100, spread: 80 });
+    setIsSolvingMode(false);
     showToast("LKPD Digital Berhasil Dikirim ke Guru! Tahap Latihan Soal kini terbuka.", "success");
   };
+
+  const renderLkpdSelector = () => (
+    <div className="flex flex-wrap items-center justify-between gap-3 bg-white dark:bg-[#111827] border-4 border-slate-950 dark:border-slate-800 rounded-3xl p-3 sm:p-4 shadow-[6px_6px_0px_0px_#0f172a] dark:shadow-[6px_6px_0px_0px_#000000]">
+      <div className="flex items-center gap-2.5">
+        <div className="w-8 h-8 rounded-xl bg-[#ffe600] border-2 border-slate-950 flex items-center justify-center font-mono font-black text-xs text-slate-950 shadow-[1.5px_1.5px_0px_0px_#0f172a]">
+          <BookOpen size={16} />
+        </div>
+        <div>
+          <span className="font-mono text-xs font-black uppercase text-slate-950 dark:text-slate-100 block">
+            PILIH TUGAS LKPD:
+          </span>
+          <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400">
+            Tersedia {lkpdList.length} tugas LKPD dari guru
+          </span>
+        </div>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2">
+        {lkpdList.map((item, idx) => {
+          const isSelected = item.id === (selectedLkpd?.id || selectedLkpdId);
+          const sub = db.lkpdSubmissions.find(s => s.studentId === currentUser.id && s.lkpdId === item.id);
+          const isDone = Boolean(sub);
+
+          return (
+            <button
+              key={item.id}
+              type="button"
+              onClick={() => handleSelectLkpd(item.id)}
+              className={`px-4 py-2 rounded-2xl border-3 border-slate-950 dark:border-slate-800 font-mono font-black text-xs uppercase tracking-wider transition-all cursor-pointer flex items-center gap-2 ${
+                isSelected
+                  ? 'bg-[#ffe600] text-slate-950 shadow-[3px_3px_0px_0px_#0f172a] dark:shadow-[3px_3px_0px_0px_#000000] -translate-y-0.5'
+                  : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 shadow-[2px_2px_0px_0px_#0f172a] dark:shadow-[2px_2px_0px_0px_#000000]'
+              }`}
+            >
+              <FileText size={15} />
+              <span>LKPD #{idx + 1}</span>
+              {isDone && (
+                <span className="px-1.5 py-0.5 rounded-md bg-emerald-500 text-white text-[10px] font-mono font-black">
+                  ✓ Selesai
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+
+  const renderPdfModal = () => (
+    isPdfModalOpen ? (
+      <Modal
+        isOpen={isPdfModalOpen}
+        onClose={() => setIsPdfModalOpen(false)}
+        title={`Dokumen PDF: ${selectedLkpd?.title}`}
+        maxWidth="max-w-4xl"
+      >
+        <div className="space-y-4">
+          <div className="flex items-center justify-between p-3 bg-[#ffe600] rounded-2xl border-2 border-slate-950 text-xs font-mono text-slate-950 font-black shadow-[2px_2px_0px_0px_#0f172a]">
+            <div className="truncate pr-2">
+              <span>Berkas: {selectedLkpd?.pdfFilename || 'Dokumen Lembar Kerja.pdf'}</span>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              {selectedLkpd?.pdfUrl && (
+                <a
+                  href={getPdfDisplayUrl(selectedLkpd.pdfUrl)}
+                  download={selectedLkpd.pdfFilename || 'LKPD_Pecahan.pdf'}
+                  className="px-3 py-1 bg-white hover:bg-slate-100 text-slate-950 border border-slate-950 rounded-xl font-bold transition flex items-center gap-1 cursor-pointer"
+                >
+                  <Download size={13} />
+                  <span>Unduh</span>
+                </a>
+              )}
+              {selectedLkpd?.pdfUrl && (
+                <a
+                  href={getPdfDisplayUrl(selectedLkpd.pdfUrl)}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="px-3 py-1 bg-slate-950 hover:bg-slate-800 text-white rounded-xl font-bold transition flex items-center gap-1 cursor-pointer"
+                >
+                  <ExternalLink size={13} />
+                  <span>Tab Baru</span>
+                </a>
+              )}
+            </div>
+          </div>
+
+          {selectedLkpd?.pdfUrl ? (
+            <div className="w-full h-[520px] rounded-2xl overflow-hidden border-3 border-slate-950 dark:border-slate-700 shadow-[4px_4px_0px_0px_#0f172a] bg-slate-900 relative">
+              <object
+                data={getPdfDisplayUrl(selectedLkpd.pdfUrl)}
+                type="application/pdf"
+                className="w-full h-full"
+              >
+                <iframe
+                  src={getPdfDisplayUrl(selectedLkpd.pdfUrl)}
+                  title={selectedLkpd.title}
+                  className="w-full h-full border-0"
+                />
+              </object>
+            </div>
+          ) : (
+            <div className="p-8 text-center bg-slate-100 dark:bg-slate-800 rounded-2xl border-2 border-slate-950 space-y-2">
+              <FileText size={44} className="mx-auto text-amber-500" />
+              <h4 className="font-mono font-black text-sm text-slate-900 dark:text-slate-100">
+                {selectedLkpd?.pdfFilename || 'Dokumen LKPD Digital'}
+              </h4>
+              <p className="text-xs text-slate-600 dark:text-slate-400 max-w-md mx-auto">
+                Berkas PDF standar kurikulum telah disiapkan oleh Guru. Silakan pelajari tujuan pembelajaran dan kerjakan lembar kerja digital.
+              </p>
+            </div>
+          )}
+        </div>
+      </Modal>
+    ) : null
+  );
 
   // 1. COMPLETED SUBMISSION VIEW
   if (existingSubmission) {
     return (
       <div className="space-y-6 max-w-4xl mx-auto font-sans pb-12 animate-in fade-in">
+        {renderLkpdSelector()}
+
         {/* Banner Selesai */}
         <div className="rounded-3xl bg-[#ffe600] border-4 border-slate-950 dark:border-slate-800 p-6 sm:p-8 shadow-[8px_8px_0px_0px_#0f172a] dark:shadow-[8px_8px_0px_0px_#000000] text-slate-950 space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b-3 border-slate-950 dark:border-slate-800 pb-4">
@@ -294,6 +450,22 @@ export const SiswaLKPD: React.FC<{
             <span className="px-3 py-1.5 bg-emerald-200 text-emerald-950 rounded-xl border-2 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a]">
               🛡 Tab Integrity: {existingSubmission.antiCheat?.switchCount || 0}x Pindah Tab
             </span>
+          </div>
+
+          {/* PDF Attachment button in Review */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 bg-white rounded-2xl border-2 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a]">
+            <div className="flex items-center gap-2.5 text-xs font-mono font-bold text-slate-800 truncate">
+              <FileText size={18} className="text-cyan-800 shrink-0" />
+              <span className="truncate">Dokumen PDF Resmi: {selectedLkpd?.pdfFilename}</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsPdfModalOpen(true)}
+              className="px-3.5 py-1.5 bg-[#a5f3fc] hover:bg-cyan-300 text-slate-950 border-2 border-slate-950 rounded-xl font-mono text-xs font-black shadow-[1.5px_1.5px_0px_0px_#0f172a] cursor-pointer flex items-center justify-center gap-1.5 shrink-0"
+            >
+              <Eye size={14} />
+              <span>Buka Dokumen PDF</span>
+            </button>
           </div>
         </div>
 
@@ -460,38 +632,216 @@ export const SiswaLKPD: React.FC<{
             </button>
           )}
         </div>
+
+        {renderPdfModal()}
       </div>
     );
   }
 
-  // 2. ACTIVE QUIZ-STYLE STEPPER VIEW
+  // 2. COVER / INTRO & PDF VIEW (If student hasn't entered solving mode yet)
+  if (!isSolvingMode) {
+    return (
+      <div className="space-y-6 max-w-4xl mx-auto font-sans pb-12 animate-in fade-in">
+        {renderLkpdSelector()}
+
+        {/* Hero Banner LKPD Cover */}
+        <div className="relative rounded-3xl bg-[#ffe600] border-4 border-slate-950 dark:border-slate-800 p-6 sm:p-8 shadow-[8px_8px_0px_0px_#0f172a] dark:shadow-[8px_8px_0px_0px_#000000] text-slate-950 space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b-3 border-slate-950 dark:border-slate-800 pb-4">
+            <div className="flex items-center gap-3">
+              <div className="p-3 bg-white border-3 border-slate-950 rounded-2xl shadow-[3px_3px_0px_0px_#0f172a]">
+                <BookOpen size={32} className="text-slate-950" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-[11px] font-mono font-black uppercase bg-white px-3 py-1 rounded-xl border-2 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a]">
+                    LEMBAR KERJA PESERTA DIDIK
+                  </span>
+                  <span className="text-[11px] font-mono font-black uppercase bg-[#a5f3fc] px-2.5 py-1 rounded-xl border-2 border-slate-950 shadow-[1.5px_1.5px_0px_0px_#0f172a]">
+                    TAHAP 1
+                  </span>
+                </div>
+                <h1 className="text-xl sm:text-2xl font-black font-mono">
+                  {selectedLkpd?.title || 'LKPD Digital'}
+                </h1>
+              </div>
+            </div>
+
+            <div className="px-3.5 py-1.5 bg-white rounded-2xl border-3 border-slate-950 font-mono text-xs font-black shadow-[3px_3px_0px_0px_#0f172a] self-start sm:self-auto">
+              {questions.length} Butir Kegiatan
+            </div>
+          </div>
+
+          <p className="text-xs sm:text-sm font-bold text-slate-900 leading-relaxed max-w-3xl">
+            {selectedLkpd?.description || 'Lembar kerja interaktif untuk melatih pemahaman dan kemampuan menganalisis konsep matematika.'}
+          </p>
+
+          <div className="flex flex-wrap items-center gap-2.5 text-xs font-mono font-bold pt-1">
+            <span className="px-3 py-1 bg-white text-slate-950 rounded-xl border-2 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a]">
+              🎯 Total Bobot: {questions.reduce((a, q) => a + (q.weight || 0), 0)} Poin
+            </span>
+            <span className="px-3 py-1 bg-sky-200 text-sky-950 rounded-xl border-2 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a]">
+              🛡 Anti-Cheat System
+            </span>
+            <span className="px-3 py-1 bg-amber-100 text-amber-950 rounded-xl border-2 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a]">
+              Status: Siap Dikerjakan
+            </span>
+          </div>
+        </div>
+
+        {/* Grid 2 Kartu: Tujuan & Berkas PDF */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Kartu 1: Tujuan Pembelajaran & Petunjuk */}
+          <div className="rounded-3xl bg-white dark:bg-[#111827] border-4 border-slate-950 dark:border-slate-800 p-6 shadow-[6px_6px_0px_0px_#0f172a] dark:shadow-[6px_6px_0px_0px_#000000] space-y-4 flex flex-col justify-between">
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <span className="px-2.5 py-1 rounded-xl bg-[#ffe600] text-slate-950 font-mono font-black text-xs border-2 border-slate-950 shadow-[1.5px_1.5px_0px_0px_#0f172a]">
+                  LANGKAH 1
+                </span>
+                <h3 className="font-mono font-black text-sm text-slate-950 dark:text-slate-100">
+                  Tujuan Pembelajaran &amp; Petunjuk
+                </h3>
+              </div>
+
+              <div className="p-4 bg-slate-50 dark:bg-slate-900 border-2 border-slate-950 dark:border-slate-800 rounded-2xl text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100 leading-relaxed whitespace-pre-line">
+                {selectedLkpd?.objectives || 'Pelajari materi operasi pecahan, kerjakan setiap butir kegiatan dengan langkah hitung terperinci, dan unggah foto lembar pengerjaan fisik bila diminta.'}
+              </div>
+            </div>
+
+            <div className="p-3.5 bg-amber-50 dark:bg-amber-950/40 border-2 border-amber-900/30 rounded-2xl text-[11px] font-bold text-amber-950 dark:text-amber-300">
+              💡 <strong>Instruksi Guru:</strong> Bacalah petunjuk pengerjaan di atas dan pelajari dokumen PDF sebelum mulai menjawab kegiatan.
+            </div>
+          </div>
+
+          {/* Kartu 2: Berkas Dokumen PDF Resmi Guru */}
+          <div className="rounded-3xl bg-white dark:bg-[#111827] border-4 border-slate-950 dark:border-slate-800 p-6 shadow-[6px_6px_0px_0px_#0f172a] dark:shadow-[6px_6px_0px_0px_#000000] space-y-4 flex flex-col justify-between">
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <span className="px-2.5 py-1 rounded-xl bg-sky-200 text-slate-950 font-mono font-black text-xs border-2 border-slate-950 shadow-[1.5px_1.5px_0px_0px_#0f172a]">
+                  LANGKAH 2
+                </span>
+                <h3 className="font-mono font-black text-sm text-slate-950 dark:text-slate-100">
+                  Dokumen Lembar Kerja (PDF)
+                </h3>
+              </div>
+
+              <p className="text-xs font-bold text-slate-600 dark:text-slate-400 leading-relaxed">
+                Guru telah menyiapkan berkas dokumen resmi untuk lembar kerja ini. Kamu dapat membaca langsung dokumen di layar atau mengunduhnya.
+              </p>
+
+              <div className="p-4 rounded-2xl bg-cyan-50 dark:bg-cyan-950/30 border-2 border-slate-950 dark:border-slate-800 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3 overflow-hidden">
+                  <div className="p-2.5 bg-[#ffe600] border-2 border-slate-950 rounded-xl text-slate-950 shrink-0">
+                    <FileText size={20} />
+                  </div>
+                  <div className="truncate">
+                    <span className="font-mono font-black text-xs block text-slate-950 dark:text-slate-100 truncate">
+                      {selectedLkpd?.pdfFilename || 'Lembar_Kerja_Peserta_Didik.pdf'}
+                    </span>
+                    <span className="text-[11px] font-bold text-cyan-800 dark:text-cyan-300">
+                      Berkas Resmi Terverifikasi
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {selectedLkpd?.imageUrl && (
+                <div className="rounded-2xl overflow-hidden border-2 border-slate-950 dark:border-slate-800 max-h-36">
+                  <img src={selectedLkpd.imageUrl} alt={selectedLkpd.title} className="w-full h-36 object-cover" />
+                </div>
+              )}
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setIsPdfModalOpen(true)}
+                className="flex-1 px-4 py-2.5 rounded-xl font-mono font-black text-xs bg-[#a5f3fc] hover:bg-cyan-300 text-slate-950 border-2 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a] cursor-pointer flex items-center justify-center gap-2 active:translate-x-0.5 active:translate-y-0.5 transition-all"
+              >
+                <Eye size={16} />
+                <span>Buka Dokumen PDF</span>
+              </button>
+
+              {selectedLkpd?.pdfUrl && (
+                <a
+                  href={getPdfDisplayUrl(selectedLkpd.pdfUrl)}
+                  download={selectedLkpd.pdfFilename || 'LKPD_Pecahan.pdf'}
+                  className="px-4 py-2.5 rounded-xl font-mono font-black text-xs bg-white dark:bg-slate-800 text-slate-950 dark:text-slate-100 border-2 border-slate-950 dark:border-slate-700 shadow-[2px_2px_0px_0px_#0f172a] hover:bg-slate-50 flex items-center gap-1.5 active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
+                >
+                  <Download size={15} />
+                  <span>Unduh</span>
+                </a>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Tombol CTA Masuk ke Lembar Pengerjaan Kegiatan */}
+        <div className="rounded-3xl bg-white dark:bg-[#111827] border-4 border-slate-950 dark:border-slate-800 p-6 sm:p-7 shadow-[8px_8px_0px_0px_#0f172a] dark:shadow-[8px_8px_0px_0px_#000000] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h3 className="font-mono font-black text-base sm:text-lg text-slate-950 dark:text-slate-100">
+              Siap Memulai Pengerjaan?
+            </h3>
+            <p className="text-xs font-bold text-slate-600 dark:text-slate-400 mt-0.5">
+              Klik tombol di samping untuk masuk ke lembar kerja Kegiatan 1 sampai Kegiatan {questions.length}.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => {
+              soundService.click();
+              setIsSolvingMode(true);
+              setActiveQuestionIdx(0);
+            }}
+            className="px-6 py-4 rounded-2xl bg-[#ffe600] hover:bg-yellow-400 text-slate-950 font-mono font-black text-xs sm:text-sm uppercase tracking-wider border-3 border-slate-950 shadow-[4px_4px_0px_0px_#0f172a] cursor-pointer shrink-0 flex items-center justify-center gap-2.5 active:translate-x-0.5 active:translate-y-0.5 transition-all"
+          >
+            <span>🚀 Mulai Kerjakan Kegiatan LKPD</span>
+            <ArrowRight size={18} />
+          </button>
+        </div>
+
+        {renderPdfModal()}
+      </div>
+    );
+  }
+
+  // 3. ACTIVE QUIZ-STYLE STEPPER VIEW (When isSolvingMode === true)
   const currentQ = questions[activeQuestionIdx] || questions[0];
   const currentAns = answers[currentQ?.id] || { textAnswer: '', photoUrl: '' };
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto font-sans pb-12">
-      {/* Header Banner */}
-      <div className="bg-[#ffe600] border-4 border-slate-950 dark:border-slate-800 rounded-3xl p-6 shadow-[8px_8px_0px_0px_#0f172a] dark:shadow-[8px_8px_0px_0px_#000000] text-slate-950 flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <div className="flex flex-wrap items-center gap-2 mb-1">
-            <span className="px-3 py-0.5 bg-white text-slate-950 border-2 border-slate-950 rounded-xl text-xs font-mono font-black shadow-[2px_2px_0px_0px_#0f172a]">
-              LKPD DIGITAL INTERAKTIF
-            </span>
-            <span className="px-3 py-0.5 bg-[#a5f3fc] text-slate-950 border-2 border-slate-950 rounded-xl text-xs font-mono font-black shadow-[2px_2px_0px_0px_#0f172a]">
-              TAHAP 1 (WAJIB)
-            </span>
-          </div>
-          <h1 className="text-xl sm:text-2xl font-black font-mono">
-            Lembar Kerja Peserta Didik: Bab Pecahan
-          </h1>
-          <p className="text-xs font-bold text-slate-900 mt-1">
-            Kerjakan setiap kegiatan secara berurutan. Ketik langkah pengerjaanmu dan lampirkan foto lembar coretan (opsional).
-          </p>
+      {renderLkpdSelector()}
+
+      {/* Top Solving Navigation Bar */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white dark:bg-[#111827] border-4 border-slate-950 dark:border-slate-800 rounded-3xl p-4 sm:p-5 shadow-[6px_6px_0px_0px_#0f172a] dark:shadow-[6px_6px_0px_0px_#000000]">
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              soundService.click();
+              setIsSolvingMode(false);
+            }}
+            className="px-3.5 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-950 dark:text-slate-100 border-2 border-slate-950 dark:border-slate-700 font-mono font-black text-xs cursor-pointer flex items-center gap-1.5 transition-all"
+          >
+            <ArrowLeft size={14} />
+            <span>Petunjuk &amp; PDF</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setIsPdfModalOpen(true)}
+            className="px-3.5 py-2 rounded-xl bg-[#a5f3fc] hover:bg-cyan-300 text-slate-950 border-2 border-slate-950 font-mono font-black text-xs shadow-[2px_2px_0px_0px_#0f172a] cursor-pointer flex items-center gap-1.5 transition-all"
+          >
+            <Eye size={14} />
+            <span>Lihat Dokumen PDF</span>
+          </button>
         </div>
 
-        {/* Status Counter */}
-        <div className="px-4 py-2.5 rounded-2xl border-3 border-slate-950 bg-white font-mono text-xs font-black shadow-[4px_4px_0px_0px_#0f172a] shrink-0">
-          Progres: {answeredCount}/{totalQuestions} Selesai
+        <div className="flex items-center gap-2 self-start sm:self-auto">
+          <span className="font-mono text-xs font-black bg-[#ffe600] px-3 py-1.5 rounded-xl border-2 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a] text-slate-950">
+            Progres: {answeredCount}/{totalQuestions} Selesai
+          </span>
         </div>
       </div>
 
@@ -760,6 +1110,8 @@ export const SiswaLKPD: React.FC<{
           </button>
         </div>
       </div>
+
+      {renderPdfModal()}
     </div>
   );
 };

@@ -4,8 +4,8 @@ import { Modal } from '@/components/ui/modal';
 import { storageService } from '@/services/storageService';
 import { soundService } from '@/services/soundService';
 import { evaluateLKPDWithAI } from '@/services/aiCorrectionService';
-import { LKPDSubmission, LKPDItem } from '@/types';
-import { FileText, Image as ImageIcon, Bot, ExternalLink, Plus, Trash2, Pencil, ChevronLeft, ChevronRight, CheckCircle2, Clock, Loader2, Sparkles, RefreshCw } from 'lucide-react';
+import { LKPDSubmission, LKPDItem, EssayQuestion } from '@/types';
+import { FileText, Image as ImageIcon, Bot, ExternalLink, Plus, Trash2, Pencil, ChevronLeft, ChevronRight, CheckCircle2, Clock, Loader2, Sparkles, RefreshCw, BookOpen } from 'lucide-react';
 
 export const GuruLKPD: React.FC<{
   showToast: (msg: string, type?: 'info' | 'success' | 'error') => void;
@@ -48,6 +48,39 @@ export const GuruLKPD: React.FC<{
   const [editImageUrl, setEditImageUrl] = useState<string>('');
   const [editPdfFilename, setEditPdfFilename] = useState<string>('');
   const [editPdfUrl, setEditPdfUrl] = useState<string>('');
+  const [editQuestions, setEditQuestions] = useState<EssayQuestion[]>([]);
+
+  const handleAddQuestionToEdit = () => {
+    const nextNum = editQuestions.length + 1;
+    setEditQuestions(prev => [
+      ...prev,
+      {
+        id: `kegiatan_${Date.now()}_${nextNum}`,
+        title: `Kegiatan ${nextNum}: Aktivitas Pembelajaran Baru`,
+        prompt: '',
+        discussion: '',
+        weight: 25
+      }
+    ]);
+    soundService.click();
+  };
+
+  const handleRemoveQuestionFromEdit = (idx: number) => {
+    if (editQuestions.length <= 1) {
+      showToast('Setidaknya harus ada minimal 1 butir kegiatan dalam LKPD!', 'error');
+      return;
+    }
+    setEditQuestions(prev => prev.filter((_, i) => i !== idx));
+    soundService.click();
+  };
+
+  const handleQuestionChange = (idx: number, field: keyof EssayQuestion, value: any) => {
+    setEditQuestions(prev => {
+      const copy = [...prev];
+      copy[idx] = { ...copy[idx], [field]: value };
+      return copy;
+    });
+  };
 
   const getPhotoDisplayUrl = (url?: string): string => {
     if (!url) return '';
@@ -254,6 +287,19 @@ export const GuruLKPD: React.FC<{
     setEditImageUrl(item.imageUrl || '');
     setEditPdfFilename(item.pdfFilename || '');
     setEditPdfUrl(item.pdfUrl || '');
+    setEditQuestions(
+      item.questions && item.questions.length > 0
+        ? JSON.parse(JSON.stringify(item.questions))
+        : [
+            {
+              id: 'q1',
+              title: 'Kegiatan 1: Pemahaman Konsep',
+              prompt: '',
+              discussion: '',
+              weight: 50
+            }
+          ]
+    );
   };
 
   const handleEditImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -293,12 +339,13 @@ export const GuruLKPD: React.FC<{
         if (editImageUrl.trim()) item.imageUrl = editImageUrl.trim();
         if (editPdfFilename.trim()) item.pdfFilename = editPdfFilename.trim();
         if (editPdfUrl.trim()) item.pdfUrl = editPdfUrl.trim();
+        item.questions = editQuestions;
       }
     });
 
     setEditingLKPD(null);
     soundService.success();
-    showToast('Tugas LKPD Digital berhasil diperbarui & disinkronkan!', 'success');
+    showToast('Tugas LKPD Digital & butir kegiatan berhasil diperbarui & disinkronkan!', 'success');
   };
 
   const getPdfDisplayUrl = (url?: string): string => {
@@ -504,9 +551,14 @@ export const GuruLKPD: React.FC<{
               <div key={item.id} className="rounded-3xl bg-white dark:bg-[#111827] border-4 border-slate-950 dark:border-slate-700 p-6 shadow-[6px_6px_0px_0px_#0f172a] dark:shadow-[6px_6px_0px_0px_#000000] space-y-4">
                 <div className="flex items-start justify-between gap-3">
                   <div className="space-y-1">
-                    <span className="px-2.5 py-0.5 rounded-lg bg-[#ffe600] text-slate-950 font-mono font-black text-xs border-2 border-slate-950 shadow-[1.5px_1.5px_0px_0px_#0f172a]">
-                      LKPD #{idx + 1}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="px-2.5 py-0.5 rounded-lg bg-[#ffe600] text-slate-950 font-mono font-black text-xs border-2 border-slate-950 shadow-[1.5px_1.5px_0px_0px_#0f172a]">
+                        LKPD #{idx + 1}
+                      </span>
+                      <span className="px-2 py-0.5 rounded-lg bg-cyan-100 dark:bg-cyan-900/50 text-cyan-950 dark:text-cyan-200 font-mono font-bold text-[11px] border border-cyan-800/30">
+                        {item.questions?.length || 0} Butir Kegiatan
+                      </span>
+                    </div>
                     <h3 className="font-black text-slate-950 dark:text-slate-100 text-base sm:text-lg">{item.title}</h3>
                   </div>
                   <div className="flex items-center gap-1.5 shrink-0">
@@ -1042,73 +1094,180 @@ export const GuruLKPD: React.FC<{
           isOpen={!!editingLKPD}
           onClose={() => setEditingLKPD(null)}
           title={`Edit Tugas LKPD — ${editingLKPD.title}`}
-          maxWidth="max-w-xl"
+          maxWidth="max-w-3xl"
         >
-          <form onSubmit={handleSaveEditLKPD} className="space-y-4">
-            <div>
-              <label className="block text-xs font-mono font-black uppercase tracking-wider text-slate-950 dark:text-slate-200 mb-1.5">
-                Judul Tugas LKPD:
-              </label>
-              <input
-                type="text"
-                value={editTitle}
-                onChange={e => setEditTitle(e.target.value)}
-                required
-                className="w-full p-3 rounded-xl border-2 border-slate-950 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-950 dark:text-slate-100 text-xs font-bold outline-none"
-              />
+          <form onSubmit={handleSaveEditLKPD} className="space-y-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="sm:col-span-2">
+                <label className="block text-xs font-mono font-black uppercase tracking-wider text-slate-950 dark:text-slate-200 mb-1.5">
+                  Judul Tugas LKPD:
+                </label>
+                <input
+                  type="text"
+                  value={editTitle}
+                  onChange={e => setEditTitle(e.target.value)}
+                  required
+                  className="w-full p-3 rounded-xl border-2 border-slate-950 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-950 dark:text-slate-100 text-xs font-bold outline-none"
+                />
+              </div>
+
+              <div className="sm:col-span-2">
+                <label className="block text-xs font-mono font-black uppercase tracking-wider text-slate-950 dark:text-slate-200 mb-1.5">
+                  Deskripsi Singkat:
+                </label>
+                <textarea
+                  value={editDesc}
+                  onChange={e => setEditDesc(e.target.value)}
+                  rows={2}
+                  required
+                  className="w-full p-3 rounded-xl border-2 border-slate-950 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-950 dark:text-slate-100 text-xs font-bold outline-none"
+                />
+              </div>
+
+              <div className="sm:col-span-2">
+                <label className="block text-xs font-mono font-black uppercase tracking-wider text-slate-950 dark:text-slate-200 mb-1.5">
+                  Tujuan Pembelajaran & Petunjuk Pengerjaan:
+                </label>
+                <textarea
+                  value={editObjectives}
+                  onChange={e => setEditObjectives(e.target.value)}
+                  rows={3}
+                  className="w-full p-3 rounded-xl border-2 border-slate-950 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-950 dark:text-slate-100 text-xs font-bold outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-mono font-black uppercase tracking-wider text-slate-950 dark:text-slate-200 mb-1.5">
+                  Ganti Berkas PDF (Opsional):
+                </label>
+                <input
+                  type="file"
+                  accept="application/pdf"
+                  onChange={handleEditPdfChange}
+                  className="w-full text-xs text-slate-600 dark:text-slate-300 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-2 file:border-slate-950 file:text-xs file:font-mono file:font-black file:bg-[#ffe600] file:text-slate-950 cursor-pointer mb-1"
+                />
+                <span className="text-[11px] text-slate-600 dark:text-slate-400 font-mono font-bold block truncate">File: {editPdfFilename}</span>
+              </div>
+
+              <div>
+                <label className="block text-xs font-mono font-black uppercase tracking-wider text-slate-950 dark:text-slate-200 mb-1.5">
+                  Ganti Gambar Lembar Kerja (Opsional):
+                </label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleEditImageChange}
+                  className="w-full text-xs text-slate-600 dark:text-slate-300 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-2 file:border-slate-950 file:text-xs file:font-mono file:font-black file:bg-sky-100 file:text-slate-950 cursor-pointer"
+                />
+              </div>
             </div>
 
-            <div>
-              <label className="block text-xs font-mono font-black uppercase tracking-wider text-slate-950 dark:text-slate-200 mb-1.5">
-                Deskripsi Singkat:
-              </label>
-              <textarea
-                value={editDesc}
-                onChange={e => setEditDesc(e.target.value)}
-                rows={2}
-                required
-                className="w-full p-3 rounded-xl border-2 border-slate-950 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-950 dark:text-slate-100 text-xs font-bold outline-none"
-              />
+            {/* Kelola Butir Kegiatan Pembelajaran (Soal LKPD) */}
+            <div className="pt-4 border-t-2 border-slate-950 dark:border-slate-700 space-y-3">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <h4 className="font-mono font-black text-sm text-slate-950 dark:text-slate-100 flex items-center gap-2">
+                    <BookOpen size={16} />
+                    <span>Daftar Butir Kegiatan Pembelajaran ({editQuestions.length} Kegiatan)</span>
+                  </h4>
+                  <span className="text-[11px] font-mono font-bold text-slate-500 dark:text-slate-400">
+                    Total Bobot: {editQuestions.reduce((acc, q) => acc + (Number(q.weight) || 0), 0)} Poin
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleAddQuestionToEdit}
+                  className="px-3 py-1.5 rounded-xl bg-[#ffe600] text-slate-950 font-mono font-black text-xs border-2 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a] hover:bg-yellow-400 cursor-pointer flex items-center gap-1.5 active:translate-x-0.5 active:translate-y-0.5 transition-all"
+                >
+                  <Plus size={14} />
+                  <span>Tambah Kegiatan Baru</span>
+                </button>
+              </div>
+
+              <div className="space-y-4 max-h-[50vh] overflow-y-auto pr-1">
+                {editQuestions.map((q, qIdx) => (
+                  <div
+                    key={q.id || qIdx}
+                    className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900 border-2 border-slate-950 dark:border-slate-700 space-y-3 shadow-[2px_2px_0px_0px_#0f172a]"
+                  >
+                    <div className="flex items-center justify-between gap-2 border-b border-slate-950/20 pb-2">
+                      <span className="px-2.5 py-0.5 rounded-lg bg-sky-200 text-slate-950 font-mono font-black text-xs border border-slate-950">
+                        Kegiatan #{qIdx + 1}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveQuestionFromEdit(qIdx)}
+                        className="px-2 py-1 rounded-lg bg-rose-100 hover:bg-rose-200 text-rose-900 border border-slate-950 cursor-pointer text-xs flex items-center gap-1 font-bold"
+                        title="Hapus kegiatan ini"
+                      >
+                        <Trash2 size={12} />
+                        <span>Hapus</span>
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                      <div className="sm:col-span-3">
+                        <label className="block text-[11px] font-mono font-black text-slate-900 dark:text-slate-200 mb-1">
+                          Judul Kegiatan:
+                        </label>
+                        <input
+                          type="text"
+                          value={q.title}
+                          onChange={e => handleQuestionChange(qIdx, 'title', e.target.value)}
+                          required
+                          placeholder="Contoh: Kegiatan 1: C3 — Menerapkan (Studi Kasus Kue)"
+                          className="w-full p-2.5 rounded-xl border border-slate-950 bg-white dark:bg-slate-800 text-slate-950 dark:text-slate-100 text-xs font-bold outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-mono font-black text-slate-900 dark:text-slate-200 mb-1">
+                          Bobot Poin:
+                        </label>
+                        <input
+                          type="number"
+                          value={q.weight}
+                          onChange={e => handleQuestionChange(qIdx, 'weight', Number(e.target.value) || 0)}
+                          required
+                          min={0}
+                          max={100}
+                          className="w-full p-2.5 rounded-xl border border-slate-950 bg-white dark:bg-slate-800 text-slate-950 dark:text-slate-100 text-xs font-mono font-bold outline-none"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-mono font-black text-slate-900 dark:text-slate-200 mb-1">
+                        Teks Soal / Permasalahan Siswa (Prompt):
+                      </label>
+                      <textarea
+                        rows={3}
+                        value={q.prompt}
+                        onChange={e => handleQuestionChange(qIdx, 'prompt', e.target.value)}
+                        required
+                        placeholder="Tuliskan petunjuk studi kasus atau butir pertanyaan yang harus diselesaikan siswa..."
+                        className="w-full p-2.5 rounded-xl border border-slate-950 bg-white dark:bg-slate-800 text-slate-950 dark:text-slate-100 text-xs font-medium outline-none"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-mono font-black text-slate-900 dark:text-slate-200 mb-1">
+                        Langkah Pembahasan Konsep Resmi:
+                      </label>
+                      <textarea
+                        rows={3}
+                        value={q.discussion}
+                        onChange={e => handleQuestionChange(qIdx, 'discussion', e.target.value)}
+                        required
+                        placeholder="Tuliskan tahapan penyelesaian matematis resmi untuk referensi pembahasan..."
+                        className="w-full p-2.5 rounded-xl border border-slate-950 bg-white dark:bg-slate-800 text-slate-950 dark:text-slate-100 text-xs font-medium outline-none"
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
 
-            <div>
-              <label className="block text-xs font-mono font-black uppercase tracking-wider text-slate-950 dark:text-slate-200 mb-1.5">
-                Tujuan Pembelajaran & Petunjuk:
-              </label>
-              <textarea
-                value={editObjectives}
-                onChange={e => setEditObjectives(e.target.value)}
-                rows={3}
-                className="w-full p-3 rounded-xl border-2 border-slate-950 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-950 dark:text-slate-100 text-xs font-bold outline-none"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-mono font-black uppercase tracking-wider text-slate-950 dark:text-slate-200 mb-1.5">
-                Ganti Berkas PDF (Opsional):
-              </label>
-              <input
-                type="file"
-                accept="application/pdf"
-                onChange={handleEditPdfChange}
-                className="w-full text-xs text-slate-600 dark:text-slate-300 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-2 file:border-slate-950 file:text-xs file:font-mono file:font-black file:bg-[#ffe600] file:text-slate-950 cursor-pointer mb-1"
-              />
-              <span className="text-[11px] text-slate-600 dark:text-slate-400 font-mono font-bold">File saat ini: {editPdfFilename}</span>
-            </div>
-
-            <div>
-              <label className="block text-xs font-mono font-black uppercase tracking-wider text-slate-950 dark:text-slate-200 mb-1.5">
-                Ganti Gambar Lembar Kerja (Opsional):
-              </label>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleEditImageChange}
-                className="w-full text-xs text-slate-600 dark:text-slate-300 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-2 file:border-slate-950 file:text-xs file:font-mono file:font-black file:bg-sky-100 file:text-slate-950 cursor-pointer"
-              />
-            </div>
-
-            <div className="flex justify-end gap-3 pt-2 border-t-2 border-slate-950 dark:border-slate-700">
+            <div className="flex justify-end gap-3 pt-3 border-t-2 border-slate-950 dark:border-slate-700">
               <button
                 type="button"
                 className="px-5 py-2.5 rounded-xl font-mono font-bold text-xs bg-slate-200 dark:bg-slate-800 border-2 border-slate-950 dark:border-slate-700 text-slate-950 dark:text-slate-200 cursor-pointer"
@@ -1120,7 +1279,7 @@ export const GuruLKPD: React.FC<{
                 type="submit"
                 className="px-6 py-2.5 rounded-xl font-mono font-black text-xs uppercase bg-[#38bdf8] text-slate-950 border-3 border-slate-950 shadow-[3px_3px_0px_0px_#0f172a] hover:bg-sky-400 cursor-pointer active:translate-x-0.5 active:translate-y-0.5 transition-all"
               >
-                Simpan Perubahan LKPD
+                Simpan Perubahan LKPD &amp; Kegiatan
               </button>
             </div>
           </form>
