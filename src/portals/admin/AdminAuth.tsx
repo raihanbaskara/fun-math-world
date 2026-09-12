@@ -25,8 +25,11 @@ export const AdminAuth: React.FC<AdminAuthProps> = ({
     soundService.click();
 
     const db = storageService.getState();
+    const cleanUsername = username.trim().toLowerCase();
+    const cleanPassword = password.trim();
+
     const user = db.users.find(
-      u => u.username === username.trim() && u.password === password.trim() && u.role === 'admin'
+      u => u.username.toLowerCase() === cleanUsername && u.password.trim() === cleanPassword && u.role === 'admin'
     );
 
     if (!user) {
@@ -36,6 +39,15 @@ export const AdminAuth: React.FC<AdminAuthProps> = ({
     }
 
     const newSessionToken = "sess_admin_" + Math.random().toString(36).substring(2) + "_" + Date.now();
+    const updatedUser: User = {
+      ...user,
+      sessionToken: newSessionToken,
+    };
+
+    // 1. Immediately register session
+    storageService.setCurrentSessionUser(updatedUser, newSessionToken);
+
+    // 2. Update DB
     storageService.update(draft => {
       const target = draft.users.find(u => u.id === user.id);
       if (target) {
@@ -43,12 +55,6 @@ export const AdminAuth: React.FC<AdminAuthProps> = ({
       }
     });
 
-    const updatedUser: User = {
-      ...user,
-      sessionToken: newSessionToken,
-    };
-
-    storageService.setCurrentSessionUser(updatedUser, newSessionToken);
     soundService.success();
     showToast(`Selamat datang, Administrator ${updatedUser.name}!`, 'success');
     onLoginSuccess(updatedUser);
@@ -96,6 +102,10 @@ export const AdminAuth: React.FC<AdminAuthProps> = ({
             <input
               type="text"
               required
+              autoCapitalize="none"
+              autoCorrect="off"
+              autoComplete="username"
+              spellCheck={false}
               placeholder="Masukkan username admin"
               value={username}
               onChange={e => setUsername(e.target.value)}
@@ -111,6 +121,10 @@ export const AdminAuth: React.FC<AdminAuthProps> = ({
               <input
                 type={showPassword ? "text" : "password"}
                 required
+                autoCapitalize="none"
+                autoCorrect="off"
+                autoComplete="current-password"
+                spellCheck={false}
                 placeholder="••••••••"
                 value={password}
                 onChange={e => setPassword(e.target.value)}
@@ -134,6 +148,24 @@ export const AdminAuth: React.FC<AdminAuthProps> = ({
           >
             Masuk Panel Admin
           </Button>
+
+          {/* Quick Fill Demo Badges */}
+          <div className="pt-3 border-t-2 border-slate-950/20 dark:border-slate-800 text-xs">
+            <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 mb-2 font-mono">
+              Akun Administrator (Klik untuk Isi Otomatis):
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                soundService.click();
+                setUsername('admin');
+                setPassword('admin123');
+              }}
+              className="px-3 py-1.5 rounded-lg bg-purple-100 hover:bg-purple-200 dark:bg-slate-800 text-slate-950 dark:text-slate-200 border border-slate-950 text-[11px] font-mono font-black shadow-[1.5px_1.5px_0px_0px_#0f172a] cursor-pointer active:translate-x-0.5 active:translate-y-0.5 transition-all"
+            >
+              Bpk. Toni Hidayat (admin / admin123)
+            </button>
+          </div>
         </form>
 
       </div>

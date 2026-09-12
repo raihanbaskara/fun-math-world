@@ -111,6 +111,11 @@ export function App() {
       }
     }
 
+    if (activeUser) {
+      setCurrentUser(activeUser);
+      currentUserRef.current = activeUser;
+    }
+
     setCurrentRoute(route);
     setIsMobileSidebarOpen(false);
 
@@ -119,7 +124,7 @@ export function App() {
       window.location.hash = `#/${route}`;
       setTimeout(() => {
         isInternalNavRef.current = false;
-      }, 60);
+      }, 300);
     }
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
@@ -142,29 +147,44 @@ export function App() {
         targetRoute = 'siswa';
       }
 
+      // Avoid re-navigating to the same route and risking bouncing on mobile
+      if (targetRoute === currentRoute) return;
+
       const activeUser = currentUserRef.current || storageService.getCurrentSessionUser();
       navigateTo(targetRoute, false, activeUser);
     };
     window.addEventListener('hashchange', handleHash);
     handleHash();
     return () => window.removeEventListener('hashchange', handleHash);
-  }, [navigateTo]);
+  }, [navigateTo, currentRoute]);
 
   // 1 Akun 1 Device Liveness Watcher
   useEffect(() => {
     const interval = setInterval(() => {
-      const stored = sessionStorage.getItem("FMW_CURRENT_USER");
+      let stored: string | null = null;
+      try {
+        stored = sessionStorage.getItem("FMW_CURRENT_USER") || localStorage.getItem("FMW_CURRENT_USER");
+      } catch {}
       if (stored) {
         try {
           const parsed = JSON.parse(stored);
           const currentInDb = storageService.getState().users.find(u => u.id === parsed.id);
-          if (currentInDb && currentInDb.sessionToken && currentInDb.sessionToken !== parsed.sessionToken) {
-            storageService.clearCurrentSession();
-            setCurrentUser(null);
-            currentUserRef.current = null;
-            setModalType('sessionKicked');
-            soundService.alert();
-            navigateTo('siswa', true, null);
+          if (
+            currentInDb &&
+            currentInDb.sessionToken &&
+            parsed.sessionToken &&
+            currentInDb.sessionToken !== parsed.sessionToken
+          ) {
+            // Guard against kicking right after login while cloud state syncs
+            const sessionAge = Date.now() - (parseInt(parsed.sessionToken.split('_').pop() || '0') || 0);
+            if (sessionAge > 8000) {
+              storageService.clearCurrentSession();
+              setCurrentUser(null);
+              currentUserRef.current = null;
+              setModalType('sessionKicked');
+              soundService.alert();
+              navigateTo('siswa', true, null);
+            }
           }
         } catch {}
       }

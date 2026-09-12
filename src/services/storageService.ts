@@ -559,7 +559,12 @@ function mergeUsersList(primary: User[], secondary: User[]): User[] {
   (primary || []).forEach(u => {
     if (u && u.id) {
       const exist = map.get(u.id);
-      map.set(u.id, exist ? { ...exist, ...u } : u);
+      map.set(u.id, exist ? {
+        ...exist,
+        ...u,
+        sessionToken: u.sessionToken || exist.sessionToken || null,
+        deviceId: u.deviceId || exist.deviceId || null
+      } : u);
     }
   });
   return Array.from(map.values());
@@ -652,7 +657,7 @@ class StorageService {
           (data.data.latsolRooms?.[0]?.questions?.length === 10);
         const remoteHasValidLKPD = Boolean(data.data.lkpdList?.[0]?.questions?.some((q: { id: string }) => q.id === 'lkpd_c3'));
 
-        const mergedUsers = mergeUsersList(data.data.users || [], this.state.users || []);
+        const mergedUsers = mergeUsersList(this.state.users || [], data.data.users || []);
         const mergedLkpdSub = mergeSubmissionsList(data.data.lkpdSubmissions || [], this.state.lkpdSubmissions || []);
         const mergedLatsolSub = mergeArrayById(data.data.latsolSubmissions || [], this.state.latsolSubmissions || []);
         const mergedEvalSub = mergeArrayById(data.data.evaluationSubmissions || [], this.state.evaluationSubmissions || []);
@@ -697,7 +702,7 @@ class StorageService {
                 (remoteState.latsolRooms?.[0]?.questions?.length === 10);
               const remoteHasValidLKPD = Boolean(remoteState.lkpdList?.[0]?.questions?.some((q: { id: string }) => q.id === 'lkpd_c3'));
 
-              const mergedUsers = mergeUsersList(remoteState.users || [], this.state.users || []);
+              const mergedUsers = mergeUsersList(this.state.users || [], remoteState.users || []);
               const mergedLkpdSub = mergeSubmissionsList(remoteState.lkpdSubmissions || [], this.state.lkpdSubmissions || []);
               const mergedLatsolSub = mergeArrayById(remoteState.latsolSubmissions || [], this.state.latsolSubmissions || []);
               const mergedEvalSub = mergeArrayById(remoteState.evaluationSubmissions || [], this.state.evaluationSubmissions || []);
@@ -873,13 +878,20 @@ class StorageService {
   }
 
   public getCurrentSessionUser(): User | null {
-    const stored = sessionStorage.getItem("FMW_CURRENT_USER");
+    let stored: string | null = null;
+    try {
+      stored = sessionStorage.getItem("FMW_CURRENT_USER") || localStorage.getItem("FMW_CURRENT_USER");
+    } catch {}
     if (!stored) return null;
     try {
       const parsed = JSON.parse(stored);
+      if (!parsed || !parsed.id) return null;
       const found = this.state.users.find(u => u.id === parsed.id);
-      if (found && found.sessionToken === parsed.sessionToken) {
-        return found;
+      if (found) {
+        return {
+          ...found,
+          sessionToken: parsed.sessionToken || found.sessionToken || null
+        };
       }
       return null;
     } catch {
@@ -888,11 +900,22 @@ class StorageService {
   }
 
   public setCurrentSessionUser(user: User, token: string): void {
-    sessionStorage.setItem("FMW_CURRENT_USER", JSON.stringify({ id: user.id, sessionToken: token }));
+    const payload = JSON.stringify({ id: user.id, sessionToken: token, role: user.role });
+    try {
+      sessionStorage.setItem("FMW_CURRENT_USER", payload);
+    } catch {}
+    try {
+      localStorage.setItem("FMW_CURRENT_USER", payload);
+    } catch {}
   }
 
   public clearCurrentSession(): void {
-    sessionStorage.removeItem("FMW_CURRENT_USER");
+    try {
+      sessionStorage.removeItem("FMW_CURRENT_USER");
+    } catch {}
+    try {
+      localStorage.removeItem("FMW_CURRENT_USER");
+    } catch {}
   }
 }
 
