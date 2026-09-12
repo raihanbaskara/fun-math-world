@@ -119,11 +119,15 @@ export function evaluateLKPDWithRubric(
 
 /**
  * OpenRouter AI Call with Automatic Multi-Model Failover:
- * 1. Coba model utama (Google Gemma 4 31B atau yang diset di .env)
- * 2. Jika 429 (rate limit) / gagal, otomatis failover ke NVIDIA Nemotron 3 Super 120B (Free)
- * 3. Jika semua offline / gagal, fallback ke Smart Rubric
+ * 1. Coba model utama Multimodal Vision (nex-agi/nex-n2.5-pro:free yang bisa baca teks + gambar)
+ * 2. Jika 429 (rate limit) / gagal, otomatis failover ke NVIDIA Nemotron 3 Super 120B (Free text)
+ * 3. Jika semua offline / gagal, fallback ke Smart Rubric Engine
  */
-async function executeOpenRouterRequest(modelName: string, apiKey: string, payloadData: unknown) {
+async function executeOpenRouterRequest(
+  modelName: string,
+  apiKey: string,
+  payloadData: string | Array<{ type: string; text?: string; image_url?: { url: string } }>
+) {
   return await fetch("https://openrouter.ai/api/v1/chat/completions", {
     method: "POST",
     headers: {
@@ -138,12 +142,15 @@ async function executeOpenRouterRequest(modelName: string, apiKey: string, paylo
         {
           role: "system",
           content: `Anda adalah Guru Penguji Matematika SMP ahli kurikulum bilangan pecahan.
-Tugas Anda adalah memeriksa dan menilai jawaban LKPD siswa terhadap kunci pembahasan resmi secara objektif, ketat, dan tegas.
+Tugas Anda adalah memeriksa dan menilai jawaban LKPD siswa (baik jawaban teks ketikan maupun tulisan tangan/coretan pada FOTO pengerjaan fisik siswa jika dilampirkan) terhadap kunci pembahasan resmi secara objektif, teliti, dan mendidik.
+
 Prinsip Penilaian:
-1. Jika siswa hanya mengetik kata acak, ngawur, atau tidak menjawab, berikan skor 0.
-2. Jika langkah ada yang benar tapi salah hitung aritmatika kecil, berikan skor sebagian proporsional.
-3. Jika langkah dan kesimpulan akhir benar dan lengkap, berikan nilai penuh sesuai maxScore.
-Kembalikan HANYA format JSON murni tanpa pembungkus teks markdown lain, format:
+1. Periksa teks jawaban dan FOTO lembar kerja fisik yang dilampirkan siswa. Jika siswa menuliskan langkah perhitungan di foto kertas, baca tulisan tangan, rumus pecahan, dan langkah penyelesaiannya.
+2. Jika siswa hanya mengetik kata acak, ngawur, atau tidak menjawab sama sekali (serta foto kosong/tidak ada), berikan skor 0.
+3. Jika langkah perhitungan di foto/teks sudah tepat namun terdapat sedikit kekeliruan aritmatika, berikan skor sebagian secara proporsional.
+4. Jika langkah penyelesaian dan kesimpulan akhir benar sesuai kunci pembahasan resmi, berikan nilai penuh sesuai maxScore.
+
+Kembalikan HANYA format JSON murni tanpa pembungkus teks markdown atau kutipan lain:
 {
   "totalScore": number,
   "overallFeedback": string,
@@ -159,7 +166,7 @@ Kembalikan HANYA format JSON murni tanpa pembungkus teks markdown lain, format:
         },
         {
           role: "user",
-          content: JSON.stringify(payloadData)
+          content: payloadData
         }
       ],
       temperature: 0.1
@@ -184,21 +191,52 @@ export async function evaluateLKPDWithAI(
     title: q.title,
     prompt: q.prompt,
     officialDiscussion: q.discussion,
-    studentAnswer: answers[q.id]?.textAnswer || "(Tidak ada jawaban)",
+    studentTextAnswer: answers[q.id]?.textAnswer || "(Tidak ada jawaban teks)",
+    hasPhotoAttached: Boolean(answers[q.id]?.photoUrl && answers[q.id].photoUrl!.length > 50),
     maxScore: q.weight || 30
   }));
 
-  const primaryModel = (import.meta as unknown as { env?: Record<string, string> }).env?.VITE_OPENROUTER_MODEL || "google/gemma-4-31b-it:free";
+  const hasAnyPhoto = questions.some(q => answers[q.id]?.photoUrl && answers[q.id].photoUrl!.length > 50);
+
+  // Build multimodal payload if photos are present
+  let primaryPayload: string | Array<{ type: string; text?: string; image_url?: { url: string } }>;
+  if (hasAnyPhoto) {
+    const multimodalBlocks: Array<{ type: string; text?: string; image_url?: { url: string } }> = [
+      {
+        type: "text",
+        text: "Berikut adalah daftar kegiatan LKPD, kunci pembahasan resmi guru, dan jawaban teks siswa:\n" + JSON.stringify(promptPayload, null, 2)
+      }
+    ];
+
+    questions.forEach((q, idx) => {
+      const photo = answers[q.id]?.photoUrl;
+      if (photo && photo.length > 50) {
+        multimodalBlocks.push({
+          type: "text",
+          text: `[Lampiran Foto Lembar Coretan / Pengerjaan Fisik untuk Kegiatan #${idx + 1}: ${q.title}]`
+        });
+        multimodalBlocks.push({
+          type: "image_url",
+          image_url: { url: photo }
+        });
+      }
+    });
+    primaryPayload = multimodalBlocks;
+  } else {
+    primaryPayload = JSON.stringify(promptPayload);
+  }
+
+  const primaryModel = (import.meta as unknown as { env?: Record<string, string> }).env?.VITE_OPENROUTER_MODEL || "nex-agi/nex-n2.5-pro:free";
   const fallbackModel = "nvidia/nemotron-3-super-120b-a12b:free";
 
   try {
-    console.log(`[AI Evaluator] Mengirim penilaian ke model OpenRouter: ${primaryModel}...`);
-    let response = await executeOpenRouterRequest(primaryModel, openRouterKey, promptPayload);
+    console.log(`[AI Evaluator] Mengirim penilaian ke model OpenRouter: ${primaryModel} (Vision: ${hasAnyPhoto ? 'Aktif' : 'Teks'})...`);
+    let response = await executeOpenRouterRequest(primaryModel, openRouterKey, primaryPayload);
 
-    // If primary model is rate-limited (429) or error, failover to secondary model immediately!
+    // If primary model is rate-limited (429) or error, failover to secondary text model immediately!
     if (!response.ok) {
       console.warn(`[AI Evaluator] Model ${primaryModel} gagal (${response.status} ${response.statusText}). Mengalihkan ke model failover: ${fallbackModel}...`);
-      response = await executeOpenRouterRequest(fallbackModel, openRouterKey, promptPayload);
+      response = await executeOpenRouterRequest(fallbackModel, openRouterKey, JSON.stringify(promptPayload));
     }
 
     if (!response.ok) {
