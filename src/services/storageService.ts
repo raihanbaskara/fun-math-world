@@ -1,7 +1,7 @@
 import { DatabaseState, User } from '@/types';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 
-const STORAGE_KEY = "FUN_MATH_WORLD_SMP7_DB_V2";
+const STORAGE_KEY = "FUN_MATH_WORLD_SMP7_DB_V4";
 
 export const defaultDatabaseState: DatabaseState = {
   system: {
@@ -201,100 +201,140 @@ export const defaultDatabaseState: DatabaseState = {
   latsolRooms: [
     {
       id: "room_1",
-      title: "Latihan Soal 1: Pecahan Senilai & Desimal",
-      topic: "Konsep Dasar, Pecahan Senilai, dan Konversi Desimal",
-      badge: "Latihan Soal 1",
-      durationSeconds: 180,
+      title: "Latihan Soal Kuis: Materi Pecahan (10 Soal Lengkap)",
+      topic: "Konsep, Operasi Hitung, dan Soal Cerita Pecahan Kelas 7",
+      badge: "Kuis Lengkap",
+      durationSeconds: 600,
       isLockedByTeacher: false,
       questions: [
         {
-          id: "ls1_q1",
-          question: "Bentuk pecahan paling sederhana dari 18/24 adalah...",
-          options: ["3/4", "2/3", "4/6", "3/8"],
-          correctIndex: 0,
-          explanation: "Bagi pembilang dan penyebut dengan FPB(18, 24) = 6. Maka 18/6 = 3 dan 24/6 = 4 -> 3/4.",
-          points: 20
+          id: "ls_q1",
+          question: "Hasil dari 1/4 + 2/4 adalah ....",
+          options: ["1/4", "2/4", "3/4", "4/4"],
+          correctIndex: 2,
+          explanation: "Karena penyebutnya sudah sama (4), jumlahkan pembilangnya: 1/4 + 2/4 = (1 + 2)/4 = 3/4.",
+          points: 10
         },
         {
-          id: "ls1_q2",
-          question: "Pecahan desimal dari 3/5 adalah...",
-          options: ["0.35", "0.6", "0.65", "0.53"],
+          id: "ls_q2",
+          question: "Hasil dari 5/6 - 2/6 adalah ....",
+          options: ["2/6", "3/6", "4/6", "7/6"],
           correctIndex: 1,
-          explanation: "Kalikan pembilang dan penyebut dengan 2: 3/5 = 6/10 = 0.6.",
-          points: 20
+          explanation: "Karena penyebutnya sudah sama (6), kurangkan pembilangnya: 5/6 - 2/6 = (5 - 2)/6 = 3/6.",
+          points: 10
         },
         {
-          id: "ls1_q3",
-          question: "Pecahan berikut yang SENILAI dengan 2/3 adalah...",
-          options: ["4/9", "6/9", "8/15", "5/6"],
+          id: "ls_q3",
+          question: "Bentuk sederhana dari 4/8 adalah ....",
+          options: ["1/2", "1/4", "2/3", "3/4"],
+          correctIndex: 0,
+          explanation: "Penyebut dan pembilang masing-masing dibagi FPB 4: (4 ÷ 4)/(8 ÷ 4) = 1/2.",
+          points: 10
+        },
+        {
+          id: "ls_q4",
+          question: "Pecahan yang lebih besar dari 1/4 adalah ....",
+          options: ["1/8", "1/6", "1/3", "1/10"],
+          correctIndex: 2,
+          explanation: "Pada pecahan dengan pembilang sama (1), pecahan dengan penyebut lebih kecil bernilai lebih besar: 1/3 > 1/4.",
+          points: 10
+        },
+        {
+          id: "ls_q5",
+          question: "Hasil dari 1/2 + 1/4 adalah ....",
+          options: ["1/4", "2/4", "3/4", "4/4"],
+          correctIndex: 2,
+          explanation: "Samakan penyebut dengan mencari KPK dari 2 dan 4, yaitu 4. 1/2 = 2/4. Maka 2/4 + 1/4 = 3/4.",
+          points: 10
+        },
+        {
+          id: "ls_q6",
+          question: "Hasil dari 2/3 × 3 adalah ....",
+          options: ["1", "2", "3", "6"],
           correctIndex: 1,
-          explanation: "Kalikan pembilang dan penyebut dengan 3: (2×3)/(3×3) = 6/9.",
-          points: 20
+          explanation: "2/3 × 3 = 2/3 × 3/1 = 6/3 = 2.",
+          points: 10
         },
         {
-          id: "ls1_q4",
-          question: "Bentuk persen dari 7/20 adalah...",
-          options: ["35%", "70%", "28%", "14%"],
+          id: "ls_q7",
+          question: "Hasil dari 1/2 ÷ 2 adalah ....",
+          options: ["1/4", "1/2", "1", "2"],
           correctIndex: 0,
-          explanation: "7/20 = (7×5)/(20×5) = 35/100 = 35%.",
-          points: 20
+          explanation: "1/2 ÷ 2 = 1/2 ÷ 2/1 = 1/2 × 1/2 = 1/4.",
+          points: 10
         },
         {
-          id: "ls1_q5",
-          question: "Urutan pecahan 1/2, 3/4, 2/5 dari yang TERKECIL adalah...",
-          options: ["2/5, 1/2, 3/4", "1/2, 2/5, 3/4", "3/4, 1/2, 2/5", "2/5, 3/4, 1/2"],
-          correctIndex: 0,
-          explanation: "Ubah ke desimal: 2/5 = 0.4, 1/2 = 0.5, 3/4 = 0.75. Urutan terkecil: 2/5, 1/2, 3/4.",
-          points: 20
+          id: "ls_q8",
+          question: "Dina memiliki uang Rp20.000. Ia menggunakan 1/2 uangnya untuk membeli buku. Berapa uang yang digunakan?",
+          options: ["Rp5.000", "Rp10.000", "Rp15.000", "Rp20.000"],
+          correctIndex: 1,
+          explanation: "1/2 × Rp20.000 = Rp10.000.",
+          points: 10
+        },
+        {
+          id: "ls_q9",
+          question: "Hasil dari 1/3 + 1/6 adalah ....",
+          options: ["1/3", "1/2", "2/3", "5/6"],
+          correctIndex: 1,
+          explanation: "Samakan penyebut dengan mencari KPK dari 3 dan 6, yaitu 6. 1/3 = 2/6. Maka 2/6 + 1/6 = 3/6 = 1/2.",
+          points: 10
+        },
+        {
+          id: "ls_q10",
+          question: "Siti memiliki 3/4 liter air. Ia meminum 1/4 liter. Sisa air Siti adalah ....",
+          options: ["1/4 liter", "1/2 liter", "3/3 liter", "1 liter"],
+          correctIndex: 1,
+          explanation: "3/4 liter - 1/4 liter = 2/4 liter = 1/2 liter.",
+          points: 10
         }
       ]
     },
     {
       id: "room_2",
-      title: "Latihan Soal 2: Operasi Campuran Penjumlahan & Pengurangan",
-      topic: "Operasi Hitung Pecahan Beda Penyebut (KPK)",
+      title: "Latihan Soal 2: Operasi Perkalian, Pembagian & Kontekstual",
+      topic: "Perkalian, Pembagian, dan Masalah Sehari-hari",
       badge: "Latihan Soal 2",
-      durationSeconds: 240,
-      isLockedByTeacher: true,
+      durationSeconds: 300,
+      isLockedByTeacher: false,
       questions: [
         {
           id: "ls2_q1",
-          question: "Hasil dari 1/3 + 1/4 adalah...",
-          options: ["2/7", "7/12", "5/12", "1/12"],
+          question: "Hasil dari 2/3 × 3 adalah ....",
+          options: ["1", "2", "3", "6"],
           correctIndex: 1,
-          explanation: "KPK dari 3 dan 4 adalah 12. 1/3 = 4/12, 1/4 = 3/12. 4/12 + 3/12 = 7/12.",
+          explanation: "2/3 × 3 = 2/3 × 3/1 = 6/3 = 2.",
           points: 20
         },
         {
           id: "ls2_q2",
-          question: "Hasil dari 5/6 - 1/2 adalah...",
-          options: ["4/4", "2/6", "1/3", "2/3"],
-          correctIndex: 2,
-          explanation: "1/2 = 3/6. 5/6 - 3/6 = 2/6 = 1/3.",
+          question: "Hasil dari 1/2 ÷ 2 adalah ....",
+          options: ["1/4", "1/2", "1", "2"],
+          correctIndex: 0,
+          explanation: "1/2 ÷ 2 = 1/2 ÷ 2/1 = 1/2 × 1/2 = 1/4.",
           points: 20
         },
         {
           id: "ls2_q3",
-          question: "Hasil dari 2 1/3 + 1 1/2 adalah...",
-          options: ["3 2/5", "3 5/6", "4 1/6", "3 1/6"],
+          question: "Dina memiliki uang Rp20.000. Ia menggunakan 1/2 uangnya untuk membeli buku. Berapa uang yang digunakan?",
+          options: ["Rp5.000", "Rp10.000", "Rp15.000", "Rp20.000"],
           correctIndex: 1,
-          explanation: "(2+1) + (2/6 + 3/6) = 3 + 5/6 = 3 5/6.",
+          explanation: "1/2 × Rp20.000 = Rp10.000.",
           points: 20
         },
         {
           id: "ls2_q4",
-          question: "Ibu membeli 3/4 kg gula, dipakai 1/3 kg. Berapa kg sisa gula?",
-          options: ["5/12 kg", "2/12 kg", "1/4 kg", "7/12 kg"],
-          correctIndex: 0,
-          explanation: "3/4 - 1/3 = 9/12 - 4/12 = 5/12 kg.",
+          question: "Hasil dari 1/3 + 1/6 adalah ....",
+          options: ["1/3", "1/2", "2/3", "5/6"],
+          correctIndex: 1,
+          explanation: "Samakan penyebut (KPK 6): 1/3 = 2/6. Maka 2/6 + 1/6 = 3/6 = 1/2.",
           points: 20
         },
         {
           id: "ls2_q5",
-          question: "Hasil dari 3/4 - 1/2 + 2/3 adalah...",
-          options: ["11/12", "7/12", "5/12", "9/12"],
-          correctIndex: 0,
-          explanation: "KPK 12: 9/12 - 6/12 + 8/12 = 11/12.",
+          question: "Siti memiliki 3/4 liter air. Ia meminum 1/4 liter. Sisa air Siti adalah ....",
+          options: ["1/4 liter", "1/2 liter", "3/3 liter", "1 liter"],
+          correctIndex: 1,
+          explanation: "3/4 liter - 1/4 liter = 2/4 liter = 1/2 liter.",
           points: 20
         }
       ]
@@ -307,31 +347,55 @@ export const defaultDatabaseState: DatabaseState = {
       studentName: "Aisyah Putri",
       studentClass: "Kelas 7-A",
       roomId: "room_1",
-      roomTitle: "Latihan Soal 1: Pecahan Senilai & Desimal",
+      roomTitle: "Latihan Soal Kuis: Materi Pecahan (10 Soal Lengkap)",
       score: 100,
-      correctCount: 5,
-      totalQuestions: 5,
-      answers: { ls1_q1: 0, ls1_q2: 1, ls1_q3: 1, ls1_q4: 0, ls1_q5: 0 },
-      timeSpentSeconds: 65,
+      correctCount: 10,
+      totalQuestions: 10,
+      answers: { ls_q1: 2, ls_q2: 1, ls_q3: 0, ls_q4: 2, ls_q5: 2, ls_q6: 1, ls_q7: 0, ls_q8: 1, ls_q9: 1, ls_q10: 1 },
+      timeSpentSeconds: 120,
       date: "2026-09-02 10:30"
     }
   ],
   evaluationQuestions: [
     {
       id: "eq_1",
-      title: "Soal Essai 1 — Pembagian Lahan Sawah",
-      prompt: "Pak Ahmad memiliki sebidang tanah sawah seluas 3/4 hektar. Dari luas tanah tersebut, 1/3 bagian akan ditanami padi dan 1/4 bagian akan ditanami jagung, sedangkan sisanya dibuat kolam ikan. Berapakah bagian lahan yang digunakan untuk kolam ikan? Tuliskan langkah perhitungannya dengan runtut!",
-      sampleAnswer: "Total bagian = 3/4 hektar.\nBagian ditanami = 1/3 + 1/4 = 4/12 + 3/12 = 7/12.\nSisa untuk kolam = 3/4 - 7/12 = 9/12 - 7/12 = 2/12 = 1/6 hektar.",
-      discussion: "Langkah-langkah:\n1. Samakan penyebut pecahan yang ditanami (KPK dari 3 dan 4 adalah 12) -> 4/12 + 3/12 = 7/12.\n2. Samakan penyebut lahan mula-mula dengan total tanaman -> 3/4 = 9/12.\n3. Kurangkan: 9/12 - 7/12 = 2/12.\n4. Sederhanakan dengan membagi FPB 2: 2/12 = 1/6 hektar.",
-      weight: 50
+      title: "Soal Evaluasi 1 — Pembelian Gula Pasir Bu Rina",
+      prompt: "Bu Rina membeli 3/4 kg gula pasir. Kemudian ia membeli lagi 2/5 kg gula pasir untuk keperluan membuat kue. Berapa kilogram total gula pasir yang dibeli Bu Rina?\n\nPetunjuk: Kerjakan dengan menuliskan langkah-langkah penyelesaian secara lengkap dan jelas!",
+      sampleAnswer: "Total gula pasir = 3/4 + 2/5 = 15/20 + 8/20 = 23/20 = 1 3/20 kg.",
+      discussion: "Langkah 1: Tulis operasi penjumlahan pecahan yang harus dihitung: 3/4 + 2/5.\nLangkah 2: Samakan penyebut kedua pecahan dengan mencari KPK dari 4 dan 5, yaitu 20.\nLangkah 3: Ubah masing-masing pecahan menjadi pecahan senilai berpenyebut 20: 3/4 = 15/20 dan 2/5 = 8/20.\nLangkah 4: Jumlahkan kedua pecahan: 15/20 + 8/20 = 23/20.\nLangkah 5: Ubah menjadi pecahan campuran: 23/20 = 1 3/20.\nJadi, total gula pasir yang dibeli Bu Rina adalah 1 3/20 kg.",
+      weight: 20
     },
     {
       id: "eq_2",
-      title: "Soal Essai 2 — Resep Membuat Kue Bolu",
-      prompt: "Ibu memiliki persediaan tepung terigu sebanyak 2 1/2 kg. Ibu menggunakan 1 3/4 kg untuk membuat kue bolu. Keesokan harinya, paman membawakan lagi tepung terigu sebanyak 3/4 kg. Berapa total persediaan tepung terigu ibu sekarang dalam bentuk pecahan campuran? Jelaskan caramu!",
-      sampleAnswer: "Persediaan awal = 2 1/2 kg = 5/2 kg.\nDigunakan = 1 3/4 kg = 7/4 kg.\nSisa = 5/2 - 7/4 = 10/4 - 7/4 = 3/4 kg.\nDitambah paman = 3/4 + 3/4 = 6/4 kg = 3/2 kg = 1 1/2 kg.",
-      discussion: "Langkah-langkah:\n1. Ubah ke pecahan biasa atau operasikan bilangan bulat: (2 - 1) + (1/2 - 3/4) = 1 + (2/4 - 3/4) = 4/4 + (-1/4) = 3/4 kg.\n2. Ditambah dari paman: 3/4 + 3/4 = 6/4 kg.\n3. Sederhanakan: 6/4 = 3/2 kg.\n4. Bentuk pecahan campuran: 3 dibagi 2 dapat 1 sisa 1 -> 1 1/2 kg.",
-      weight: 50
+      title: "Soal Evaluasi 2 — Pemotongan Panjang Tali",
+      prompt: "Sebuah tali panjangnya 7 1/2 meter. Tali tersebut akan dipotong menjadi beberapa bagian yang masing-masing panjangnya 5/6 meter. Berapa banyak potongan tali yang dapat diperoleh?\n\nPetunjuk: Kerjakan dengan menuliskan langkah-langkah penyelesaian secara lengkap dan jelas!",
+      sampleAnswer: "Panjang tali = 7 1/2 m = 15/2 m. Banyak potongan = 15/2 : 5/6 = 15/2 x 6/5 = 90/10 = 9 bagian.",
+      discussion: "Langkah 1: Ubah pecahan campuran 7 1/2 menjadi pecahan biasa: 7 1/2 = 15/2.\nLangkah 2: Tuliskan operasi pembagian yang diperlukan: 15/2 : 5/6.\nLangkah 3: Pembagian pecahan diselesaikan dengan mengalikan pecahan pertama dengan kebalikan (invers) pecahan kedua: 15/2 x 6/5.\nLangkah 4: Kalikan pembilang dengan pembilang dan penyebut dengan penyebut: (15 x 6)/(2 x 5) = 90/10.\nLangkah 5: Sederhanakan hasilnya: 90/10 = 9.\nJadi, tali tersebut dapat dipotong menjadi 9 bagian.",
+      weight: 20
+    },
+    {
+      id: "eq_3",
+      title: "Soal Evaluasi 3 — Nilai Ulangan Matematika Andi",
+      prompt: "Hasil ulangan matematika Andi adalah 2 1/3 dari nilai KKM (Kriteria Ketuntasan Minimal). Jika nilai KKM adalah 30, tentukan nilai ulangan matematika Andi tersebut!\n\nPetunjuk: Kerjakan dengan menuliskan langkah-langkah penyelesaian secara lengkap dan jelas!",
+      sampleAnswer: "Nilai Andi = 2 1/3 x 30 = 7/3 x 30 = 210/3 = 70.",
+      discussion: "Langkah 1: Ubah pecahan campuran 2 1/3 menjadi pecahan biasa: 2 1/3 = 7/3.\nLangkah 2: Tuliskan operasi perkalian yang menyatakan nilai Andi: 7/3 x 30.\nLangkah 3: Kalikan pembilang pecahan dengan bilangan bulat: (7 x 30)/3 = 210/3.\nLangkah 4: Sederhanakan hasil pembagian: 210/3 = 70.\nJadi, nilai ulangan matematika Andi adalah 70.",
+      weight: 20
+    },
+    {
+      id: "eq_4",
+      title: "Soal Evaluasi 4 — Luas Sebidang Tanah Persegi Panjang",
+      prompt: "Sebidang tanah berbentuk persegi panjang memiliki panjang 4 1/2 m dan lebar 3 1/3 m. Tentukan luas tanah tersebut!\n\nPetunjuk: Kerjakan dengan menuliskan langkah-langkah penyelesaian secara lengkap dan jelas!",
+      sampleAnswer: "Luas = panjang x lebar = 4 1/2 x 3 1/3 = 9/2 x 10/3 = 90/6 = 15 m².",
+      discussion: "Langkah 1: Ingat rumus luas persegi panjang: Luas = panjang x lebar.\nLangkah 2: Ubah kedua pecahan campuran menjadi pecahan biasa: 4 1/2 = 9/2 dan 3 1/3 = 10/3.\nLangkah 3: Kalikan kedua pecahan biasa tersebut: 9/2 x 10/3 = (9 x 10)/(2 x 3) = 90/6.\nLangkah 4: Sederhanakan hasil perkalian: 90/6 = 15.\nJadi, luas tanah tersebut adalah 15 meter persegi (m²).",
+      weight: 20
+    },
+    {
+      id: "eq_5",
+      title: "Soal Evaluasi 5 — Pembagian Penggunaan Uang Dina",
+      prompt: "Dina mempunyai uang sebesar Rp60.000. Ia menggunakan 2/5 bagian uangnya untuk membeli buku dan 1/4 bagian dari uangnya untuk membeli alat tulis.\na. Berapa rupiah yang digunakan Dina untuk membeli buku?\nb. Berapa rupiah yang digunakan untuk membeli alat tulis?\nc. Berapa sisa uang Dina?\n\nPetunjuk: Tuliskan langkah-langkah penyelesaiannya secara lengkap!",
+      sampleAnswer: "a. Buku = 2/5 x Rp60.000 = Rp24.000\nb. Alat tulis = 1/4 x Rp60.000 = Rp15.000\nc. Sisa uang = Rp60.000 - (Rp24.000 + Rp15.000) = Rp60.000 - Rp39.000 = Rp21.000.",
+      discussion: "Diketahui:\nUang Dina = Rp60.000\nUntuk membeli buku = 2/5 bagian\nUntuk membeli alat tulis = 1/4 bagian\n\na. Uang untuk membeli buku:\n2/5 x Rp60.000 = 2 x Rp12.000 = Rp24.000\nJadi, uang yang digunakan Dina untuk membeli buku adalah Rp24.000.\n\nb. Uang untuk membeli alat tulis:\n1/4 x Rp60.000 = Rp15.000\nJadi, uang yang digunakan Dina untuk membeli alat tulis adalah Rp15.000.\n\nc. Sisa uang Dina:\nPertama, jumlahkan uang yang digunakan untuk membeli buku dan alat tulis:\nRp24.000 + Rp15.000 = Rp39.000\nKemudian, kurangkan dari uang Dina semula:\nRp60.000 - Rp39.000 = Rp21.000\nJadi, sisa uang Dina adalah Rp21.000.",
+      weight: 20
     }
   ],
   evaluationSubmissions: [
@@ -343,8 +407,11 @@ export const defaultDatabaseState: DatabaseState = {
       date: "2026-09-02 11:20",
       score: 95,
       textAnswers: {
-        eq_1: "Sisa lahan kolam ikan adalah 1/6 hektar dengan menyamakan penyebut ke 12.",
-        eq_2: "Total tepung ibu sekarang adalah 1 1/2 kg."
+        eq_1: "1. 3/4 + 2/5 = 15/20 + 8/20 = 23/20 = 1 3/20 kg gula pasir.",
+        eq_2: "2. 7 1/2 : 5/6 = 15/2 x 6/5 = 90/10 = 9 potongan tali.",
+        eq_3: "3. 2 1/3 x 30 = 7/3 x 30 = 210/3 = 70.",
+        eq_4: "4. Luas = 4 1/2 x 3 1/3 = 9/2 x 10/3 = 90/6 = 15 m².",
+        eq_5: "5. a) Buku = 2/5 x 60.000 = Rp24.000\nb) Alat tulis = 1/4 x 60.000 = Rp15.000\nc) Sisa = 60.000 - 39.000 = Rp21.000."
       },
       photoProof: "https://images.unsplash.com/photo-1456735190829-80ab37a75842?auto=format&fit=crop&w=600&q=80",
       antiCheat: {
