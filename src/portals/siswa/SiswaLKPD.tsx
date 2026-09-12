@@ -29,6 +29,7 @@ import {
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { PdfCanvasViewer } from '@/components/ui/PdfCanvasViewer';
+import { DocumentPreviewModal, DocumentPreviewItem } from '@/components/ui/DocumentPreviewModal';
 
 export const SiswaLKPD: React.FC<{
   currentUser: User;
@@ -58,7 +59,7 @@ export const SiswaLKPD: React.FC<{
 
   // Solving mode state: false = Intro/PDF/Instructions View; true = Solving Questions View
   const [isSolvingMode, setIsSolvingMode] = useState<boolean>(false);
-  const [isPdfModalOpen, setIsPdfModalOpen] = useState<boolean>(false);
+  const [previewDocItem, setPreviewDocItem] = useState<DocumentPreviewItem | null>(null);
 
   // Stepper state
   const [activeQuestionIdx, setActiveQuestionIdx] = useState<number>(0);
@@ -436,64 +437,28 @@ export const SiswaLKPD: React.FC<{
     );
   };
 
-  const renderPdfModal = () => (
-    isPdfModalOpen ? (
-      <Modal
-        isOpen={isPdfModalOpen}
-        onClose={() => setIsPdfModalOpen(false)}
-        title={`Dokumen PDF: ${selectedLkpd?.title}`}
-        maxWidth="max-w-4xl"
-      >
-        <div className="space-y-4">
-          <div className="flex items-center justify-between p-3.5 bg-[#ffe600] rounded-2xl border-2 border-slate-950 text-xs font-mono text-slate-950 font-black shadow-[2px_2px_0px_0px_#0f172a]">
-            <div className="truncate pr-2 flex items-center gap-2">
-              <FileText size={16} />
-              <span className="truncate">Berkas: {selectedLkpd?.pdfFilename || 'Dokumen Lembar Kerja.pdf'}</span>
-            </div>
-            <div className="flex items-center gap-2 shrink-0">
-              {selectedLkpd?.pdfUrl && (
-                <a
-                  href={getPdfDisplayUrl(selectedLkpd.pdfUrl)}
-                  download={selectedLkpd.pdfFilename || 'LKPD_Pecahan.pdf'}
-                  className="px-3.5 py-1.5 bg-white hover:bg-slate-100 text-slate-950 border-2 border-slate-950 rounded-xl font-bold transition flex items-center gap-1.5 cursor-pointer shadow-[1px_1px_0px_0px_#0f172a]"
-                >
-                  <Download size={13} />
-                  <span>Unduh</span>
-                </a>
-              )}
-              {selectedLkpd?.pdfUrl && (
-                <a
-                  href={getPdfDisplayUrl(selectedLkpd.pdfUrl)}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="px-3.5 py-1.5 bg-slate-950 hover:bg-slate-800 text-white rounded-xl font-bold transition flex items-center gap-1.5 cursor-pointer"
-                >
-                  <ExternalLink size={13} />
-                  <span>Tab Baru</span>
-                </a>
-              )}
-            </div>
-          </div>
+  const handleOpenPdfPreview = () => {
+    if (!selectedLkpd) return;
+    soundService.click();
+    const lkpdIdx = lkpdList.findIndex(l => l.id === selectedLkpd.id);
+    const displayIdx = lkpdIdx >= 0 ? lkpdIdx + 1 : 1;
+    setPreviewDocItem({
+      title: selectedLkpd.title,
+      url: selectedLkpd.pdfUrl || selectedLkpd.imageUrl,
+      type: selectedLkpd.pdfUrl ? 'pdf' : 'image',
+      name: selectedLkpd.pdfFilename || (selectedLkpd.pdfUrl ? `${selectedLkpd.title}.pdf` : undefined),
+      chapterCode: `LKPD ${displayIdx}`,
+      badge: 'Lembar Kerja Peserta Didik',
+      summary: selectedLkpd.objectives || selectedLkpd.description,
+      fileSize: selectedLkpd.pdfUrl ? 'Dokumen PDF' : 'Berkas Gambar'
+    });
+  };
 
-          {selectedLkpd?.pdfUrl ? (
-            <PdfCanvasViewer
-              url={selectedLkpd.pdfUrl}
-              title={selectedLkpd.title}
-            />
-          ) : (
-            <div className="p-8 text-center bg-slate-100 dark:bg-slate-800 rounded-2xl border-2 border-slate-950 space-y-2">
-              <FileText size={44} className="mx-auto text-amber-500" />
-              <h4 className="font-mono font-black text-sm text-slate-900 dark:text-slate-100">
-                {selectedLkpd?.pdfFilename || 'Dokumen LKPD Digital'}
-              </h4>
-              <p className="text-xs text-slate-600 dark:text-slate-400 max-w-md mx-auto">
-                Berkas PDF standar kurikulum telah disiapkan oleh Guru. Silakan pelajari tujuan pembelajaran dan kerjakan lembar kerja digital.
-              </p>
-            </div>
-          )}
-        </div>
-      </Modal>
-    ) : null
+  const renderPdfModal = () => (
+    <DocumentPreviewModal
+      item={previewDocItem}
+      onClose={() => setPreviewDocItem(null)}
+    />
   );
 
   // 1. COMPLETED SUBMISSION VIEW
@@ -545,7 +510,7 @@ export const SiswaLKPD: React.FC<{
             </div>
             <button
               type="button"
-              onClick={() => setIsPdfModalOpen(true)}
+              onClick={handleOpenPdfPreview}
               className="px-3.5 py-1.5 bg-[#a5f3fc] hover:bg-cyan-300 text-slate-950 border-2 border-slate-950 rounded-xl font-mono text-xs font-black shadow-[1.5px_1.5px_0px_0px_#0f172a] cursor-pointer flex items-center justify-center gap-1.5 shrink-0"
             >
               <Eye size={14} />
@@ -841,7 +806,7 @@ export const SiswaLKPD: React.FC<{
             <div className="flex flex-wrap items-center gap-2 pt-2">
               <button
                 type="button"
-                onClick={() => setIsPdfModalOpen(true)}
+                onClick={handleOpenPdfPreview}
                 className="flex-1 px-4 py-2.5 rounded-xl font-mono font-black text-xs bg-[#a5f3fc] hover:bg-cyan-300 text-slate-950 border-2 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a] cursor-pointer flex items-center justify-center gap-2 active:translate-x-0.5 active:translate-y-0.5 transition-all"
               >
                 <Eye size={16} />
@@ -923,7 +888,7 @@ export const SiswaLKPD: React.FC<{
 
           <button
             type="button"
-            onClick={() => setIsPdfModalOpen(true)}
+            onClick={handleOpenPdfPreview}
             className="px-3.5 py-2 rounded-xl bg-[#a5f3fc] hover:bg-cyan-300 text-slate-950 border-2 border-slate-950 font-mono font-black text-xs shadow-[2px_2px_0px_0px_#0f172a] cursor-pointer flex items-center gap-1.5 transition-all"
           >
             <Eye size={14} />
