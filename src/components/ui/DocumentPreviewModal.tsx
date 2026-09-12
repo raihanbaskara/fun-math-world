@@ -12,7 +12,9 @@ import {
   Sparkles,
   Lightbulb,
   CheckCircle2,
-  X
+  Printer,
+  X,
+  GraduationCap
 } from 'lucide-react';
 
 export interface DocumentPreviewItem {
@@ -33,7 +35,8 @@ export const DocumentPreviewModal: React.FC<{
   item: DocumentPreviewItem | null;
   onClose: () => void;
 }> = ({ item, onClose }) => {
-  const [activeView, setActiveView] = useState<'pdf' | 'reader'>('pdf');
+  // Default to 'reader' so students & teachers immediately see the rich digital paper sheet
+  const [activeView, setActiveView] = useState<'reader' | 'pdf'>('reader');
   const [safeUrl, setSafeUrl] = useState<string>('');
 
   useEffect(() => {
@@ -44,6 +47,7 @@ export const DocumentPreviewModal: React.FC<{
     } else {
       setSafeUrl('');
     }
+    setActiveView('reader');
   }, [item]);
 
   if (!item) return null;
@@ -57,18 +61,22 @@ export const DocumentPreviewModal: React.FC<{
     }
   };
 
+  const handlePrint = () => {
+    window.print();
+  };
+
   return (
     <Modal
       isOpen={!!item}
       onClose={onClose}
-      title={isImage ? "Pratinjau Infografis: " + item.title : "Pratinjau Modul: " + item.title}
+      title={isImage ? "Pratinjau Infografis: " + item.title : "Modul Pembelajaran: " + item.title}
       maxWidth="max-w-4xl"
     >
-      <div className="space-y-4">
+      <div className="space-y-4 font-sans">
         {/* Top Actions & Subheader Bar */}
         <div className="p-4 rounded-2xl bg-amber-50 dark:bg-slate-800/90 border-3 border-slate-950 dark:border-slate-700 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-[3px_3px_0px_0px_#0f172a]">
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-10 h-10 rounded-xl bg-white dark:bg-slate-900 border-2 border-slate-950 flex items-center justify-center shrink-0">
+            <div className="w-10 h-10 rounded-xl bg-white dark:bg-slate-900 border-2 border-slate-950 flex items-center justify-center shrink-0 shadow-[1.5px_1.5px_0px_0px_#0f172a]">
               {isPdf ? <FileText size={22} className="text-rose-600" /> : <ImageIcon size={22} className="text-sky-600" />}
             </div>
             <div className="min-w-0">
@@ -83,6 +91,9 @@ export const DocumentPreviewModal: React.FC<{
                     {item.badge}
                   </span>
                 )}
+                <span className="text-[10px] font-bold text-slate-600 dark:text-slate-400">
+                  {item.fileSize || 'Kurikulum Merdeka'}
+                </span>
               </div>
               <p className="text-xs sm:text-sm font-black text-slate-950 dark:text-slate-100 truncate mt-0.5">
                 {item.name || (item.title + '.' + (isPdf ? 'pdf' : 'png'))}
@@ -91,15 +102,15 @@ export const DocumentPreviewModal: React.FC<{
           </div>
 
           {/* Action buttons */}
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-2 shrink-0 flex-wrap">
             {safeUrl && (
               <button
                 type="button"
                 onClick={handleOpenNewTab}
-                className="px-3 py-1.5 rounded-xl bg-white dark:bg-slate-900 hover:bg-slate-100 text-slate-950 dark:text-slate-100 border-2 border-slate-950 text-xs font-black shadow-[2px_2px_0px_0px_#0f172a] flex items-center gap-1.5 cursor-pointer"
+                className="px-3 py-1.5 rounded-xl bg-white dark:bg-slate-900 hover:bg-slate-100 text-slate-950 dark:text-slate-100 border-2 border-slate-950 text-xs font-black shadow-[2px_2px_0px_0px_#0f172a] flex items-center gap-1.5 cursor-pointer active:translate-x-0.5 active:translate-y-0.5 transition-all"
               >
                 <ExternalLink size={13} />
-                <span>Buka Tab Baru</span>
+                <span>Buka Tab Penuh</span>
               </button>
             )}
 
@@ -109,7 +120,7 @@ export const DocumentPreviewModal: React.FC<{
                 download={item.name || (item.title + '.' + (isPdf ? 'pdf' : 'png'))}
                 target="_blank"
                 rel="noreferrer"
-                className="px-3 py-1.5 rounded-xl bg-[#ffe600] hover:bg-yellow-400 text-slate-950 border-2 border-slate-950 text-xs font-black shadow-[2px_2px_0px_0px_#0f172a] flex items-center gap-1.5 cursor-pointer"
+                className="px-3 py-1.5 rounded-xl bg-[#ffe600] hover:bg-yellow-400 text-slate-950 border-2 border-slate-950 text-xs font-black shadow-[2px_2px_0px_0px_#0f172a] flex items-center gap-1.5 cursor-pointer active:translate-x-0.5 active:translate-y-0.5 transition-all"
               >
                 <Download size={13} />
                 <span>Unduh File</span>
@@ -118,32 +129,44 @@ export const DocumentPreviewModal: React.FC<{
           </div>
         </div>
 
-        {/* PDF Mode: Tab Switcher */}
+        {/* PDF Mode: View Switcher Tabs */}
         {isPdf && (
-          <div className="flex items-center gap-2 border-b-2 border-slate-200 dark:border-slate-800 pb-2">
+          <div className="flex items-center justify-between gap-2 border-b-2 border-slate-200 dark:border-slate-800 pb-2">
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setActiveView('reader')}
+                className={"px-3.5 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-1.5 border-2 " + (
+                  activeView === 'reader'
+                    ? 'bg-[#ffe600] text-slate-950 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a]'
+                    : 'border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-950'
+                )}
+              >
+                <BookOpen size={14} />
+                <span>Lembar Pembaca Digital</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveView('pdf')}
+                className={"px-3.5 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-1.5 border-2 " + (
+                  activeView === 'pdf'
+                    ? 'bg-[#38bdf8] text-slate-950 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a]'
+                    : 'border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-950'
+                )}
+              >
+                <FileText size={14} />
+                <span>Tampilan File PDF</span>
+              </button>
+            </div>
+
             <button
               type="button"
-              onClick={() => setActiveView('pdf')}
-              className={"px-3 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-1.5 border-2 " + (
-                activeView === 'pdf'
-                  ? 'bg-[#38bdf8] text-slate-950 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a]'
-                  : 'border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-950'
-              )}
+              onClick={handlePrint}
+              className="px-2.5 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-950 text-xs font-black flex items-center gap-1 cursor-pointer hover:bg-slate-200"
             >
-              <FileText size={14} />
-              <span>Dokumen PDF</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveView('reader')}
-              className={"px-3 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-1.5 border-2 " + (
-                activeView === 'reader'
-                  ? 'bg-[#ffe600] text-slate-950 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a]'
-                  : 'border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-950'
-              )}
-            >
-              <BookOpen size={14} />
-              <span>Lembar Pembaca Digital</span>
+              <Printer size={13} />
+              <span className="hidden sm:inline">Cetak</span>
             </button>
           </div>
         )}
@@ -159,105 +182,96 @@ export const DocumentPreviewModal: React.FC<{
           </div>
         ) : isPdf && activeView === 'pdf' && safeUrl ? (
           <div className="relative rounded-2xl overflow-hidden border-3 border-slate-950 dark:border-slate-700 bg-slate-100 dark:bg-slate-900 shadow-inner">
-            <object
-              data={safeUrl}
-              type="application/pdf"
-              className="w-full h-[65vh] rounded-xl bg-white"
-            >
-              {/* Fallback if browser PDF plugin is blocked or unavailable */}
-              <div className="p-8 text-center space-y-4 flex flex-col items-center justify-center h-full bg-white dark:bg-slate-900">
-                <div className="w-16 h-16 rounded-2xl bg-amber-200 border-3 border-slate-950 flex items-center justify-center text-slate-950 shadow-[3px_3px_0px_0px_#0f172a]">
-                  <FileText size={30} className="text-rose-600" />
-                </div>
-                <div className="max-w-md space-y-1">
-                  <h4 className="font-black text-sm text-slate-950 dark:text-slate-100">
-                    Pratinjau PDF di Browser Anda
-                  </h4>
-                  <p className="text-xs font-bold text-slate-600 dark:text-slate-400">
-                    Browser Anda mengarahkan tampilan PDF ke tab baru atau belum mengaktifkan plugin PDF inline.
-                  </p>
-                </div>
-                <div className="flex items-center gap-3 flex-wrap justify-center">
-                  <button
-                    type="button"
-                    onClick={handleOpenNewTab}
-                    className="px-4 py-2 rounded-xl bg-[#38bdf8] text-slate-950 font-black text-xs border-2 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a] hover:bg-sky-400 cursor-pointer"
-                  >
-                    Buka Dokumen PDF di Tab Penuh
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setActiveView('reader')}
-                    className="px-4 py-2 rounded-xl bg-[#ffe600] text-slate-950 font-black text-xs border-2 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a] hover:bg-yellow-400 cursor-pointer"
-                  >
-                    Buka Lembar Pembaca Digital
-                  </button>
-                </div>
-              </div>
-            </object>
+            <iframe
+              src={safeUrl}
+              title={item.title}
+              className="w-full h-[65vh] rounded-xl bg-white border-0"
+            />
           </div>
         ) : (
-          /* Digital Paper Reader View (100% reliable across all browsers & devices) */
+          /* High-End Digital Paper Reader View */
           <div className="max-h-[65vh] overflow-y-auto p-6 sm:p-8 rounded-2xl bg-white dark:bg-slate-900 border-3 border-slate-950 dark:border-slate-700 shadow-inner space-y-6">
-            <div className="border-b-2 border-slate-200 dark:border-slate-800 pb-4 space-y-2">
-              <div className="flex items-center gap-2">
-                <span className="px-2.5 py-0.5 rounded-lg bg-[#a3e635] text-slate-950 font-black text-xs border-2 border-slate-950">
-                  {item.chapterCode || 'MODUL MATERI'}
-                </span>
-                <span className="px-2.5 py-0.5 rounded-lg bg-[#ffe600] text-slate-950 font-black text-xs border-2 border-slate-950">
-                  {item.badge || 'Kurikulum Merdeka'}
+            
+            {/* Header / Kop Modul */}
+            <div className="border-b-3 border-slate-950/15 dark:border-slate-800 pb-5 space-y-2">
+              <div className="flex items-center justify-between gap-2 flex-wrap">
+                <div className="flex items-center gap-2">
+                  <span className="px-2.5 py-1 rounded-lg bg-[#a3e635] text-slate-950 font-black text-xs border-2 border-slate-950 shadow-[1.5px_1.5px_0px_0px_#0f172a]">
+                    {item.chapterCode || 'MODUL MATERI'}
+                  </span>
+                  <span className="px-2.5 py-1 rounded-lg bg-[#ffe600] text-slate-950 font-black text-xs border-2 border-slate-950">
+                    {item.badge || 'Kurikulum Merdeka'}
+                  </span>
+                </div>
+                <span className="text-[11px] font-black text-slate-500 dark:text-slate-400">
+                  SMP Negeri Malang • Matematika Kelas 7
                 </span>
               </div>
-              <h3 className="text-xl sm:text-2xl font-black text-slate-950 dark:text-slate-100">
+
+              <h3 className="text-xl sm:text-2xl font-black text-slate-950 dark:text-slate-100 leading-tight">
                 {item.title}
               </h3>
+
               {item.summary && (
-                <p className="text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-300">
+                <p className="text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-300 leading-relaxed bg-amber-50/70 dark:bg-slate-800/60 p-3 rounded-xl border border-slate-950/20">
                   {item.summary}
                 </p>
               )}
             </div>
 
+            {/* Uraian Teori & Konsep */}
             {item.content && (
               <div className="space-y-2">
                 <h4 className="text-xs font-black uppercase tracking-wider text-slate-950 dark:text-slate-200 flex items-center gap-1.5">
-                  <Sparkles size={14} className="text-amber-500" />
-                  <span>Uraian Konsep &amp; Penjelasan:</span>
+                  <GraduationCap size={15} className="text-[#38bdf8]" />
+                  <span>A. Uraian Penjelasan Konsep &amp; Teori:</span>
                 </h4>
-                <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800 border-2 border-slate-950 text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 leading-relaxed whitespace-pre-line">
+                <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/80 border-2 border-slate-950 dark:border-slate-700 text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 leading-relaxed whitespace-pre-line">
                   {renderFormattedMathText(item.content, 'sm')}
                 </div>
               </div>
             )}
 
+            {/* Rumus Kaidah Matematis */}
             {item.formula && (
               <div className="space-y-2">
                 <h4 className="text-xs font-black uppercase tracking-wider text-slate-950 dark:text-slate-200 flex items-center gap-1.5">
-                  <Lightbulb size={14} className="text-amber-500" />
-                  <span>Rumus / Kaidah Matematis:</span>
+                  <Lightbulb size={15} className="text-amber-500" />
+                  <span>B. Rumus / Kaidah Matematis Utama:</span>
                 </h4>
-                <div className="p-4 rounded-xl bg-amber-50 dark:bg-slate-800 border-2 border-slate-950 text-sm font-black text-slate-950 dark:text-slate-100">
+                <div className="p-4 rounded-xl bg-[#fffdf5] dark:bg-amber-950/20 border-2 border-slate-950 dark:border-slate-700 text-sm sm:text-base font-black text-slate-950 dark:text-slate-100 shadow-[2px_2px_0px_0px_#0f172a]">
                   {renderFormattedMathText(item.formula, 'md')}
                 </div>
               </div>
             )}
 
+            {/* Contoh Kasus & Pembahasan */}
             {item.exampleCase && (
               <div className="space-y-2">
                 <h4 className="text-xs font-black uppercase tracking-wider text-slate-950 dark:text-slate-200 flex items-center gap-1.5">
-                  <CheckCircle2 size={14} className="text-sky-500" />
-                  <span>Contoh Kasus &amp; Penyelesaian:</span>
+                  <CheckCircle2 size={15} className="text-sky-500" />
+                  <span>C. Contoh Kasus &amp; Penyelesaian Nyata:</span>
                 </h4>
-                <div className="p-4 rounded-xl bg-sky-50 dark:bg-slate-800 border-2 border-slate-950 text-xs sm:text-sm font-bold text-slate-950 dark:text-slate-100">
+                <div className="p-4 rounded-xl bg-[#e0f2fe] dark:bg-sky-950/40 border-2 border-slate-950 dark:border-slate-700 text-xs sm:text-sm font-bold text-slate-950 dark:text-slate-100 leading-relaxed shadow-[2px_2px_0px_0px_#0f172a]">
                   {renderFormattedMathText(item.exampleCase, 'sm')}
                 </div>
               </div>
             )}
+
+            {/* Official Module Footer */}
+            <div className="pt-4 border-t-2 border-dashed border-slate-950/20 dark:border-slate-800 flex items-center justify-between text-[11px] font-bold text-slate-500 dark:text-slate-400">
+              <span>Fun Math World • Media Pembelajaran Interaktif SMP</span>
+              <span>Hak Cipta © 2026 Tim Pengembang</span>
+            </div>
+
           </div>
         )}
 
         {/* Footer */}
-        <div className="flex justify-end pt-2">
+        <div className="flex items-center justify-between pt-2 border-t-2 border-slate-200 dark:border-slate-800">
+          <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400">
+            {isPdf ? 'Gunakan tombol unduh jika ingin menyimpan modul untuk belajar luring.' : 'Gambar beresolusi penuh.'}
+          </span>
           <button
             type="button"
             onClick={onClose}
