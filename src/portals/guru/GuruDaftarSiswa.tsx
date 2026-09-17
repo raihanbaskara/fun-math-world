@@ -58,7 +58,7 @@ export const GuruDaftarSiswa: React.FC<{
             </h1>
 
             <p className="text-xs sm:text-sm text-slate-950 max-w-2xl leading-relaxed font-bold">
-              Pantau status pengerjaan LKPD digital, kuis latihan soal, evaluasi sumatif, dan progres ketuntasan kurikulum seluruh siswa secara real-time.
+              Pantau status pengerjaan LKPD, latihan soal, evaluasi sumatif, dan progres ketuntasan kurikulum seluruh siswa secara real-time.
             </p>
           </div>
 

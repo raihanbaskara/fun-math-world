@@ -279,7 +279,7 @@ export const GuruLatsol: React.FC<{
             </h1>
 
             <p className="text-xs sm:text-sm text-slate-950 max-w-2xl leading-relaxed font-bold">
-              Buka atau kunci akses ruangan kuis latihan soal, atur durasi pengerjaan timer, tambah &amp; edit butir soal pilihan ganda, serta pantau skor langsung siswa.
+              Buka atau kunci akses ruangan latihan soal, atur durasi pengerjaan timer, tambah &amp; edit butir soal pilihan ganda, serta pantau skor langsung siswa.
             </p>
           </div>
 

@@ -63,7 +63,7 @@ export const SiswaHome: React.FC<{
           </h1>
 
           <p className="text-xs sm:text-sm text-slate-950 max-w-2xl leading-relaxed font-bold">
-            Ikuti alur pembelajaran berurutan di bawah ini untuk menguasai materi pecahan, menyelesaikan penugasan LKPD digital, kuis latihan soal, dan evaluasi sumatif.
+            Ikuti alur pembelajaran berurutan di bawah ini untuk menguasai materi pecahan, menyelesaikan penugasan LKPD, latihan soal, dan evaluasi sumatif.
           </p>
         </div>
       </div>
@@ -277,8 +277,7 @@ export const SiswaHome: React.FC<{
                   <h4 className="font-mono font-black text-sm text-slate-950 dark:text-slate-100">{sch.title}</h4>
                 </div>
 
-                <div className="pt-1 flex items-center justify-between text-xs font-mono">
-                  {sch.topic ? <span className="text-slate-500 dark:text-slate-400 font-bold">{sch.topic}</span> : <span />}
+                <div className="pt-1 flex items-center justify-end text-xs font-mono">
                   <span className="font-black text-slate-950 bg-white dark:bg-slate-700 dark:text-slate-100 px-2 py-0.5 rounded border border-slate-950 dark:border-slate-600">
                     {sch.status}
                   </span>

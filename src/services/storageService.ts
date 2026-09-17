@@ -2,7 +2,7 @@ import { DatabaseState, User, Material } from '@/types';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import { generateChapterPdfDataUri } from '@/utils/pdfUtils';
 
-const STORAGE_KEY = "FUN_MATH_WORLD_SMP7_DB_V6";
+const STORAGE_KEY = "FUN_MATH_WORLD_SMP7_DB_V7";
 
 export const defaultDatabaseState: DatabaseState = {
   system: {
@@ -248,9 +248,9 @@ export const defaultDatabaseState: DatabaseState = {
   latsolRooms: [
     {
       id: "room_1",
-      title: "Latihan Soal Kuis: Materi Pecahan (10 Soal Lengkap)",
+      title: "Latihan Soal 1: Materi Pecahan (10 Soal Lengkap)",
       topic: "",
-      badge: "Kuis Lengkap",
+      badge: "Latihan Soal 1",
       durationSeconds: 600,
       isLockedByTeacher: false,
       questions: [
@@ -338,7 +338,7 @@ export const defaultDatabaseState: DatabaseState = {
     },
     {
       id: "room_2",
-      title: "Latihan Soal 2: Operasi Perkalian, Pembagian & Kontekstual",
+      title: "Latihan Soal 2: Operasi Pecahan & Kontekstual",
       topic: "",
       badge: "Latihan Soal 2",
       durationSeconds: 300,
@@ -616,6 +616,37 @@ function ensureMaterialsHaveUrl(materials: Material[]): Material[] {
   });
 }
 
+function sanitizeBannedSubtitles(state: DatabaseState): DatabaseState {
+  const bannedPhrases = [
+    "Bab 1.1 Pecahan Senilai & Desimal",
+    "LKPD Digital Soal Essai",
+    "Game Interaktif Berwaktu",
+    "Penilaian Capaian Bab 1",
+    "Konsep, Operasi Hitung, dan Soal Cerita Pecahan Kelas 7",
+    "Perkalian, Pembagian, dan Masalah Sehari-hari",
+    "Pemahaman materi pecahan & modul teori",
+    "Eksperimen pizza, balok, & peraga pecahan",
+    "Penyelesaian lembar kerja & koreksi AI per",
+    "Kuis Latihan Soal & Evaluasi Essai Kurikulum"
+  ];
+
+  // Schedules are always fixed from clean defaultDatabaseState
+  state.schedules = defaultDatabaseState.schedules;
+
+  // Scrub banned topics in latsol rooms
+  if (state.latsolRooms) {
+    state.latsolRooms = state.latsolRooms.map(room => {
+      let topic = room.topic || "";
+      if (bannedPhrases.some(b => topic.toLowerCase().includes(b.toLowerCase()) || b.toLowerCase().includes(topic.toLowerCase()))) {
+        topic = "";
+      }
+      return { ...room, topic };
+    });
+  }
+
+  return state;
+}
+
 class StorageService {
   private state: DatabaseState;
   private listeners: Set<Listener> = new Set();
@@ -716,7 +747,7 @@ class StorageService {
         const mergedLatsolSub = mergeArrayById(data.data.latsolSubmissions || [], this.state.latsolSubmissions || []);
         const mergedEvalSub = mergeArrayById(data.data.evaluationSubmissions || [], this.state.evaluationSubmissions || []);
 
-        this.state = this.sanitizeStudentProgress({
+        this.state = sanitizeBannedSubtitles(this.sanitizeStudentProgress({
           ...defaultDatabaseState,
           ...data.data,
           users: mergedUsers,
@@ -726,9 +757,9 @@ class StorageService {
           latsolRooms: remoteHasValidNewQuestions ? data.data.latsolRooms : defaultDatabaseState.latsolRooms,
           evaluationQuestions: remoteHasValidNewQuestions ? data.data.evaluationQuestions : defaultDatabaseState.evaluationQuestions,
           lkpdList: remoteHasValidLKPD ? data.data.lkpdList : defaultDatabaseState.lkpdList,
-          schedules: data.data.schedules || defaultDatabaseState.schedules,
+          schedules: defaultDatabaseState.schedules,
           reflections: data.data.reflections || defaultDatabaseState.reflections,
-        });
+        }));
         this.safeSaveToLocalStorage(this.state);
         this.isInitialSyncDone = true;
         this.notify();
@@ -761,7 +792,7 @@ class StorageService {
               const mergedLatsolSub = mergeArrayById(remoteState.latsolSubmissions || [], this.state.latsolSubmissions || []);
               const mergedEvalSub = mergeArrayById(remoteState.evaluationSubmissions || [], this.state.evaluationSubmissions || []);
 
-              this.state = this.sanitizeStudentProgress({
+              this.state = sanitizeBannedSubtitles(this.sanitizeStudentProgress({
                 ...defaultDatabaseState,
                 ...remoteState,
                 users: mergedUsers,
@@ -771,9 +802,9 @@ class StorageService {
                 latsolRooms: remoteHasValidNewQuestions ? remoteState.latsolRooms : defaultDatabaseState.latsolRooms,
                 evaluationQuestions: remoteHasValidNewQuestions ? remoteState.evaluationQuestions : defaultDatabaseState.evaluationQuestions,
                 lkpdList: remoteHasValidLKPD ? remoteState.lkpdList : defaultDatabaseState.lkpdList,
-                schedules: remoteState.schedules || defaultDatabaseState.schedules,
+                schedules: defaultDatabaseState.schedules,
                 reflections: remoteState.reflections || defaultDatabaseState.reflections,
-              });
+              }));
               this.safeSaveToLocalStorage(this.state);
               this.notify();
             }
@@ -805,6 +836,13 @@ class StorageService {
     let raw: string | null = null;
     try {
       raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) {
+        // Fallback to migrate existing users & submissions from V6 if present
+        const oldV6 = localStorage.getItem("FUN_MATH_WORLD_SMP7_DB_V6");
+        if (oldV6) {
+          raw = oldV6;
+        }
+      }
     } catch (e) {
       console.warn('[StorageService] localStorage.getItem failed:', e);
     }
@@ -830,11 +868,13 @@ class StorageService {
         lkpdList: hasValidLKPD ? parsed.lkpdList : defaultDatabaseState.lkpdList,
         materials: ensureMaterialsHaveUrl(parsed.materials?.length ? parsed.materials : defaultDatabaseState.materials),
         latsolSubmissions: parsed.latsolSubmissions || defaultDatabaseState.latsolSubmissions,
-        schedules: parsed.schedules?.length ? parsed.schedules : defaultDatabaseState.schedules,
+        schedules: defaultDatabaseState.schedules,
         reflections: parsed.reflections?.length ? parsed.reflections : defaultDatabaseState.reflections
       };
 
-      return this.sanitizeStudentProgress(merged);
+      const sanitized = sanitizeBannedSubtitles(this.sanitizeStudentProgress(merged));
+      this.safeSaveToLocalStorage(sanitized);
+      return sanitized;
     } catch {
       return JSON.parse(JSON.stringify(defaultDatabaseState));
     }
@@ -874,6 +914,7 @@ class StorageService {
             this.safeSaveToLocalStorage(this.state);
             this.notify();
           }
+          stateToSave = sanitizeBannedSubtitles(stateToSave);
 
           await supabase!
             .from('app_state')
