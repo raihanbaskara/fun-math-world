@@ -137,22 +137,28 @@ export function evaluateLKPDWithRubric(
 async function executeOpenRouterRequest(
   modelName: string,
   apiKey: string,
-  payloadData: string | Array<{ type: string; text?: string; image_url?: { url: string } }>
+  payloadData: string | Array<{ type: string; text?: string; image_url?: { url: string } }>,
+  timeoutMs: number = 12000
 ) {
-  return await fetch("https://openrouter.ai/api/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${apiKey}`,
-      "HTTP-Referer": "http://localhost:5173",
-      "X-Title": "Fun Math World LKPD"
-    },
-    body: JSON.stringify({
-      model: modelName,
-      messages: [
-        {
-          role: "system",
-          content: `Anda adalah Guru Penguji Matematika SMP ahli kurikulum bilangan pecahan.
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      method: "POST",
+      signal: controller.signal,
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${apiKey}`,
+        "HTTP-Referer": "http://localhost:5173",
+        "X-Title": "Fun Math World LKPD"
+      },
+      body: JSON.stringify({
+        model: modelName,
+        messages: [
+          {
+            role: "system",
+            content: `Anda adalah Guru Penguji Matematika SMP ahli kurikulum bilangan pecahan.
 Tugas Anda adalah memeriksa dan menilai jawaban LKPD siswa (baik jawaban teks ketikan maupun tulisan tangan/coretan pada FOTO pengerjaan fisik siswa jika dilampirkan) terhadap kunci pembahasan resmi secara objektif, teliti, dan mendidik.
 
 Prinsip Penilaian:
@@ -176,15 +182,19 @@ Kembalikan HANYA format JSON murni tanpa pembungkus teks markdown atau kutipan l
     }
   }
 }`
-        },
-        {
-          role: "user",
-          content: payloadData
-        }
-      ],
-      temperature: 0.1
-    })
-  });
+          },
+          {
+            role: "user",
+            content: payloadData
+          }
+        ],
+        temperature: 0.1
+      })
+    });
+    return res;
+  } finally {
+    clearTimeout(timeoutId);
+  }
 }
 
 export async function evaluateLKPDWithAI(
@@ -260,9 +270,11 @@ export async function evaluateLKPDWithAI(
     const resJson = await response.json();
     let contentText = resJson.choices?.[0]?.message?.content || "";
     
+    // Strip reasoning tags (<think>...</think>) if present in output
+    contentText = contentText.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
     // Clean up markdown fences if LLM wrapped in ```json
     contentText = contentText.replace(/^```json\s*/i, '').replace(/```$/i, '').trim();
-    // Sometimes model outputs text before JSON, extract JSON substring
+    // Extract JSON substring
     const firstBrace = contentText.indexOf('{');
     const lastBrace = contentText.lastIndexOf('}');
     if (firstBrace !== -1 && lastBrace !== -1) {
@@ -272,6 +284,7 @@ export async function evaluateLKPDWithAI(
     const parsed = JSON.parse(contentText);
     console.log("[AI Evaluator] Berhasil menerima evaluasi AI murni:", parsed);
 
+    const rubricFallbackOverall = evaluateLKPDWithRubric(questions, answers);
     const resultPerQuestion: Record<string, QuestionEvaluationResult> = {};
     let calculatedTotal = 0;
 
@@ -280,10 +293,11 @@ export async function evaluateLKPDWithAI(
       const maxScore = q.weight || 30;
       const studentAnsText = (answers[q.id]?.textAnswer || '').trim();
       const hasPhoto = Boolean(answers[q.id]?.photoUrl && answers[q.id].photoUrl!.length > 50);
+      const fallbackPerQ = rubricFallbackOverall.perQuestion[q.id];
 
       let qScore = 0;
       if (studentAnsText.length > 0 || hasPhoto) {
-        qScore = typeof qEval?.score === 'number' ? Math.min(maxScore, Math.max(0, qEval.score)) : 0;
+        qScore = typeof qEval?.score === 'number' ? Math.min(maxScore, Math.max(0, qEval.score)) : (fallbackPerQ?.score ?? 0);
       }
 
       calculatedTotal += qScore;
@@ -292,15 +306,15 @@ export async function evaluateLKPDWithAI(
         questionId: q.id,
         score: qScore,
         maxScore: maxScore,
-        aiAnswer: qEval?.aiAnswer || undefined,
+        aiAnswer: qEval?.aiAnswer?.trim() || fallbackPerQ?.aiAnswer || "Langkah kalkulasi pecahan versi AI telah dihitung.",
         diagnosa:
           studentAnsText.length === 0 && !hasPhoto
             ? "Siswa tidak mengumpulkan jawaban / lembar kerja kosong."
-            : qEval?.diagnosa || "Telah dievaluasi oleh Asisten AI.",
+            : qEval?.diagnosa || fallbackPerQ?.diagnosa || "Telah dievaluasi oleh Asisten AI.",
         conceptFeedback:
           studentAnsText.length === 0 && !hasPhoto
             ? "Tidak ada pengerjaan yang dapat dinilai pada kegiatan ini."
-            : qEval?.conceptFeedback || "Periksa kembali kesesuaian langkah dengan kunci pembahasan resmi.",
+            : qEval?.conceptFeedback || fallbackPerQ?.conceptFeedback || "Periksa kembali kesesuaian langkah dengan kunci pembahasan resmi.",
         discussion: q.discussion
       };
     });

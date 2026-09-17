@@ -129,7 +129,7 @@ export const SiswaLKPD: React.FC<{
   useEffect(() => {
     if (existingSubmission && existingSubmission.answers) {
       setAnswers(existingSubmission.answers);
-      setAiDiscussionUnlocked(false);
+      setAiDiscussionUnlocked(true);
     } else {
       const initial: Record<string, LKPDEssayAnswer> = {};
       questions.forEach(q => {
@@ -251,6 +251,31 @@ export const SiswaLKPD: React.FC<{
       const evalResult = await evaluateLKPDWithAI(questions, existingSubmission.answers);
       setAiEvaluationResult(evalResult);
       setAiDiscussionUnlocked(true);
+
+      // Persist the updated AI answers and scores into storageService
+      const updatedAnswers: Record<string, LKPDEssayAnswer> = { ...(existingSubmission.answers || {}) };
+      questions.forEach(q => {
+        const qEval = evalResult.perQuestion[q.id];
+        const studentAns = updatedAnswers[q.id] || { textAnswer: '', photoUrl: '' };
+        const diagnosaNote = qEval?.diagnosa ? `${qEval.diagnosa} (${qEval.conceptFeedback})` : (qEval?.conceptFeedback || "Jawaban telah diperiksa AI.");
+        updatedAnswers[q.id] = {
+          ...studentAns,
+          aiAnswer: qEval?.aiAnswer || studentAns.aiAnswer,
+          aiScore: qEval?.score ?? 0,
+          aiFeedback: diagnosaNote
+        };
+      });
+
+      storageService.update(draft => {
+        const target = draft.lkpdSubmissions.find(s => s.id === existingSubmission.id);
+        if (target) {
+          target.answers = updatedAnswers;
+          target.aiScore = evalResult.totalScore;
+          target.aiFeedback = evalResult.overallFeedback;
+        }
+      });
+      setAnswers(updatedAnswers);
+
       soundService.success();
       showToast("Analisis AI selesai! Pembahasan konsep resmi siap dipelajari.", "success");
     } catch (err: any) {
@@ -266,10 +291,19 @@ export const SiswaLKPD: React.FC<{
     // Ambil laporan integritas anti-cheat sebelum transisi selesai
     const antiCheatReport = getReport();
     setIsSolvingMode(false);
+    setIsAiLoading(true);
 
-    showToast("Mengirimkan lembar jawaban...", "info");
+    showToast("Mengirimkan lembar jawaban & menelaah hasil...", "info");
 
-    const aiEval = aiEvaluationResult || await evaluateLKPDWithAI(questions, answers);
+    let aiEval: LKPDOverallEvaluation;
+    try {
+      aiEval = aiEvaluationResult || await evaluateLKPDWithAI(questions, answers);
+    } catch (err) {
+      console.warn("AI evaluation fallback to smart rubric:", err);
+      aiEval = evaluateLKPDWithRubric(questions, answers);
+    } finally {
+      setIsAiLoading(false);
+    }
 
     const finalAnswers: Record<string, LKPDEssayAnswer> = {};
     questions.forEach(q => {
@@ -324,7 +358,7 @@ export const SiswaLKPD: React.FC<{
 
     soundService.success();
     confetti({ particleCount: 100, spread: 80 });
-    setIsSolvingMode(false);
+    setAiDiscussionUnlocked(true);
     showToast("Jawaban LKPD berhasil dikirim dan tersimpan permanen!", "success");
   };
 

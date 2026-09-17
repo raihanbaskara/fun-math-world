@@ -139,7 +139,7 @@ export const GuruLKPD: React.FC<{
   const handleOpenGrade = (sub: LKPDSubmission) => {
     soundService.click();
     setSelectedSub(sub);
-    setIsAiCorrectionRevealed(false);
+    setIsAiCorrectionRevealed(true);
     setIsAiEvaluating(false);
     setGradeScore(sub.teacherScore ?? sub.aiScore ?? 0);
     setGradeFeedback(sub.teacherFeedback || '');
@@ -172,6 +172,7 @@ export const GuruLKPD: React.FC<{
         const studentAns = updatedAnswers[q.id] || { textAnswer: '', photoUrl: '' };
         updatedAnswers[q.id] = {
           ...studentAns,
+          aiAnswer: qEval?.aiAnswer || studentAns.aiAnswer,
           aiScore: qEval?.score ?? 0,
           aiFeedback: qEval?.diagnosa ? `${qEval.diagnosa} (${qEval.conceptFeedback})` : (qEval?.conceptFeedback || "Telah dievaluasi oleh Asisten AI.")
         };
