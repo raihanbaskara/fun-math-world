@@ -29,7 +29,7 @@ interface SiswaNilaiProps {
 
 export const SiswaNilai: React.FC<SiswaNilaiProps> = ({ currentUser, onNavigate, showToast }) => {
   const [db, setDb] = useState(storageService.getState());
-  const [selectedTab, setSelectedTab] = useState<'all' | 'lkpd' | 'latsol' | 'evaluasi'>('all');
+  const [selectedTab, setSelectedTab] = useState<'lkpd' | 'latsol' | 'evaluasi'>('lkpd');
 
   useEffect(() => {
     return storageService.subscribe(newState => {
@@ -201,22 +201,12 @@ export const SiswaNilai: React.FC<SiswaNilaiProps> = ({ currentUser, onNavigate,
       </div>
 
       {/* Tabs Filter */}
-      <div className="flex flex-wrap items-center gap-2 border-b-4 border-slate-950 pb-4">
-        <button
-          onClick={() => setSelectedTab('all')}
-          className={`px-5 py-2.5 rounded-xl border-2 border-slate-950 font-black text-sm transition-all shadow-[3px_3px_0px_0px_#0f172a] ${
-            selectedTab === 'all'
-              ? 'bg-[#FACC15] text-slate-950 translate-x-0.5 translate-y-0.5 shadow-none'
-              : 'bg-white text-slate-700 hover:bg-slate-100'
-          }`}
-        >
-          Semua Materi & Kegiatan
-        </button>
+      <div className="flex flex-wrap items-center gap-2 border-b-2 border-slate-200 dark:border-slate-800 pb-4">
         <button
           onClick={() => setSelectedTab('lkpd')}
-          className={`px-5 py-2.5 rounded-xl border-2 border-slate-950 font-black text-sm transition-all shadow-[3px_3px_0px_0px_#0f172a] ${
+          className={`px-5 py-2.5 rounded-xl border-2 border-slate-950 font-black text-sm transition-all shadow-[2.5px_2.5px_0px_0px_#0f172a] cursor-pointer ${
             selectedTab === 'lkpd'
-              ? 'bg-[#FACC15] text-slate-950 translate-x-0.5 translate-y-0.5 shadow-none'
+              ? 'bg-[#ffe600] text-slate-950 translate-x-0.5 translate-y-0.5 shadow-none'
               : 'bg-white text-slate-700 hover:bg-slate-100'
           }`}
         >
@@ -224,9 +214,9 @@ export const SiswaNilai: React.FC<SiswaNilaiProps> = ({ currentUser, onNavigate,
         </button>
         <button
           onClick={() => setSelectedTab('latsol')}
-          className={`px-5 py-2.5 rounded-xl border-2 border-slate-950 font-black text-sm transition-all shadow-[3px_3px_0px_0px_#0f172a] ${
+          className={`px-5 py-2.5 rounded-xl border-2 border-slate-950 font-black text-sm transition-all shadow-[2.5px_2.5px_0px_0px_#0f172a] cursor-pointer ${
             selectedTab === 'latsol'
-              ? 'bg-[#FACC15] text-slate-950 translate-x-0.5 translate-y-0.5 shadow-none'
+              ? 'bg-[#ffe600] text-slate-950 translate-x-0.5 translate-y-0.5 shadow-none'
               : 'bg-white text-slate-700 hover:bg-slate-100'
           }`}
         >
@@ -234,9 +224,9 @@ export const SiswaNilai: React.FC<SiswaNilaiProps> = ({ currentUser, onNavigate,
         </button>
         <button
           onClick={() => setSelectedTab('evaluasi')}
-          className={`px-5 py-2.5 rounded-xl border-2 border-slate-950 font-black text-sm transition-all shadow-[3px_3px_0px_0px_#0f172a] ${
+          className={`px-5 py-2.5 rounded-xl border-2 border-slate-950 font-black text-sm transition-all shadow-[2.5px_2.5px_0px_0px_#0f172a] cursor-pointer ${
             selectedTab === 'evaluasi'
-              ? 'bg-[#FACC15] text-slate-950 translate-x-0.5 translate-y-0.5 shadow-none'
+              ? 'bg-[#ffe600] text-slate-950 translate-x-0.5 translate-y-0.5 shadow-none'
               : 'bg-white text-slate-700 hover:bg-slate-100'
           }`}
         >
@@ -247,7 +237,7 @@ export const SiswaNilai: React.FC<SiswaNilaiProps> = ({ currentUser, onNavigate,
       {/* Content Section: Detailed Grade Cards */}
       <div className="space-y-8">
         {/* SECTION 1: LKPD GRADES */}
-        {(selectedTab === 'all' || selectedTab === 'lkpd') && (
+        {selectedTab === 'lkpd' && (
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -426,7 +416,7 @@ export const SiswaNilai: React.FC<SiswaNilaiProps> = ({ currentUser, onNavigate,
         )}
 
         {/* SECTION 2: LATIHAN SOAL */}
-        {(selectedTab === 'all' || selectedTab === 'latsol') && (
+        {selectedTab === 'latsol' && (
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -507,7 +497,7 @@ export const SiswaNilai: React.FC<SiswaNilaiProps> = ({ currentUser, onNavigate,
         )}
 
         {/* SECTION 3: EVALUASI SUMATIF */}
-        {(selectedTab === 'all' || selectedTab === 'evaluasi') && (
+        {selectedTab === 'evaluasi' && (
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
