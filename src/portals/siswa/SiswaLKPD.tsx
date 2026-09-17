@@ -588,50 +588,6 @@ export const SiswaLKPD: React.FC<{
             </span>
           </div>
 
-          {/* Nilai & Catatan Evaluasi Guru / Status Penilaian */}
-          <div className="p-4 sm:p-5 bg-white dark:bg-[#1f2937] rounded-2xl border-3 border-slate-950 dark:border-slate-700 shadow-[4px_4px_0px_0px_#0f172a] space-y-3">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b-2 border-slate-200 dark:border-slate-700 pb-2.5">
-              <div className="flex items-center gap-2 font-mono font-black text-sm text-slate-950 dark:text-slate-100">
-                <Trophy size={18} className="text-amber-500" />
-                <span>Hasil Penilaian &amp; Catatan Guru</span>
-              </div>
-              <div className="flex items-center gap-2">
-                {existingSubmission.isAiEvaluated ? (
-                  <span className="text-xs font-mono font-black px-2.5 py-1 rounded-xl bg-purple-100 text-purple-900 border border-purple-950/20">
-                    Rekomendasi AI: {existingSubmission.aiScore ?? 0} / 100
-                  </span>
-                ) : (
-                  <span className="text-xs font-mono font-black px-2.5 py-1 rounded-xl bg-slate-100 text-slate-600 border border-slate-950/20">
-                    AI: Belum Dikoreksi
-                  </span>
-                )}
-                <span className={`text-xs font-mono font-black px-3 py-1 rounded-xl border-2 border-slate-950 ${
-                  existingSubmission.teacherScore !== null ? 'bg-[#ffe600] text-slate-950' : 'bg-slate-100 text-slate-700'
-                }`}>
-                  {existingSubmission.teacherScore !== null
-                    ? `Nilai Guru: ${existingSubmission.teacherScore} / 100`
-                    : 'Belum Dinilai Guru'}
-                </span>
-              </div>
-            </div>
-
-            {existingSubmission.teacherFeedback ? (
-              <div className="p-3 bg-amber-50/80 dark:bg-amber-950/20 rounded-xl border-2 border-amber-400/60 dark:border-amber-700/60 text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100">
-                <span className="font-mono font-black text-amber-950 dark:text-amber-400 block mb-1">
-                  Catatan Evaluasi / Bimbingan Guru:
-                </span>
-                <p className="whitespace-pre-line leading-relaxed">
-                  {existingSubmission.teacherFeedback}
-                </p>
-              </div>
-            ) : (
-              <p className="text-xs font-bold text-slate-600 dark:text-slate-400 italic">
-                {existingSubmission.teacherScore !== null
-                  ? 'Guru telah memberikan nilai final tanpa catatan tambahan.'
-                  : 'Guru pengampu sedang memeriksa pengerjaanmu. Nilai final dan feedback bimbingan akan segera muncul di sini dan menu Nilai.'}
-              </p>
-            )}
-          </div>
 
           {/* PDF Attachment button in Review */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 bg-white rounded-2xl border-2 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a]">
@@ -837,17 +793,7 @@ export const SiswaLKPD: React.FC<{
                       </div>
                     )}
                   </div>
-                ) : (
-                  <div className="p-3 bg-slate-50 dark:bg-slate-900/40 rounded-xl border border-dashed border-slate-300 dark:border-slate-800 text-center">
-                    <span className="text-xs font-bold text-slate-500 dark:text-slate-400">
-                      {existingSubmission.isAiEvaluated ? (
-                        <>🔒 Langkah konsep &amp; solusi AI disembunyikan. Tekan tombol <strong className="text-cyan-700 dark:text-cyan-400">"Tampilkan Pembahasan"</strong> di atas.</>
-                      ) : (
-                        <>🔒 Belum dikoreksi AI. Tekan tombol <strong className="text-amber-700 dark:text-amber-400">"Minta Koreksi AI"</strong> di atas jika ingin memunculkan evaluasi dan solusi langkah resmi.</>
-                      )}
-                    </span>
-                  </div>
-                )}
+                ) : null}
               </div>
             );
           })}
