@@ -98,8 +98,9 @@ export interface LKPDSubmission {
   photoUrls?: string[];
   answers?: Record<string, LKPDEssayAnswer>;
   date: string;
-  aiScore: number;
-  aiFeedback: string;
+  isAiEvaluated?: boolean;
+  aiScore?: number;
+  aiFeedback?: string;
   teacherScore: number | null;
   teacherFeedback: string;
   antiCheat?: AntiCheatReport;

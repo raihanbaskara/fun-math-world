@@ -129,7 +129,7 @@ export const SiswaLKPD: React.FC<{
   useEffect(() => {
     if (existingSubmission && existingSubmission.answers) {
       setAnswers(existingSubmission.answers);
-      setAiDiscussionUnlocked(true);
+      setAiDiscussionUnlocked(existingSubmission.isAiEvaluated === true);
     } else {
       const initial: Record<string, LKPDEssayAnswer> = {};
       questions.forEach(q => {
@@ -245,14 +245,20 @@ export const SiswaLKPD: React.FC<{
 
     setIsAiLoading(true);
     soundService.click();
-    showToast("Menghubungi AI untuk menelaah jawabanmu...", "info");
+    showToast("Menghubungi AI untuk mengoreksi jawabanmu...", "info");
 
     try {
-      const evalResult = await evaluateLKPDWithAI(questions, existingSubmission.answers);
+      let evalResult: LKPDOverallEvaluation;
+      try {
+        evalResult = await evaluateLKPDWithAI(questions, existingSubmission.answers);
+      } catch (e) {
+        console.warn("AI service fallback to rubric:", e);
+        evalResult = evaluateLKPDWithRubric(questions, existingSubmission.answers);
+      }
       setAiEvaluationResult(evalResult);
       setAiDiscussionUnlocked(true);
 
-      // Persist the updated AI answers and scores into storageService
+      // Persist the updated AI answers, score, and isAiEvaluated flag into storageService
       const updatedAnswers: Record<string, LKPDEssayAnswer> = { ...(existingSubmission.answers || {}) };
       questions.forEach(q => {
         const qEval = evalResult.perQuestion[q.id];
@@ -270,6 +276,7 @@ export const SiswaLKPD: React.FC<{
         const target = draft.lkpdSubmissions.find(s => s.id === existingSubmission.id);
         if (target) {
           target.answers = updatedAnswers;
+          target.isAiEvaluated = true;
           target.aiScore = evalResult.totalScore;
           target.aiFeedback = evalResult.overallFeedback;
         }
@@ -277,11 +284,11 @@ export const SiswaLKPD: React.FC<{
       setAnswers(updatedAnswers);
 
       soundService.success();
-      showToast("Analisis AI selesai! Pembahasan konsep resmi siap dipelajari.", "success");
+      showToast("Koreksi AI selesai! Pembahasan konsep resmi siap dipelajari.", "success");
     } catch (err: any) {
       console.error(err);
       setAiDiscussionUnlocked(true);
-      showToast("Pembahasan resmi dibuka (AI offline).", "info");
+      showToast("Pembahasan resmi dibuka.", "info");
     } finally {
       setIsAiLoading(false);
     }
@@ -291,31 +298,15 @@ export const SiswaLKPD: React.FC<{
     // Ambil laporan integritas anti-cheat sebelum transisi selesai
     const antiCheatReport = getReport();
     setIsSolvingMode(false);
-    setIsAiLoading(true);
+    soundService.click();
 
-    showToast("Mengirimkan lembar jawaban & menelaah hasil...", "info");
-
-    let aiEval: LKPDOverallEvaluation;
-    try {
-      aiEval = aiEvaluationResult || await evaluateLKPDWithAI(questions, answers);
-    } catch (err) {
-      console.warn("AI evaluation fallback to smart rubric:", err);
-      aiEval = evaluateLKPDWithRubric(questions, answers);
-    } finally {
-      setIsAiLoading(false);
-    }
-
+    // Jawaban dikirim murni tanpa memanggil AI
     const finalAnswers: Record<string, LKPDEssayAnswer> = {};
     questions.forEach(q => {
       const studentAns = answers[q.id] || { textAnswer: '', photoUrl: '' };
-      const qEval = aiEval.perQuestion[q.id];
-      const diagnosaNote = qEval?.diagnosa ? `${qEval.diagnosa} (${qEval.conceptFeedback})` : qEval?.conceptFeedback || "Jawaban telah diperiksa AI.";
       finalAnswers[q.id] = {
         textAnswer: studentAns.textAnswer,
         photoUrl: studentAns.photoUrl || '',
-        aiAnswer: qEval?.aiAnswer,
-        aiScore: qEval?.score ?? 0,
-        aiFeedback: diagnosaNote
       };
     });
 
@@ -331,8 +322,9 @@ export const SiswaLKPD: React.FC<{
       photoUrls: photoList,
       answers: finalAnswers,
       date: new Date().toLocaleString('id-ID'),
-      aiScore: aiEval.totalScore,
-      aiFeedback: aiEval.overallFeedback,
+      isAiEvaluated: false,
+      aiScore: undefined,
+      aiFeedback: "",
       teacherScore: null,
       teacherFeedback: "",
       antiCheat: antiCheatReport,
@@ -358,8 +350,8 @@ export const SiswaLKPD: React.FC<{
 
     soundService.success();
     confetti({ particleCount: 100, spread: 80 });
-    setAiDiscussionUnlocked(true);
-    showToast("Jawaban LKPD berhasil dikirim dan tersimpan permanen!", "success");
+    setAiDiscussionUnlocked(false);
+    showToast("Jawaban LKPD berhasil dikirim ke Guru! Klik 'Minta Koreksi AI' jika ingin ditelaah AI.", "success");
   };
 
   // Modern Minimalist Chevron Dropdown LKPD Selector
@@ -545,9 +537,15 @@ export const SiswaLKPD: React.FC<{
                 <span>Hasil Penilaian &amp; Catatan Guru</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-xs font-mono font-black px-2.5 py-1 rounded-xl bg-purple-100 text-purple-900 border border-purple-950/20">
-                  Rekomendasi AI: {existingSubmission.aiScore} / 100
-                </span>
+                {existingSubmission.isAiEvaluated ? (
+                  <span className="text-xs font-mono font-black px-2.5 py-1 rounded-xl bg-purple-100 text-purple-900 border border-purple-950/20">
+                    Rekomendasi AI: {existingSubmission.aiScore ?? 0} / 100
+                  </span>
+                ) : (
+                  <span className="text-xs font-mono font-black px-2.5 py-1 rounded-xl bg-slate-100 text-slate-600 border border-slate-950/20">
+                    AI: Belum Dikoreksi
+                  </span>
+                )}
                 <span className={`text-xs font-mono font-black px-3 py-1 rounded-xl border-2 border-slate-950 ${
                   existingSubmission.teacherScore !== null ? 'bg-[#ffe600] text-slate-950' : 'bg-slate-100 text-slate-700'
                 }`}>
@@ -608,25 +606,53 @@ export const SiswaLKPD: React.FC<{
               </div>
             </div>
           ) : (
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white dark:bg-[#111827] border-4 border-slate-950 dark:border-slate-800 rounded-3xl p-5 shadow-[6px_6px_0px_0px_#0f172a] dark:shadow-[6px_6px_0px_0px_#000000]">
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 bg-[#a5f3fc] border-2 border-slate-950 rounded-xl text-slate-950 shadow-[1.5px_1.5px_0px_0px_#0f172a]">
-                  <Bot size={22} />
+            !existingSubmission.isAiEvaluated ? (
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-[#fffdf0] dark:bg-[#18181b] border-4 border-slate-950 dark:border-amber-600 rounded-3xl p-5 sm:p-6 shadow-[6px_6px_0px_0px_#0f172a] dark:shadow-[6px_6px_0px_0px_#000000]">
+                <div className="flex items-center gap-3.5">
+                  <div className="p-3 bg-[#ffe600] border-3 border-slate-950 rounded-2xl text-slate-950 shadow-[2px_2px_0px_0px_#0f172a] shrink-0">
+                    <Sparkles size={24} />
+                  </div>
+                  <div>
+                    <h2 className="text-base sm:text-lg font-black font-mono text-slate-950 dark:text-slate-100 flex items-center gap-2">
+                      <span>Bimbingan &amp; Solusi Koreksi AI</span>
+                      <span className="text-[11px] font-mono font-black bg-amber-200 dark:bg-amber-900 text-amber-950 dark:text-amber-200 px-2 py-0.5 rounded-lg border border-amber-950/20">
+                        Opsional
+                      </span>
+                    </h2>
+                    <p className="text-xs sm:text-sm font-bold text-slate-600 dark:text-slate-400 mt-0.5">
+                      Ingin tahu evaluasi langkah hitungmu serta melihat solusi langkah demi langkah versi AI? Klik tombol untuk menjalankan koreksi.
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <h2 className="text-base sm:text-lg font-black font-mono text-slate-950 dark:text-slate-100">
-                    Tinjauan Jawaban &amp; Pembahasan Soal
-                  </h2>
-                  <p className="text-xs font-bold text-slate-600 dark:text-slate-400">
-                    {aiDiscussionUnlocked
-                      ? 'Langkah konsep pembahasan resmi per soal sedang terbuka.'
-                      : 'Klik tombol di samping untuk menelaah jawabanmu dan memunculkan pembahasan konsep resmi.'}
-                  </p>
-                </div>
-              </div>
 
-              <div className="flex items-center gap-2 shrink-0">
-                {aiDiscussionUnlocked && (
+                <button
+                  type="button"
+                  onClick={() => handleRunAiCorrectionForReview(true)}
+                  className="px-6 py-3.5 rounded-2xl font-mono text-xs sm:text-sm font-black border-3 border-slate-950 bg-[#ffe600] hover:bg-yellow-400 text-slate-950 shadow-[4px_4px_0px_0px_#0f172a] dark:shadow-[4px_4px_0px_0px_#000000] transition-all cursor-pointer flex items-center justify-center gap-2 active:translate-x-0.5 active:translate-y-0.5 shrink-0"
+                >
+                  <Sparkles size={18} />
+                  <span>Minta Koreksi AI</span>
+                </button>
+              </div>
+            ) : (
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white dark:bg-[#111827] border-4 border-slate-950 dark:border-slate-800 rounded-3xl p-5 shadow-[6px_6px_0px_0px_#0f172a] dark:shadow-[6px_6px_0px_0px_#000000]">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 bg-[#a5f3fc] border-2 border-slate-950 rounded-xl text-slate-950 shadow-[1.5px_1.5px_0px_0px_#0f172a]">
+                    <Bot size={22} />
+                  </div>
+                  <div>
+                    <h2 className="text-base sm:text-lg font-black font-mono text-slate-950 dark:text-slate-100">
+                      Tinjauan Jawaban &amp; Pembahasan Soal
+                    </h2>
+                    <p className="text-xs font-bold text-slate-600 dark:text-slate-400">
+                      {aiDiscussionUnlocked
+                        ? 'Langkah konsep pembahasan resmi per soal sedang terbuka.'
+                        : 'Pembahasan sedang disembunyikan. Klik tombol di samping untuk membukanya.'}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 shrink-0">
                   <button
                     type="button"
                     onClick={() => handleRunAiCorrectionForReview(true)}
@@ -636,22 +662,22 @@ export const SiswaLKPD: React.FC<{
                     <RefreshCw size={14} />
                     <span>Koreksi Ulang</span>
                   </button>
-                )}
 
-                <button
-                  type="button"
-                  onClick={() => handleRunAiCorrectionForReview(false)}
-                  className={`px-5 py-3 rounded-2xl font-mono text-xs font-black border-3 border-slate-950 shadow-[4px_4px_0px_0px_#0f172a] dark:shadow-[4px_4px_0px_0px_#000000] transition-all cursor-pointer flex items-center justify-center gap-2 ${
-                    aiDiscussionUnlocked
-                      ? 'bg-slate-200 dark:bg-slate-800 text-slate-900 dark:text-slate-100'
-                      : 'bg-[#a5f3fc] hover:bg-cyan-300 text-slate-950'
-                  }`}
-                >
-                  <Sparkles size={16} />
-                  <span>{aiDiscussionUnlocked ? 'Sembunyikan Pembahasan' : 'Jalankan Koreksi AI (Live)'}</span>
-                </button>
+                  <button
+                    type="button"
+                    onClick={() => setAiDiscussionUnlocked(!aiDiscussionUnlocked)}
+                    className={`px-5 py-3 rounded-2xl font-mono text-xs font-black border-3 border-slate-950 shadow-[4px_4px_0px_0px_#0f172a] dark:shadow-[4px_4px_0px_0px_#000000] transition-all cursor-pointer flex items-center justify-center gap-2 ${
+                      aiDiscussionUnlocked
+                        ? 'bg-slate-200 dark:bg-slate-800 text-slate-900 dark:text-slate-100'
+                        : 'bg-[#a5f3fc] hover:bg-cyan-300 text-slate-950'
+                    }`}
+                  >
+                    <Sparkles size={16} />
+                    <span>{aiDiscussionUnlocked ? 'Sembunyikan Pembahasan' : 'Tampilkan Pembahasan'}</span>
+                  </button>
+                </div>
               </div>
-            </div>
+            )
           )}
 
           {questions.map((q, idx) => {
@@ -755,7 +781,11 @@ export const SiswaLKPD: React.FC<{
                 ) : (
                   <div className="p-3 bg-slate-50 dark:bg-slate-900/40 rounded-xl border border-dashed border-slate-300 dark:border-slate-800 text-center">
                     <span className="text-xs font-bold text-slate-500 dark:text-slate-400">
-                      🔒 Pembahasan disembunyikan. Tekan tombol <strong className="text-cyan-700 dark:text-cyan-400">"Jalankan Koreksi AI (Live)"</strong> di atas untuk memunculkan langkah konsep resmi.
+                      {existingSubmission.isAiEvaluated ? (
+                        <>🔒 Langkah konsep &amp; solusi AI disembunyikan. Tekan tombol <strong className="text-cyan-700 dark:text-cyan-400">"Tampilkan Pembahasan"</strong> di atas.</>
+                      ) : (
+                        <>🔒 Belum dikoreksi AI. Tekan tombol <strong className="text-amber-700 dark:text-amber-400">"Minta Koreksi AI"</strong> di atas jika ingin memunculkan evaluasi dan solusi langkah resmi.</>
+                      )}
                     </span>
                   </div>
                 )}

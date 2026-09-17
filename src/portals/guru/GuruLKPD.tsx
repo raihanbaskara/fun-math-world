@@ -183,6 +183,7 @@ export const GuruLKPD: React.FC<{
         const target = draft.lkpdSubmissions.find(s => s.id === selectedSub.id);
         if (target) {
           target.answers = updatedAnswers;
+          target.isAiEvaluated = true;
           target.aiScore = evalResult.totalScore;
           target.aiFeedback = evalResult.overallFeedback;
         }
@@ -192,6 +193,7 @@ export const GuruLKPD: React.FC<{
       setSelectedSub(prev => prev ? {
         ...prev,
         answers: updatedAnswers,
+        isAiEvaluated: true,
         aiScore: evalResult.totalScore,
         aiFeedback: evalResult.overallFeedback
       } : null);
@@ -539,9 +541,15 @@ export const GuruLKPD: React.FC<{
                         </button>
                       </td>
                       <td className="p-4 font-mono font-black">
-                        <span className="inline-block whitespace-nowrap px-2.5 py-1 rounded-xl bg-purple-100 dark:bg-purple-900/60 text-purple-950 dark:text-purple-200 border-2 border-slate-950 dark:border-purple-700 shadow-[1.5px_1.5px_0px_0px_#0f172a] dark:shadow-[1.5px_1.5px_0px_0px_#000000]">
-                          {s.aiScore}/100
-                        </span>
+                        {s.isAiEvaluated ? (
+                          <span className="inline-block whitespace-nowrap px-2.5 py-1 rounded-xl bg-purple-100 dark:bg-purple-900/60 text-purple-950 dark:text-purple-200 border-2 border-slate-950 dark:border-purple-700 shadow-[1.5px_1.5px_0px_0px_#0f172a] dark:shadow-[1.5px_1.5px_0px_0px_#000000]">
+                            {s.aiScore ?? 0}/100
+                          </span>
+                        ) : (
+                          <span className="inline-block whitespace-nowrap px-2.5 py-1 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-2 border-slate-950 dark:border-slate-700 text-xs font-mono font-black shadow-[1.5px_1.5px_0px_0px_#0f172a]">
+                            Belum Koreksi AI
+                          </span>
+                        )}
                       </td>
                       <td className="p-4 font-mono font-black">
                         {s.teacherScore ? (
@@ -837,32 +845,35 @@ export const GuruLKPD: React.FC<{
 
                         {/* 1. AI Step-by-Step Solution & Teacher Key Separation */}
                         {(() => {
-                          const aiAnswerText = ans?.aiAnswer || evaluateLKPDWithRubric([q], { [q.id]: ans || { textAnswer: '' } }).perQuestion[q.id]?.aiAnswer || "Langkah kalkulasi pecahan versi AI telah dihitung.";
+                          const hasAi = selectedSub.isAiEvaluated && ans?.aiAnswer;
+                          const aiAnswerText = ans?.aiAnswer || "";
                           return (
                             <div className="space-y-2.5">
-                              {/* Blok Jawaban & Solusi Langkah Versi AI */}
-                              <div className="p-3.5 bg-purple-50 dark:bg-purple-950/40 rounded-xl border-2 border-slate-950 dark:border-purple-800 text-xs space-y-2 shadow-[2px_2px_0px_0px_#0f172a] animate-in fade-in">
-                                <div className="font-black text-purple-950 dark:text-purple-300 flex items-center justify-between font-mono">
-                                  <div className="flex items-center gap-1.5">
-                                    <Bot size={15} className="text-purple-700 dark:text-purple-400" />
-                                    <span>Jawaban &amp; Solusi Langkah Versi AI:</span>
+                              {/* Blok Jawaban & Solusi Langkah Versi AI (Hanya jika siswa sudah minta koreksi AI) */}
+                              {hasAi ? (
+                                <div className="p-3.5 bg-purple-50 dark:bg-purple-950/40 rounded-xl border-2 border-slate-950 dark:border-purple-800 text-xs space-y-2 shadow-[2px_2px_0px_0px_#0f172a] animate-in fade-in">
+                                  <div className="font-black text-purple-950 dark:text-purple-300 flex items-center justify-between font-mono">
+                                    <div className="flex items-center gap-1.5">
+                                      <Bot size={15} className="text-purple-700 dark:text-purple-400" />
+                                      <span>Jawaban &amp; Solusi Langkah Versi AI:</span>
+                                    </div>
+                                    <span className="text-[11px] font-black bg-purple-200 dark:bg-purple-900 px-2 py-0.5 rounded-md border border-purple-950/20">
+                                      Rekomendasi AI: {ans?.aiScore !== undefined ? ans.aiScore : 0} Poin
+                                    </span>
                                   </div>
-                                  <span className="text-[11px] font-black bg-purple-200 dark:bg-purple-900 px-2 py-0.5 rounded-md border border-purple-950/20">
-                                    Rekomendasi AI: {ans?.aiScore !== undefined ? ans.aiScore : 0} Poin
-                                  </span>
+                                  <p className="text-slate-800 dark:text-purple-200 font-bold whitespace-pre-line leading-relaxed">
+                                    {aiAnswerText}
+                                  </p>
+                                  {ans?.aiFeedback && (
+                                    <div className="text-[11px] font-mono font-bold text-purple-950 dark:text-purple-300 pt-1.5 border-t border-purple-200 dark:border-purple-800 flex items-start gap-1">
+                                      <span className="shrink-0 font-black">Diagnosa AI:</span>
+                                      <span>{ans.aiFeedback}</span>
+                                    </div>
+                                  )}
                                 </div>
-                                <p className="text-slate-800 dark:text-purple-200 font-bold whitespace-pre-line leading-relaxed">
-                                  {aiAnswerText}
-                                </p>
-                                {ans?.aiFeedback && (
-                                  <div className="text-[11px] font-mono font-bold text-purple-950 dark:text-purple-300 pt-1.5 border-t border-purple-200 dark:border-purple-800 flex items-start gap-1">
-                                    <span className="shrink-0 font-black">Diagnosa AI:</span>
-                                    <span>{ans.aiFeedback}</span>
-                                  </div>
-                                )}
-                              </div>
+                              ) : null}
 
-                              {/* Blok Pembahasan Jawaban Guru (Kunci Guru) */}
+                              {/* Blok Pembahasan Jawaban Guru (Kunci Guru) - Selalu ada sebagai pedoman guru */}
                               {q.discussion && (
                                 <div className="p-3.5 bg-emerald-50 dark:bg-emerald-950/40 rounded-xl border-2 border-slate-950 dark:border-emerald-800 text-xs space-y-1.5 shadow-[2px_2px_0px_0px_#0f172a]">
                                   <div className="font-black text-emerald-950 dark:text-emerald-300 flex items-center gap-1.5 font-mono">
@@ -883,39 +894,62 @@ export const GuruLKPD: React.FC<{
                 </div>
 
                 {/* AI Score Recommendation Summary */}
-                <div className="p-4 bg-sky-50 dark:bg-sky-950/40 rounded-2xl border-3 border-slate-950 dark:border-sky-800 text-xs space-y-2.5 shadow-[3px_3px_0px_0px_#0f172a] animate-in fade-in">
-                  <div className="font-black text-sky-950 dark:text-sky-300 flex flex-col sm:flex-row sm:items-center justify-between gap-2 font-mono">
-                    <div className="flex items-center gap-2">
-                      <Bot size={18} className="text-sky-700 dark:text-sky-400" />
-                      <span className="text-sm">Rekomendasi Total Skor AI: {selectedSub.aiScore !== undefined ? selectedSub.aiScore : 0} / 100</span>
+                {selectedSub.isAiEvaluated ? (
+                  <div className="p-4 bg-sky-50 dark:bg-sky-950/40 rounded-2xl border-3 border-slate-950 dark:border-sky-800 text-xs space-y-2.5 shadow-[3px_3px_0px_0px_#0f172a] animate-in fade-in">
+                    <div className="font-black text-sky-950 dark:text-sky-300 flex flex-col sm:flex-row sm:items-center justify-between gap-2 font-mono">
+                      <div className="flex items-center gap-2">
+                        <Bot size={18} className="text-sky-700 dark:text-sky-400" />
+                        <span className="text-sm">Rekomendasi Total Skor AI: {selectedSub.aiScore !== undefined ? selectedSub.aiScore : 0} / 100</span>
+                      </div>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <button
+                          type="button"
+                          disabled={isAiEvaluating}
+                          onClick={() => handleRunLiveAiEvaluation(true)}
+                          className="px-3 py-1.5 bg-white dark:bg-slate-800 text-slate-950 dark:text-slate-100 border-2 border-slate-950 rounded-xl text-xs font-mono font-black shadow-[2px_2px_0px_0px_#0f172a] cursor-pointer hover:bg-slate-100 flex items-center gap-1.5 disabled:opacity-50"
+                        >
+                          {isAiEvaluating ? <Loader2 size={13} className="animate-spin" /> : <RefreshCw size={13} />}
+                          <span>Koreksi Ulang AI (Live)</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            soundService.click();
+                            setGradeScore(selectedSub.aiScore ?? 0);
+                            showToast("Skor rekomendasi AI diterapkan ke form nilai.", "info");
+                          }}
+                          className="px-3 py-1.5 bg-[#ffe600] text-slate-950 border-2 border-slate-950 rounded-xl text-xs font-mono font-black shadow-[2px_2px_0px_0px_#0f172a] cursor-pointer hover:bg-yellow-400 w-fit"
+                        >
+                          Terapkan ke Nilai Final Guru
+                        </button>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <button
-                        type="button"
-                        disabled={isAiEvaluating}
-                        onClick={() => handleRunLiveAiEvaluation(true)}
-                        className="px-3 py-1.5 bg-white dark:bg-slate-800 text-slate-950 dark:text-slate-100 border-2 border-slate-950 rounded-xl text-xs font-mono font-black shadow-[2px_2px_0px_0px_#0f172a] cursor-pointer hover:bg-slate-100 flex items-center gap-1.5 disabled:opacity-50"
-                      >
-                        {isAiEvaluating ? <Loader2 size={13} className="animate-spin" /> : <RefreshCw size={13} />}
-                        <span>Koreksi Ulang AI (Live)</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          soundService.click();
-                          setGradeScore(selectedSub.aiScore ?? 0);
-                          showToast("Skor rekomendasi AI diterapkan ke form nilai.", "info");
-                        }}
-                        className="px-3 py-1.5 bg-[#ffe600] text-slate-950 border-2 border-slate-950 rounded-xl text-xs font-mono font-black shadow-[2px_2px_0px_0px_#0f172a] cursor-pointer hover:bg-yellow-400 w-fit"
-                      >
-                        Terapkan ke Nilai Final Guru
-                      </button>
-                    </div>
+                    <p className="text-slate-800 dark:text-sky-200 font-bold leading-relaxed">
+                      {selectedSub.aiFeedback || (selectedSub.aiScore === 0 ? "Siswa belum mengumpulkan jawaban pengerjaan." : "Hasil evaluasi pengerjaan siswa.")}
+                    </p>
                   </div>
-                  <p className="text-slate-800 dark:text-sky-200 font-bold leading-relaxed">
-                    {selectedSub.aiFeedback || (selectedSub.aiScore === 0 ? "Siswa belum mengumpulkan jawaban pengerjaan." : "Hasil evaluasi pengerjaan siswa.")}
-                  </p>
-                </div>
+                ) : (
+                  <div className="p-4 bg-slate-50 dark:bg-slate-900/60 rounded-2xl border-3 border-dashed border-slate-400 dark:border-slate-700 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-[2px_2px_0px_0px_#0f172a]">
+                    <div className="flex items-center gap-2.5 text-slate-700 dark:text-slate-300 font-mono font-bold">
+                      <Bot size={20} className="text-slate-500 shrink-0" />
+                      <div>
+                        <span className="font-black text-slate-900 dark:text-slate-100 block">Status AI: Siswa Belum Meminta Koreksi AI</span>
+                        <span className="text-[11px] text-slate-500 dark:text-slate-400 font-sans">
+                          Siswa mengumpulkan lembar jawaban tanpa meminta bantuan koreksi AI. Guru dapat langsung menilai secara manual berdasarkan Kunci Guru di atas, atau menjalankan AI sekarang jika diperlukan.
+                        </span>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      disabled={isAiEvaluating}
+                      onClick={() => handleRunLiveAiEvaluation(true)}
+                      className="px-4 py-2.5 bg-[#a5f3fc] hover:bg-cyan-300 text-slate-950 border-2 border-slate-950 rounded-xl text-xs font-mono font-black shadow-[2px_2px_0px_0px_#0f172a] cursor-pointer flex items-center gap-2 shrink-0 self-start sm:self-auto disabled:opacity-50"
+                    >
+                      {isAiEvaluating ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
+                      <span>Jalankan Koreksi AI (Guru)</span>
+                    </button>
+                  </div>
+                )}
 
                 {/* Teacher Grading Inputs */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2 border-t-3 border-slate-950 dark:border-slate-700">
