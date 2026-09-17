@@ -570,8 +570,17 @@ export const SiswaLKPD: React.FC<{
               </div>
             </div>
 
-            <div className="px-4 py-2 bg-white rounded-2xl border-3 border-slate-950 font-mono text-xs font-black shadow-[3px_3px_0px_0px_#0f172a]">
-              Status: {existingSubmission.status === 'Dinilai' ? 'Telah Dinilai Guru' : 'Menunggu Nilai Guru'}
+            <div className="flex items-center gap-2">
+              {existingSubmission.teacherScore !== null ? (
+                <div className="flex items-center gap-2 px-4 py-2 bg-white rounded-2xl border-3 border-slate-950 font-mono shadow-[3px_3px_0px_0px_#0f172a]">
+                  <span className="text-[11px] font-black uppercase text-slate-500">Nilai Guru:</span>
+                  <span className="text-base font-black text-slate-950">{existingSubmission.teacherScore} / 100</span>
+                </div>
+              ) : (
+                <div className="px-4 py-2 bg-white rounded-2xl border-3 border-slate-950 font-mono text-xs font-black shadow-[3px_3px_0px_0px_#0f172a]">
+                  Status: Menunggu Nilai Guru
+                </div>
+              )}
             </div>
           </div>
 
@@ -587,6 +596,17 @@ export const SiswaLKPD: React.FC<{
               🛡 Tab Integrity: {existingSubmission.antiCheat?.switchCount || 0}x Pindah Tab
             </span>
           </div>
+
+          {existingSubmission.teacherFeedback && (
+            <div className="p-3.5 bg-white/95 rounded-2xl border-2 border-slate-950 text-xs text-slate-900 shadow-[2px_2px_0px_0px_#0f172a] flex items-start gap-2.5">
+              <span className="font-mono font-black text-amber-900 bg-amber-200 px-2 py-0.5 rounded-lg shrink-0">
+                Catatan Guru:
+              </span>
+              <p className="font-semibold italic leading-relaxed pt-0.5">
+                "{existingSubmission.teacherFeedback}"
+              </p>
+            </div>
+          )}
 
 
           {/* PDF Attachment button in Review */}
