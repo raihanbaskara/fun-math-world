@@ -646,7 +646,7 @@ export const SiswaLKPD: React.FC<{
                   className="px-6 py-3.5 rounded-2xl font-mono text-xs sm:text-sm font-black border-3 border-slate-950 bg-[#ffe600] hover:bg-yellow-400 text-slate-950 shadow-[4px_4px_0px_0px_#0f172a] dark:shadow-[4px_4px_0px_0px_#000000] transition-all cursor-pointer flex items-center justify-center gap-2 active:translate-x-0.5 active:translate-y-0.5 shrink-0"
                 >
                   <Sparkles size={18} />
-                  <span>Minta Koreksi AI</span>
+                  <span>Koreksi AI</span>
                 </button>
               </div>
             ) : (
@@ -662,7 +662,7 @@ export const SiswaLKPD: React.FC<{
                     <p className="text-xs font-bold text-slate-600 dark:text-slate-400">
                       {aiDiscussionUnlocked
                         ? 'Langkah konsep pembahasan resmi per soal sedang terbuka.'
-                        : 'Pembahasan sedang disembunyikan. Klik tombol di samping untuk membukanya.'}
+                        : 'Koreksi AI sedang disembunyikan. Klik tombol di samping untuk membukanya.'}
                     </p>
                   </div>
                 </div>
@@ -688,7 +688,7 @@ export const SiswaLKPD: React.FC<{
                     }`}
                   >
                     <Sparkles size={16} />
-                    <span>{aiDiscussionUnlocked ? 'Sembunyikan Pembahasan' : 'Tampilkan Pembahasan'}</span>
+                    <span>{aiDiscussionUnlocked ? 'Sembunyikan Koreksi AI' : 'Koreksi AI'}</span>
                   </button>
                 </div>
               </div>
