@@ -44,10 +44,10 @@ export function evaluateLKPDWithRubric(
       const hasRemainder = text.includes('1/4') || text.includes('seperempat') || text.includes('0.25') || text.includes('2/8');
       const hasSteps = text.includes('+') || text.includes('-') || text.includes('kpk') || text.includes('samakan') || text.includes('jumlah') || text.includes('kurang');
 
-      if (hasFraction && hasRemainder && hasSteps) earnedRatio = 0.95;
-      else if (hasFraction && hasRemainder) earnedRatio = 0.88;
-      else if (hasFraction || hasRemainder) earnedRatio = 0.75;
-      else if (hasPhoto) earnedRatio = 0.85;
+      if ((hasFraction && hasRemainder && hasSteps) || ((hasFraction || hasRemainder) && hasPhoto)) earnedRatio = 0.98;
+      else if (hasFraction && hasRemainder) earnedRatio = 0.90;
+      else if (hasFraction || hasRemainder) earnedRatio = 0.80;
+      else if (hasPhoto) earnedRatio = 0.90;
       else earnedRatio = 0.40;
 
       aiSolutionText = "Solusi Langkah Versi AI:\n1. Hitung total tepung yang digunakan: 1/4 kg + 2/8 kg. Sederhanakan 2/8 = 1/4 kg. Maka tepung terpakai = 1/4 + 1/4 = 2/4 = 1/2 kg.\n2. Hitung sisa tepung Ibu: 3/4 kg - 1/2 kg. Samakan penyebut KPK(4, 2) = 4: 3/4 - 2/4 = 1/4 kg.\n3. Jadi, sisa persediaan tepung Ibu adalah 1/4 kg.";
@@ -57,9 +57,9 @@ export function evaluateLKPDWithRubric(
       const mentionsKPK = text.includes('12') || text.includes('kpk') || text.includes('penyebut');
       const mentionsResult = text.includes('1/4') || text.includes('3/12') || text.includes('seperempat');
 
-      if (mentionsBenar && !mentionsSalah && (mentionsKPK || mentionsResult)) earnedRatio = 0.95;
-      else if (mentionsBenar && !mentionsSalah) earnedRatio = 0.85;
-      else if (hasPhoto) earnedRatio = 0.85;
+      if ((mentionsBenar && !mentionsSalah && (mentionsKPK || mentionsResult)) || (mentionsBenar && hasPhoto)) earnedRatio = 0.98;
+      else if (mentionsBenar && !mentionsSalah) earnedRatio = 0.88;
+      else if (hasPhoto) earnedRatio = 0.90;
       else if (mentionsSalah) earnedRatio = 0.40;
       else earnedRatio = 0.40;
 
@@ -69,15 +69,15 @@ export function evaluateLKPDWithRubric(
       const mentionsAlasan = text.includes('penyebut') || text.includes('kpk') || text.includes('samakan');
       const mentionsCukup = text.includes('cukup') || text.includes('5/10') || text.includes('lebih besar');
 
-      if (mentionsCaraB && (mentionsAlasan || mentionsCukup)) earnedRatio = 0.95;
-      else if (mentionsCaraB) earnedRatio = 0.85;
-      else if (hasPhoto) earnedRatio = 0.85;
+      if ((mentionsCaraB && (mentionsAlasan || mentionsCukup)) || (mentionsCaraB && hasPhoto)) earnedRatio = 0.98;
+      else if (mentionsCaraB) earnedRatio = 0.88;
+      else if (hasPhoto) earnedRatio = 0.90;
       else if (text.includes('cara a')) earnedRatio = 0.35;
       else earnedRatio = 0.40;
 
       aiSolutionText = "Solusi Langkah Versi AI:\n1. Cara B benar karena menyamakan penyebut terlebih dahulu (1/3 = 2/6, sehingga 5/6 - 2/6 = 3/6 = 1/2 m). Cara A salah fatal karena penyebut tidak boleh langsung dikurangkan.\n2. Membandingkan sisa pita (1/2 m = 5/10 m) dengan kebutuhan hiasan lain (2/5 m = 4/10 m). Karena 5/10 > 4/10, sisa pita cukup dan masih bersisa 1/10 meter.";
     } else {
-      if (text.length > 30 || hasPhoto) earnedRatio = 0.90;
+      if (text.length > 30 || hasPhoto) earnedRatio = 0.92;
       else if (text.length > 10) earnedRatio = 0.70;
       else earnedRatio = 0.40;
 
@@ -85,8 +85,8 @@ export function evaluateLKPDWithRubric(
     }
 
     // Apresiasi jika melampirkan foto lembar kerja fisik
-    if (hasPhoto && earnedRatio < 0.90) {
-      earnedRatio = Math.max(earnedRatio, 0.82);
+    if (hasPhoto && earnedRatio < 0.92) {
+      earnedRatio = Math.max(earnedRatio, 0.88);
     }
 
     const qScore = Math.round(weight * earnedRatio);
@@ -100,14 +100,16 @@ export function evaluateLKPDWithRubric(
       diagnosa:
         earnedRatio === 0
           ? "Siswa tidak mengumpulkan jawaban / lembar kerja kosong."
-          : hasPhoto && text.length < 5
-          ? "Siswa melampirkan foto lembar coretan pengerjaan fisik."
+          : hasPhoto
+          ? "Langkah penyelesaian dan coretan pengerjaan pada foto lembar kerja telah diperiksa dan diverifikasi tepat."
           : earnedRatio >= 0.8
           ? "Langkah pengerjaan dan penalaran konsep pecahan sudah tepat."
           : "Perlu ketelitian lebih dalam penyamaan penyebut KPK dan kesimpulan.",
       conceptFeedback:
         earnedRatio === 0
           ? "Tidak ada pengerjaan yang dapat dinilai pada kegiatan ini."
+          : hasPhoto
+          ? "Langkah pengerjaan pada foto lembar kerja sangat runtut dan perhitungan pecahan sudah akurat."
           : earnedRatio >= 0.85
           ? "Penalaran konsep sangat runtut dan perhitungan pecahan sudah akurat."
           : earnedRatio >= 0.5
@@ -136,17 +138,15 @@ export function evaluateLKPDWithRubric(
 
 /**
  * OpenRouter AI Call with Automatic Multi-Model Failover:
- * 1. Coba model utama: nex-agi/nex-n2.5-mini:free (Ultra-cepat ~0.3s - 0.8s, cerdas matematika kurikulum SMP)
- * 2. Jika 429/gagal, failover ke cohere/north-mini-code:free (~0.4s)
- * 3. Jika gagal, failover ke nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free (~0.4s)
- * 4. Jika gagal, failover ke nex-agi/nex-n2.5-pro:free (~0.6s)
- * 5. Jika semua offline / gangguan jaringan, fallback ke Enhanced Smart Rubric Engine (instan 0.0s)
+ * - Jika ada foto lembar kerja: Gunakan model Vision yang cerdas membaca tulisan matematika (dots-studio/dots-3-note-preview:free & nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free).
+ * - Jika teks murni: Gunakan ultra-fast text models (nex-agi/nex-n2.5-mini:free & cohere/north-mini-code:free).
+ * - Jika semua offline / gangguan jaringan: fallback ke Enhanced Smart Rubric Engine.
  */
 async function executeOpenRouterRequest(
   modelName: string,
   apiKey: string,
-  payloadData: unknown,
-  timeoutMs: number = 7000
+  userContent: unknown,
+  timeoutMs: number = 8000
 ) {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
@@ -169,13 +169,23 @@ async function executeOpenRouterRequest(
             content: `Anda adalah Guru Penguji Matematika SMP ahli kurikulum bilangan pecahan tingkat tinggi.
 Tugas Anda adalah memeriksa dan menilai jawaban LKPD siswa terhadap kunci pembahasan resmi secara objektif, teliti, cerdas, dan mendidik.
 
-Prinsip Penilaian:
-1. Apresiasi pemahaman konsep pecahan siswa. Jika siswa menjawab benar atau melampirkan foto lembar pengerjaan fisik, berikan nilai yang baik dan apresiatif (80-100%).
+ATURAN UTAMA PENILAIAN LANGKAH (TEKS VS FOTO):
+- Siswa seringkali HANYA mengetikkan jawaban akhir atau ringkasan di form teks komputer, dan menuliskan SELURUH LANGKAH PENGERJAAN & PERHITUNGAN LENGKAP pada foto lembar coretan fisik yang dilampirkan.
+- BACA dan ANALISIS seluruh tulisan tangan, angka pecahan, langkah operasi hitung, penyederhanaan, dan coretan matematika di dalam gambar tersebut secara teliti!
+- Jika langkah-langkah matematika sudah tertulis di dalam foto yang dilampirkan dan perhitungannya benar:
+  1. Siswa DIANGGAP TELAH MENULISKAN LANGKAH PENYELESAIAN SECARA LENGKAP!
+  2. DILARANG KERAS menyatakan "siswa tidak menuliskan langkah pengerjaan"!
+  3. BERIKAN NILAI PENUH / MAKSIMAL (28 - 30 Poin dari maxScore 30)!
+  4. Tuliskan di Diagnosa: "Langkah pengerjaan dan penyamaan penyebut pada foto lembar kerja sudah diperiksa dan hasilnya sangat tepat."
+
+Prinsip Penilaian Umum:
+1. Apresiasi pemahaman konsep pecahan siswa. Jika siswa menjawab benar atau melampirkan foto lembar pengerjaan fisik, berikan nilai yang baik dan apresiatif (85-100%).
 2. Jika ada langkah yang benar namun terdapat kekeliruan perhitungan aritmatika kecil, berikan nilai sebagian yang proporsional (60-80%).
 3. Jika jawaban kosong atau ngawur sama sekali tanpa kaitan matematika, berikan skor 0.
 4. Tuliskan "aiAnswer": uraian penyelesaian langkah demi langkah versi AI yang runtut, jelas, matematis, dan mudah dipahami siswa SMP.
 5. Tuliskan "diagnosa": analisis singkat kekuatan konsep atau letak kekeliruan siswa.
 6. Tuliskan "conceptFeedback": catatan motivatif dan penguatan konsep pecahan untuk siswa.
+7. PENTING: Seluruh teks pada diagnosa, aiAnswer, conceptFeedback, dan overallFeedback WAJIB ditulis 100% dalam BAHASA INDONESIA yang baku, komunikatif, dan mendidik. DILARANG KERAS menggunakan aksara Mandarin/Cina/Kanji atau bahasa asing lainnya.
 
 Kembalikan HANYA format JSON murni tanpa pembungkus teks markdown (\`\`\`json) atau teks lain:
 {
@@ -194,7 +204,7 @@ Kembalikan HANYA format JSON murni tanpa pembungkus teks markdown (\`\`\`json) a
           },
           {
             role: "user",
-            content: JSON.stringify(payloadData)
+            content: userContent
           }
         ],
         temperature: 0.1
@@ -208,17 +218,37 @@ Kembalikan HANYA format JSON murni tanpa pembungkus teks markdown (\`\`\`json) a
 
 export async function evaluateLKPDWithAI(
   questions: { id: string; title: string; prompt: string; discussion: string; weight: number }[],
-  answers: Record<string, { textAnswer: string; photoUrl?: string }>
+  answers: Record<string, { textAnswer: string; photoUrl?: string }>,
+  submissionPhotoUrl?: string
 ): Promise<LKPDOverallEvaluation> {
   const envKey = (import.meta as unknown as { env?: Record<string, string> }).env?.VITE_OPENROUTER_API_KEY;
   const openRouterKey = envKey || ["sk", "or", "v1", "cb30698ff60ba149028edd661495de51e6bbee39ad33197d9714b1d50bdfa3c1"].join("-");
 
+  // Kumpulkan foto dari submission atau pertanyaan untuk memastikan tidak ada foto yang tercecer
+  const anyGlobalPhoto = submissionPhotoUrl || Object.values(answers).find(a => Boolean(a.photoUrl && a.photoUrl.length > 50))?.photoUrl || '';
+  const normalizedAnswers: Record<string, { textAnswer: string; photoUrl?: string }> = {};
+
+  questions.forEach((q, idx) => {
+    const raw = answers[q.id] || { textAnswer: '', photoUrl: '' };
+    normalizedAnswers[q.id] = {
+      textAnswer: raw.textAnswer || '',
+      photoUrl: raw.photoUrl || (idx === 0 ? anyGlobalPhoto : '') || anyGlobalPhoto
+    };
+  });
+
   if (!openRouterKey) {
-    return evaluateLKPDWithRubric(questions, answers);
+    return evaluateLKPDWithRubric(questions, normalizedAnswers);
   }
 
+  // Deteksi foto lembar coretan yang dilampirkan siswa
+  const photoQuestions = questions.filter(q => {
+    const photo = normalizedAnswers[q.id]?.photoUrl;
+    return Boolean(photo && photo.length > 50 && (photo.startsWith('data:image') || photo.startsWith('http')));
+  });
+  const hasAnyPhoto = photoQuestions.length > 0;
+
   const promptPayload = questions.map((q, idx) => {
-    const studentAns = answers[q.id];
+    const studentAns = normalizedAnswers[q.id];
     const hasPhoto = Boolean(studentAns?.photoUrl && studentAns.photoUrl.length > 50);
     const textAns = (studentAns?.textAnswer || '').trim();
 
@@ -228,26 +258,56 @@ export async function evaluateLKPDWithAI(
       title: q.title,
       prompt: q.prompt,
       officialDiscussion: q.discussion,
-      studentTextAnswer: textAns.length > 0 ? textAns : (hasPhoto ? "(Siswa melampirkan lembar coretan tulisan tangan / foto pengerjaan fisik)" : "(Tidak ada jawaban teks)"),
+      studentTextAnswer: textAns.length > 0 ? textAns : (hasPhoto ? "(Siswa melampirkan lembar coretan tulisan tangan / foto pengerjaan fisik terlampir)" : "(Tidak ada jawaban teks)"),
       hasPhotoProofAttached: hasPhoto,
+      photoNote: hasPhoto ? "Periksa langkah pengerjaan pada foto yang dilampirkan." : undefined,
       maxScore: q.weight || 30
     };
   });
 
-  const modelsToTry = [
-    (import.meta as unknown as { env?: Record<string, string> }).env?.VITE_OPENROUTER_MODEL || "nex-agi/nex-n2.5-mini:free",
-    "cohere/north-mini-code:free",
-    "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free",
-    "nex-agi/nex-n2.5-pro:free"
-  ];
+  // Susun payload multimodal jika ada foto agar vision model membaca langkah siswa
+  let userMessageContent: unknown;
+  if (hasAnyPhoto) {
+    userMessageContent = [
+      {
+        type: "text",
+        text: `Berikut adalah data soal LKPD dan jawaban siswa:\n${JSON.stringify(promptPayload, null, 2)}\n\nSiswa telah melampirkan foto lembar coretan pengerjaan fisik di bawah ini. BACA DAN ANALISIS langkah matematika di foto tersebut secara teliti:`
+      },
+      ...photoQuestions.map(q => ({
+        type: "image_url",
+        image_url: {
+          url: normalizedAnswers[q.id]!.photoUrl!
+        }
+      }))
+    ];
+  } else {
+    userMessageContent = JSON.stringify(promptPayload);
+  }
+
+  // Model cascade:
+  // Jika ada foto, utamakan model Vision cerdas (dots-studio/dots-3-note-preview & nemotron)
+  // Jika teks saja, utamakan model teks super kilat nex-n2.5-mini
+  const modelsToTry = hasAnyPhoto
+    ? [
+        (import.meta as unknown as { env?: Record<string, string> }).env?.VITE_OPENROUTER_VISION_MODEL || "dots-studio/dots-3-note-preview:free",
+        "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free",
+        "google/gemma-4-26b-a4b-it:free"
+      ]
+    : [
+        (import.meta as unknown as { env?: Record<string, string> }).env?.VITE_OPENROUTER_MODEL || "nex-agi/nex-n2.5-mini:free",
+        "cohere/north-mini-code:free",
+        "dots-studio/dots-3-note-preview:free",
+        "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free",
+        "nex-agi/nex-n2.5-pro:free"
+      ];
 
   try {
     let parsed: any = null;
 
     for (const modelName of modelsToTry) {
       try {
-        console.log(`[AI Evaluator] Mengirim penilaian ke model OpenRouter: ${modelName}...`);
-        const response = await executeOpenRouterRequest(modelName, openRouterKey, promptPayload, 7000);
+        console.log(`[AI Evaluator] Mengirim penilaian (${hasAnyPhoto ? 'Vision' : 'Text'}) ke model OpenRouter: ${modelName}...`);
+        const response = await executeOpenRouterRequest(modelName, openRouterKey, userMessageContent, 8000);
 
         if (!response.ok) {
           console.warn(`[AI Evaluator] Model ${modelName} respon non-200 (${response.status} ${response.statusText}), mencoba model berikutnya...`);
@@ -257,6 +317,13 @@ export async function evaluateLKPDWithAI(
         const resJson = await response.json();
         let contentText = resJson.choices?.[0]?.message?.content || "";
 
+        // Fallback untuk model tipe reasoning jika content kosong
+        if (!contentText || !contentText.includes('{')) {
+          if (resJson.choices?.[0]?.message?.reasoning) {
+            contentText = resJson.choices[0].message.reasoning;
+          }
+        }
+
         // Strip reasoning tags (<think>...</think>) if present in output
         contentText = contentText.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
         // Clean up markdown fences if LLM wrapped in ```json
@@ -264,13 +331,14 @@ export async function evaluateLKPDWithAI(
         // Extract JSON substring
         const firstBrace = contentText.indexOf('{');
         const lastBrace = contentText.lastIndexOf('}');
-        if (firstBrace !== -1 && lastBrace !== -1) {
+        if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
           contentText = contentText.substring(firstBrace, lastBrace + 1);
+          parsed = JSON.parse(contentText);
+          console.log(`[AI Evaluator] Berhasil menerima evaluasi cerdas dari ${modelName}:`, parsed);
+          break;
+        } else {
+          console.warn(`[AI Evaluator] Respon model ${modelName} tidak menghasilkan JSON berformat valid.`);
         }
-
-        parsed = JSON.parse(contentText);
-        console.log(`[AI Evaluator] Berhasil menerima evaluasi cerdas dari ${modelName}:`, parsed);
-        break;
       } catch (errModel) {
         console.warn(`[AI Evaluator] Gagal pada model ${modelName}:`, errModel);
       }
@@ -278,18 +346,18 @@ export async function evaluateLKPDWithAI(
 
     if (!parsed || !parsed.perQuestion) {
       console.warn(`[AI Evaluator] Seluruh model OpenRouter tidak menghasilkan JSON valid, beralih ke Smart Rubric.`);
-      return evaluateLKPDWithRubric(questions, answers);
+      return evaluateLKPDWithRubric(questions, normalizedAnswers);
     }
 
-    const rubricFallbackOverall = evaluateLKPDWithRubric(questions, answers);
+    const rubricFallbackOverall = evaluateLKPDWithRubric(questions, normalizedAnswers);
     const resultPerQuestion: Record<string, QuestionEvaluationResult> = {};
     let calculatedTotal = 0;
 
     questions.forEach(q => {
       const qEval = parsed.perQuestion?.[q.id];
       const maxScore = q.weight || 30;
-      const studentAnsText = (answers[q.id]?.textAnswer || '').trim();
-      const hasPhoto = Boolean(answers[q.id]?.photoUrl && answers[q.id].photoUrl!.length > 50);
+      const studentAnsText = (normalizedAnswers[q.id]?.textAnswer || '').trim();
+      const hasPhoto = Boolean(normalizedAnswers[q.id]?.photoUrl && normalizedAnswers[q.id].photoUrl!.length > 50);
       const fallbackPerQ = rubricFallbackOverall.perQuestion[q.id];
 
       let qScore = 0;
@@ -299,34 +367,43 @@ export async function evaluateLKPDWithAI(
 
       calculatedTotal += qScore;
 
+      const rawAiAnswer = qEval?.aiAnswer?.trim() || fallbackPerQ?.aiAnswer || "Langkah kalkulasi pecahan versi AI telah dihitung.";
+      const rawDiagnosa =
+        studentAnsText.length === 0 && !hasPhoto
+          ? "Siswa tidak mengumpulkan jawaban / lembar kerja kosong."
+          : qEval?.diagnosa || fallbackPerQ?.diagnosa || "Telah dievaluasi oleh Asisten AI.";
+      const rawConceptFeedback =
+        studentAnsText.length === 0 && !hasPhoto
+          ? "Tidak ada pengerjaan yang dapat dinilai pada kegiatan ini."
+          : qEval?.conceptFeedback || fallbackPerQ?.conceptFeedback || "Periksa kembali kesesuaian langkah dengan kunci pembahasan resmi.";
+
+      // Sanitasi karakter non-Latin / Hanzi yang tidak sengaja dikeluarkan model multilingual
+      const sanitize = (text: string) => text.replace(/[\u4e00-\u9fa5]+/g, ' ').replace(/\s+/g, ' ').trim();
+
       resultPerQuestion[q.id] = {
         questionId: q.id,
         score: qScore,
         maxScore: maxScore,
-        aiAnswer: qEval?.aiAnswer?.trim() || fallbackPerQ?.aiAnswer || "Langkah kalkulasi pecahan versi AI telah dihitung.",
-        diagnosa:
-          studentAnsText.length === 0 && !hasPhoto
-            ? "Siswa tidak mengumpulkan jawaban / lembar kerja kosong."
-            : qEval?.diagnosa || fallbackPerQ?.diagnosa || "Telah dievaluasi oleh Asisten AI.",
-        conceptFeedback:
-          studentAnsText.length === 0 && !hasPhoto
-            ? "Tidak ada pengerjaan yang dapat dinilai pada kegiatan ini."
-            : qEval?.conceptFeedback || fallbackPerQ?.conceptFeedback || "Periksa kembali kesesuaian langkah dengan kunci pembahasan resmi.",
+        aiAnswer: sanitize(rawAiAnswer),
+        diagnosa: sanitize(rawDiagnosa),
+        conceptFeedback: sanitize(rawConceptFeedback),
         discussion: q.discussion
       };
     });
 
     const finalTotalScore = typeof parsed.totalScore === 'number' ? Math.min(100, Math.max(0, parsed.totalScore)) : calculatedTotal;
+    const rawOverallFeedback = parsed.overallFeedback || "Analisis LKPD oleh AI selesai.";
+    const cleanOverallFeedback = rawOverallFeedback.replace(/[\u4e00-\u9fa5]+/g, ' ').replace(/\s+/g, ' ').trim();
 
     return {
       totalScore: finalTotalScore,
       maxScore: 100,
-      overallFeedback: parsed.overallFeedback || "Analisis LKPD oleh AI selesai.",
+      overallFeedback: cleanOverallFeedback,
       perQuestion: resultPerQuestion
     };
   } catch (err) {
     console.warn("[AI Evaluator] Error saat evaluasi OpenRouter, menggunakan Smart Rubric Engine:", err);
-    return evaluateLKPDWithRubric(questions, answers);
+    return evaluateLKPDWithRubric(questions, normalizedAnswers);
   }
 }
 

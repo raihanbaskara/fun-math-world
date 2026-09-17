@@ -162,16 +162,33 @@ export const GuruLKPD: React.FC<{
     showToast("Asisten AI sedang menelaah langkah konsep & bukti pengerjaan siswa...", "info");
 
     try {
-      const answersRecord = selectedSub.answers || {};
-      const evalResult = await evaluateLKPDWithAI(questions, answersRecord);
+      const fallbackPhoto =
+        selectedSub.photoUrl ||
+        selectedSub.photoUrls?.[0] ||
+        Object.values(selectedSub.answers || {}).find(a => Boolean(a.photoUrl && a.photoUrl.length > 50))?.photoUrl ||
+        '';
+
+      const preparedAnswers: Record<string, { textAnswer: string; photoUrl?: string }> = {};
+      questions.forEach((q, idx) => {
+        const studentAns = selectedSub.answers?.[q.id] || { textAnswer: '', photoUrl: '' };
+        const photo = studentAns.photoUrl || (idx === 0 ? fallbackPhoto : '') || fallbackPhoto;
+        preparedAnswers[q.id] = {
+          textAnswer: studentAns.textAnswer || '',
+          photoUrl: photo
+        };
+      });
+
+      const evalResult = await evaluateLKPDWithAI(questions, preparedAnswers, fallbackPhoto);
 
       // Merge results into submission answers
       const updatedAnswers = { ...(selectedSub.answers || {}) };
-      questions.forEach(q => {
+      questions.forEach((q, idx) => {
         const qEval = evalResult.perQuestion[q.id];
         const studentAns = updatedAnswers[q.id] || { textAnswer: '', photoUrl: '' };
+        const photo = studentAns.photoUrl || (idx === 0 ? fallbackPhoto : '') || fallbackPhoto;
         updatedAnswers[q.id] = {
           ...studentAns,
+          photoUrl: photo,
           aiAnswer: qEval?.aiAnswer || studentAns.aiAnswer,
           aiScore: qEval?.score ?? 0,
           aiFeedback: qEval?.diagnosa ? `${qEval.diagnosa} (${qEval.conceptFeedback})` : (qEval?.conceptFeedback || "Telah dievaluasi oleh Asisten AI.")

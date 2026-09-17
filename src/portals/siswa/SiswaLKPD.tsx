@@ -128,7 +128,17 @@ export const SiswaLKPD: React.FC<{
   // Load existing answers if available
   useEffect(() => {
     if (existingSubmission && existingSubmission.answers) {
-      setAnswers(existingSubmission.answers);
+      const loadedAnswers: Record<string, LKPDEssayAnswer> = { ...existingSubmission.answers };
+      const fallbackPhoto = existingSubmission.photoUrl || existingSubmission.photoUrls?.[0] || '';
+      questions.forEach((q, idx) => {
+        if (!loadedAnswers[q.id]) {
+          loadedAnswers[q.id] = { textAnswer: '', photoUrl: '' };
+        }
+        if (!loadedAnswers[q.id].photoUrl && fallbackPhoto) {
+          loadedAnswers[q.id].photoUrl = (idx === 0 ? fallbackPhoto : '') || fallbackPhoto;
+        }
+      });
+      setAnswers(loadedAnswers);
       setAiDiscussionUnlocked(existingSubmission.isAiEvaluated === true);
     } else {
       const initial: Record<string, LKPDEssayAnswer> = {};
@@ -200,18 +210,39 @@ export const SiswaLKPD: React.FC<{
       return;
     }
 
-    const answeredCount = questions.filter(q => (answers[q.id]?.textAnswer || '').trim().length > 0).length;
+    const anyAttachedPhoto = Object.values(answers).find(a => Boolean(a.photoUrl && a.photoUrl.length > 50))?.photoUrl || '';
+    const preparedAnswers: Record<string, { textAnswer: string; photoUrl?: string }> = {};
+    questions.forEach((q, idx) => {
+      const ans = answers[q.id] || { textAnswer: '', photoUrl: '' };
+      preparedAnswers[q.id] = {
+        textAnswer: ans.textAnswer || '',
+        photoUrl: ans.photoUrl || (idx === 0 ? anyAttachedPhoto : '') || anyAttachedPhoto
+      };
+    });
+
+    const answeredCount = questions.filter(q => {
+      const text = (preparedAnswers[q.id]?.textAnswer || '').trim();
+      const hasPhoto = Boolean(preparedAnswers[q.id]?.photoUrl && preparedAnswers[q.id].photoUrl!.length > 50);
+      return text.length > 0 || hasPhoto;
+    }).length;
     if (answeredCount === 0) {
-      showToast("Tuliskan minimal 1 jawaban sebelum menjalankan koreksi AI.", "error");
+      showToast("Tuliskan jawaban atau lampirkan foto pengerjaan sebelum koreksi AI.", "error");
       return;
     }
 
+    const hasPhotoAttached = questions.some(q => Boolean(preparedAnswers[q.id]?.photoUrl && preparedAnswers[q.id].photoUrl!.length > 50));
+
     setIsAiLoading(true);
     soundService.click();
-    showToast("Menghubungi AI untuk menganalisis pemahaman konsep...", "info");
+    showToast(
+      hasPhotoAttached
+        ? "AI sedang membaca foto lembar pengerjaan & menganalisis langkahmu..."
+        : "Menghubungi AI untuk menganalisis pemahaman konsep...",
+      "info"
+    );
 
     try {
-      const evalResult = await evaluateLKPDWithAI(questions, answers);
+      const evalResult = await evaluateLKPDWithAI(questions, preparedAnswers, anyAttachedPhoto);
       setAiEvaluationResult(evalResult);
       setAiDiscussionUnlocked(true);
       soundService.success();
@@ -243,29 +274,55 @@ export const SiswaLKPD: React.FC<{
       return;
     }
 
+    // Pastikan foto terambil baik dari answers per-soal, photoUrl submission, atau photoUrls
+    const fallbackPhoto =
+      existingSubmission.photoUrl ||
+      existingSubmission.photoUrls?.[0] ||
+      Object.values(existingSubmission.answers || {}).find(a => Boolean(a.photoUrl && a.photoUrl.length > 50))?.photoUrl ||
+      '';
+
+    const preparedAnswers: Record<string, { textAnswer: string; photoUrl?: string }> = {};
+    questions.forEach((q, idx) => {
+      const studentAns = existingSubmission.answers?.[q.id] || { textAnswer: '', photoUrl: '' };
+      const photo = studentAns.photoUrl || (idx === 0 ? fallbackPhoto : '') || fallbackPhoto;
+      preparedAnswers[q.id] = {
+        textAnswer: studentAns.textAnswer || '',
+        photoUrl: photo
+      };
+    });
+
+    const hasPhotoAttached = questions.some(q => Boolean(preparedAnswers[q.id]?.photoUrl && preparedAnswers[q.id].photoUrl!.length > 50));
+
     setIsAiLoading(true);
     soundService.click();
-    showToast("Menghubungi AI untuk mengoreksi jawabanmu...", "info");
+    showToast(
+      hasPhotoAttached
+        ? "AI sedang membaca foto lembar pengerjaan & mengoreksi langkahmu..."
+        : "Menghubungi AI untuk mengoreksi jawabanmu...",
+      "info"
+    );
 
     try {
       let evalResult: LKPDOverallEvaluation;
       try {
-        evalResult = await evaluateLKPDWithAI(questions, existingSubmission.answers);
+        evalResult = await evaluateLKPDWithAI(questions, preparedAnswers, fallbackPhoto);
       } catch (e) {
         console.warn("AI service fallback to rubric:", e);
-        evalResult = evaluateLKPDWithRubric(questions, existingSubmission.answers);
+        evalResult = evaluateLKPDWithRubric(questions, preparedAnswers);
       }
       setAiEvaluationResult(evalResult);
       setAiDiscussionUnlocked(true);
 
       // Persist the updated AI answers, score, and isAiEvaluated flag into storageService
       const updatedAnswers: Record<string, LKPDEssayAnswer> = { ...(existingSubmission.answers || {}) };
-      questions.forEach(q => {
+      questions.forEach((q, idx) => {
         const qEval = evalResult.perQuestion[q.id];
         const studentAns = updatedAnswers[q.id] || { textAnswer: '', photoUrl: '' };
+        const photo = studentAns.photoUrl || (idx === 0 ? fallbackPhoto : '') || fallbackPhoto;
         const diagnosaNote = qEval?.diagnosa ? `${qEval.diagnosa} (${qEval.conceptFeedback})` : (qEval?.conceptFeedback || "Jawaban telah diperiksa AI.");
         updatedAnswers[q.id] = {
           ...studentAns,
+          photoUrl: photo,
           aiAnswer: qEval?.aiAnswer || studentAns.aiAnswer,
           aiScore: qEval?.score ?? 0,
           aiFeedback: diagnosaNote
@@ -276,6 +333,7 @@ export const SiswaLKPD: React.FC<{
         const target = draft.lkpdSubmissions.find(s => s.id === existingSubmission.id);
         if (target) {
           target.answers = updatedAnswers;
+          target.photoUrl = fallbackPhoto || target.photoUrl;
           target.isAiEvaluated = true;
           target.aiScore = evalResult.totalScore;
           target.aiFeedback = evalResult.overallFeedback;
@@ -301,12 +359,13 @@ export const SiswaLKPD: React.FC<{
     soundService.click();
 
     // Jawaban dikirim murni tanpa memanggil AI
+    const anyPhoto = Object.values(answers).find(a => Boolean(a.photoUrl && a.photoUrl.length > 50))?.photoUrl || '';
     const finalAnswers: Record<string, LKPDEssayAnswer> = {};
-    questions.forEach(q => {
+    questions.forEach((q, idx) => {
       const studentAns = answers[q.id] || { textAnswer: '', photoUrl: '' };
       finalAnswers[q.id] = {
         textAnswer: studentAns.textAnswer,
-        photoUrl: studentAns.photoUrl || '',
+        photoUrl: studentAns.photoUrl || (idx === 0 ? anyPhoto : '') || anyPhoto,
       };
     });
 
