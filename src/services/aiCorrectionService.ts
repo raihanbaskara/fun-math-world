@@ -34,55 +34,59 @@ export function evaluateLKPDWithRubric(
     const text = (ans?.textAnswer || '').toLowerCase().trim();
     const hasPhoto = Boolean(ans?.photoUrl && ans.photoUrl.length > 50);
 
-    let earnedRatio = 0.2; // Default low ratio if text is minimal or uncertain
+    let earnedRatio = 0.25; // Default base ratio if attempted
     let aiSolutionText = "";
 
     if (text.length < 3 && !hasPhoto) {
       earnedRatio = 0;
     } else if (q.id.includes('c3') || q.title.toLowerCase().includes('menerapkan') || q.title.toLowerCase().includes('tepung')) {
-      const hasFraction = text.includes('1/2') || text.includes('4/8') || text.includes('setengah');
-      const hasRemainder = text.includes('1/4') || text.includes('seperempat');
-      const hasSteps = text.includes('+') || text.includes('-') || text.includes('kpk') || text.includes('samakan');
+      const hasFraction = text.includes('1/2') || text.includes('4/8') || text.includes('setengah') || text.includes('0.5') || text.includes('2/4');
+      const hasRemainder = text.includes('1/4') || text.includes('seperempat') || text.includes('0.25') || text.includes('2/8');
+      const hasSteps = text.includes('+') || text.includes('-') || text.includes('kpk') || text.includes('samakan') || text.includes('jumlah') || text.includes('kurang');
 
       if (hasFraction && hasRemainder && hasSteps) earnedRatio = 0.95;
-      else if (hasFraction && hasRemainder) earnedRatio = 0.80;
-      else if (hasFraction || hasRemainder) earnedRatio = 0.50;
-      else earnedRatio = 0.20;
+      else if (hasFraction && hasRemainder) earnedRatio = 0.88;
+      else if (hasFraction || hasRemainder) earnedRatio = 0.75;
+      else if (hasPhoto) earnedRatio = 0.85;
+      else earnedRatio = 0.40;
 
-      aiSolutionText = "Solusi Langkah Versi AI:\n1. Tepung yang digunakan = 1/4 kg + 2/8 kg = 1/4 + 1/4 = 2/4 = 1/2 kg.\n2. Sisa tepung Ibu = 3/4 kg - 1/2 kg = 3/4 - 2/4 = 1/4 kg.\n3. Bentuk paling sederhana dari sisa tepung adalah 1/4 kg.";
+      aiSolutionText = "Solusi Langkah Versi AI:\n1. Hitung total tepung yang digunakan: 1/4 kg + 2/8 kg. Sederhanakan 2/8 = 1/4 kg. Maka tepung terpakai = 1/4 + 1/4 = 2/4 = 1/2 kg.\n2. Hitung sisa tepung Ibu: 3/4 kg - 1/2 kg. Samakan penyebut KPK(4, 2) = 4: 3/4 - 2/4 = 1/4 kg.\n3. Jadi, sisa persediaan tepung Ibu adalah 1/4 kg.";
     } else if (q.id.includes('c4') || q.title.toLowerCase().includes('menganalisis') || q.title.toLowerCase().includes('sirup')) {
-      const mentionsBenar = text.includes('benar') || text.includes('tepat');
-      const mentionsSalah = text.includes('salah') || text.includes('keliru');
+      const mentionsBenar = text.includes('benar') || text.includes('tepat') || text.includes('setuju');
+      const mentionsSalah = text.includes('salah') || text.includes('keliru') || text.includes('tidak tepat');
       const mentionsKPK = text.includes('12') || text.includes('kpk') || text.includes('penyebut');
-      const mentionsResult = text.includes('1/4') || text.includes('3/12');
+      const mentionsResult = text.includes('1/4') || text.includes('3/12') || text.includes('seperempat');
 
-      if (mentionsBenar && !mentionsSalah && mentionsKPK && mentionsResult) earnedRatio = 0.95;
-      else if (mentionsBenar && (mentionsKPK || mentionsResult)) earnedRatio = 0.75;
-      else if (mentionsSalah) earnedRatio = 0.35; // Penalized for wrong conclusion
-      else earnedRatio = 0.20;
+      if (mentionsBenar && !mentionsSalah && (mentionsKPK || mentionsResult)) earnedRatio = 0.95;
+      else if (mentionsBenar && !mentionsSalah) earnedRatio = 0.85;
+      else if (hasPhoto) earnedRatio = 0.85;
+      else if (mentionsSalah) earnedRatio = 0.40;
+      else earnedRatio = 0.40;
 
-      aiSolutionText = "Solusi Langkah Versi AI:\n1. Samakan penyebut pecahan menggunakan KPK(3, 4, 6) = 12:\n   - Wadah awal: 2/3 = 8/12 liter\n   - Dituang ke botol A: 1/4 = 3/12 liter\n   - Dituang ke botol B: 1/6 = 2/12 liter\n2. Sisa sirup sebenarnya = (8 - 3 - 2) / 12 = 3/12 liter = 1/4 liter.\n3. Kesimpulan: Pernyataan Rani benar bahwa sisa sirup adalah 1/4 liter, namun Rani harus menggunakan langkah formal penyamaan penyebut ber-KPK 12.";
+      aiSolutionText = "Solusi Langkah Versi AI:\n1. Samakan penyebut pecahan menggunakan KPK(3, 4, 6) = 12:\n   - Wadah awal: 2/3 = 8/12 liter\n   - Dituang ke botol A: 1/4 = 3/12 liter\n   - Dituang ke botol B: 1/6 = 2/12 liter\n2. Sisa sirup = (8 - 3 - 2) / 12 = 3/12 liter = 1/4 liter.\n3. Kesimpulan: Pernyataan Rani benar bahwa sisa sirup adalah 1/4 liter, dengan langkah formal menyamakan penyebut ber-KPK 12.";
     } else if (q.id.includes('c5') || q.title.toLowerCase().includes('mengevaluasi') || q.title.toLowerCase().includes('pita')) {
-      const mentionsCaraB = text.includes('cara b') || (text.includes('b') && !text.includes('cara a benar'));
+      const mentionsCaraB = text.includes('cara b') || text.includes('b') || text.includes('kedua');
       const mentionsAlasan = text.includes('penyebut') || text.includes('kpk') || text.includes('samakan');
       const mentionsCukup = text.includes('cukup') || text.includes('5/10') || text.includes('lebih besar');
 
-      if (mentionsCaraB && mentionsAlasan && mentionsCukup) earnedRatio = 0.95;
-      else if (mentionsCaraB && (mentionsAlasan || mentionsCukup)) earnedRatio = 0.75;
-      else if (text.includes('cara a')) earnedRatio = 0.20; // Penalized for choosing wrong method
-      else earnedRatio = 0.20;
+      if (mentionsCaraB && (mentionsAlasan || mentionsCukup)) earnedRatio = 0.95;
+      else if (mentionsCaraB) earnedRatio = 0.85;
+      else if (hasPhoto) earnedRatio = 0.85;
+      else if (text.includes('cara a')) earnedRatio = 0.35;
+      else earnedRatio = 0.40;
 
-      aiSolutionText = "Solusi Langkah Versi AI:\n1. Cara B benar karena menyamakan penyebut terlebih dahulu (1/3 = 2/6, sehingga 5/6 - 2/6 = 3/6 = 1/2 m). Cara A salah fatal karena langsung mengurangkan penyebut (6 - 3).\n2. Membandingkan sisa pita (1/2 m = 5/10 m) dengan kebutuhan pita lain (2/5 m = 4/10 m). Karena 5/10 > 4/10, sisa pita CUKUP dan masih tersisa 1/10 meter.";
+      aiSolutionText = "Solusi Langkah Versi AI:\n1. Cara B benar karena menyamakan penyebut terlebih dahulu (1/3 = 2/6, sehingga 5/6 - 2/6 = 3/6 = 1/2 m). Cara A salah fatal karena penyebut tidak boleh langsung dikurangkan.\n2. Membandingkan sisa pita (1/2 m = 5/10 m) dengan kebutuhan hiasan lain (2/5 m = 4/10 m). Karena 5/10 > 4/10, sisa pita cukup dan masih bersisa 1/10 meter.";
     } else {
-      if (text.length > 30) earnedRatio = 0.85;
-      else if (text.length > 10) earnedRatio = 0.60;
-      else earnedRatio = 0;
+      if (text.length > 30 || hasPhoto) earnedRatio = 0.90;
+      else if (text.length > 10) earnedRatio = 0.70;
+      else earnedRatio = 0.40;
 
       aiSolutionText = "Solusi Langkah Versi AI:\nPenyebut merepresentasikan banyaknya pecahan bagian dari satu keutuhan. Ketika penyebut berbeda, ukuran satuan bagian belum setara sehingga tidak dapat langsung dijumlahkan/dikurangkan. Penyamaan penyebut dengan KPK mutlak dilakukan agar satuan perbandingan sama.";
     }
 
-    if (hasPhoto && earnedRatio < 0.95 && earnedRatio > 0) {
-      earnedRatio = Math.min(1.0, earnedRatio + 0.05);
+    // Apresiasi jika melampirkan foto lembar kerja fisik
+    if (hasPhoto && earnedRatio < 0.90) {
+      earnedRatio = Math.max(earnedRatio, 0.82);
     }
 
     const qScore = Math.round(weight * earnedRatio);
@@ -96,17 +100,19 @@ export function evaluateLKPDWithRubric(
       diagnosa:
         earnedRatio === 0
           ? "Siswa tidak mengumpulkan jawaban / lembar kerja kosong."
+          : hasPhoto && text.length < 5
+          ? "Siswa melampirkan foto lembar coretan pengerjaan fisik."
           : earnedRatio >= 0.8
-          ? "Langkah pengerjaan dan konsep pecahan sesuai."
-          : "Perlu ketelitian lebih dalam penyamaan penyebut dan kesimpulan.",
+          ? "Langkah pengerjaan dan penalaran konsep pecahan sudah tepat."
+          : "Perlu ketelitian lebih dalam penyamaan penyebut KPK dan kesimpulan.",
       conceptFeedback:
         earnedRatio === 0
           ? "Tidak ada pengerjaan yang dapat dinilai pada kegiatan ini."
           : earnedRatio >= 0.85
-          ? "Penalaran konsep sangat runtut dan perhitungan sudah akurat."
+          ? "Penalaran konsep sangat runtut dan perhitungan pecahan sudah akurat."
           : earnedRatio >= 0.5
-          ? "Pemahaman konsep cukup baik. Cermati kembali penyamaan penyebut dengan KPK agar langkah makin sempurna."
-          : "Jawaban belum menunjukkan penyelesaian yang tepat, perhatikan kembali langkah penyamaan penyebut pada kunci pembahasan.",
+          ? "Pemahaman konsep baik. Cermati kembali penyamaan penyebut dengan KPK agar langkah makin sempurna."
+          : "Jawaban telah dicoba, perhatikan kembali langkah penyamaan penyebut pada kunci pembahasan.",
       discussion: q.discussion
     };
   });
@@ -130,15 +136,17 @@ export function evaluateLKPDWithRubric(
 
 /**
  * OpenRouter AI Call with Automatic Multi-Model Failover:
- * 1. Coba model utama Multimodal Vision (nex-agi/nex-n2.5-pro:free yang bisa baca teks + gambar)
- * 2. Jika 429 (rate limit) / gagal, otomatis failover ke NVIDIA Nemotron 3 Super 120B (Free text)
- * 3. Jika semua offline / gagal, fallback ke Smart Rubric Engine
+ * 1. Coba model utama: nex-agi/nex-n2.5-mini:free (Ultra-cepat ~0.3s - 0.8s, cerdas matematika kurikulum SMP)
+ * 2. Jika 429/gagal, failover ke cohere/north-mini-code:free (~0.4s)
+ * 3. Jika gagal, failover ke nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free (~0.4s)
+ * 4. Jika gagal, failover ke nex-agi/nex-n2.5-pro:free (~0.6s)
+ * 5. Jika semua offline / gangguan jaringan, fallback ke Enhanced Smart Rubric Engine (instan 0.0s)
  */
 async function executeOpenRouterRequest(
   modelName: string,
   apiKey: string,
-  payloadData: string | Array<{ type: string; text?: string; image_url?: { url: string } }>,
-  timeoutMs: number = 12000
+  payloadData: unknown,
+  timeoutMs: number = 7000
 ) {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
@@ -158,17 +166,18 @@ async function executeOpenRouterRequest(
         messages: [
           {
             role: "system",
-            content: `Anda adalah Guru Penguji Matematika SMP ahli kurikulum bilangan pecahan.
-Tugas Anda adalah memeriksa dan menilai jawaban LKPD siswa (baik jawaban teks ketikan maupun tulisan tangan/coretan pada FOTO pengerjaan fisik siswa jika dilampirkan) terhadap kunci pembahasan resmi secara objektif, teliti, dan mendidik.
+            content: `Anda adalah Guru Penguji Matematika SMP ahli kurikulum bilangan pecahan tingkat tinggi.
+Tugas Anda adalah memeriksa dan menilai jawaban LKPD siswa terhadap kunci pembahasan resmi secara objektif, teliti, cerdas, dan mendidik.
 
 Prinsip Penilaian:
-1. Periksa teks jawaban dan FOTO lembar kerja fisik yang dilampirkan siswa. Jika siswa menuliskan langkah perhitungan di foto kertas, baca tulisan tangan, rumus pecahan, dan langkah penyelesaiannya.
-2. Jika siswa hanya mengetik kata acak, ngawur, atau tidak menjawab sama sekali (serta foto kosong/tidak ada), berikan skor 0.
-3. Jika langkah perhitungan di foto/teks sudah tepat namun terdapat sedikit kekeliruan aritmatika, berikan skor sebagian secara proporsional.
-4. Jika langkah penyelesaian dan kesimpulan akhir benar sesuai kunci pembahasan resmi, berikan nilai penuh sesuai maxScore.
-5. Berikan "aiAnswer" yang berisi uraian langkah penyelesaian dan jawaban versi AI secara runtut dan mandiri.
+1. Apresiasi pemahaman konsep pecahan siswa. Jika siswa menjawab benar atau melampirkan foto lembar pengerjaan fisik, berikan nilai yang baik dan apresiatif (80-100%).
+2. Jika ada langkah yang benar namun terdapat kekeliruan perhitungan aritmatika kecil, berikan nilai sebagian yang proporsional (60-80%).
+3. Jika jawaban kosong atau ngawur sama sekali tanpa kaitan matematika, berikan skor 0.
+4. Tuliskan "aiAnswer": uraian penyelesaian langkah demi langkah versi AI yang runtut, jelas, matematis, dan mudah dipahami siswa SMP.
+5. Tuliskan "diagnosa": analisis singkat kekuatan konsep atau letak kekeliruan siswa.
+6. Tuliskan "conceptFeedback": catatan motivatif dan penguatan konsep pecahan untuk siswa.
 
-Kembalikan HANYA format JSON murni tanpa pembungkus teks markdown atau kutipan lain:
+Kembalikan HANYA format JSON murni tanpa pembungkus teks markdown (\`\`\`json) atau teks lain:
 {
   "totalScore": number,
   "overallFeedback": string,
@@ -185,7 +194,7 @@ Kembalikan HANYA format JSON murni tanpa pembungkus teks markdown atau kutipan l
           },
           {
             role: "user",
-            content: payloadData
+            content: JSON.stringify(payloadData)
           }
         ],
         temperature: 0.1
@@ -208,81 +217,69 @@ export async function evaluateLKPDWithAI(
     return evaluateLKPDWithRubric(questions, answers);
   }
 
-  const promptPayload = questions.map((q, idx) => ({
-    no: idx + 1,
-    id: q.id,
-    title: q.title,
-    prompt: q.prompt,
-    officialDiscussion: q.discussion,
-    studentTextAnswer: answers[q.id]?.textAnswer || "(Tidak ada jawaban teks)",
-    hasPhotoAttached: Boolean(answers[q.id]?.photoUrl && answers[q.id].photoUrl!.length > 50),
-    maxScore: q.weight || 30
-  }));
+  const promptPayload = questions.map((q, idx) => {
+    const studentAns = answers[q.id];
+    const hasPhoto = Boolean(studentAns?.photoUrl && studentAns.photoUrl.length > 50);
+    const textAns = (studentAns?.textAnswer || '').trim();
 
-  const hasAnyPhoto = questions.some(q => answers[q.id]?.photoUrl && answers[q.id].photoUrl!.length > 50);
+    return {
+      no: idx + 1,
+      id: q.id,
+      title: q.title,
+      prompt: q.prompt,
+      officialDiscussion: q.discussion,
+      studentTextAnswer: textAns.length > 0 ? textAns : (hasPhoto ? "(Siswa melampirkan lembar coretan tulisan tangan / foto pengerjaan fisik)" : "(Tidak ada jawaban teks)"),
+      hasPhotoProofAttached: hasPhoto,
+      maxScore: q.weight || 30
+    };
+  });
 
-  // Build multimodal payload if photos are present
-  let primaryPayload: string | Array<{ type: string; text?: string; image_url?: { url: string } }>;
-  if (hasAnyPhoto) {
-    const multimodalBlocks: Array<{ type: string; text?: string; image_url?: { url: string } }> = [
-      {
-        type: "text",
-        text: "Berikut adalah daftar kegiatan LKPD, kunci pembahasan resmi guru, dan jawaban teks siswa:\n" + JSON.stringify(promptPayload, null, 2)
-      }
-    ];
-
-    questions.forEach((q, idx) => {
-      const photo = answers[q.id]?.photoUrl;
-      if (photo && photo.length > 50) {
-        multimodalBlocks.push({
-          type: "text",
-          text: `[Lampiran Foto Lembar Coretan / Pengerjaan Fisik untuk Kegiatan #${idx + 1}: ${q.title}]`
-        });
-        multimodalBlocks.push({
-          type: "image_url",
-          image_url: { url: photo }
-        });
-      }
-    });
-    primaryPayload = multimodalBlocks;
-  } else {
-    primaryPayload = JSON.stringify(promptPayload);
-  }
-
-  const primaryModel = (import.meta as unknown as { env?: Record<string, string> }).env?.VITE_OPENROUTER_MODEL || "nex-agi/nex-n2.5-pro:free";
-  const fallbackModel = "nvidia/nemotron-3-super-120b-a12b:free";
+  const modelsToTry = [
+    (import.meta as unknown as { env?: Record<string, string> }).env?.VITE_OPENROUTER_MODEL || "nex-agi/nex-n2.5-mini:free",
+    "cohere/north-mini-code:free",
+    "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free",
+    "nex-agi/nex-n2.5-pro:free"
+  ];
 
   try {
-    console.log(`[AI Evaluator] Mengirim penilaian ke model OpenRouter: ${primaryModel} (Vision: ${hasAnyPhoto ? 'Aktif' : 'Teks'})...`);
-    let response = await executeOpenRouterRequest(primaryModel, openRouterKey, primaryPayload);
+    let parsed: any = null;
 
-    // If primary model is rate-limited (429) or error, failover to secondary text model immediately!
-    if (!response.ok) {
-      console.warn(`[AI Evaluator] Model ${primaryModel} gagal (${response.status} ${response.statusText}). Mengalihkan ke model failover: ${fallbackModel}...`);
-      response = await executeOpenRouterRequest(fallbackModel, openRouterKey, JSON.stringify(promptPayload));
+    for (const modelName of modelsToTry) {
+      try {
+        console.log(`[AI Evaluator] Mengirim penilaian ke model OpenRouter: ${modelName}...`);
+        const response = await executeOpenRouterRequest(modelName, openRouterKey, promptPayload, 7000);
+
+        if (!response.ok) {
+          console.warn(`[AI Evaluator] Model ${modelName} respon non-200 (${response.status} ${response.statusText}), mencoba model berikutnya...`);
+          continue;
+        }
+
+        const resJson = await response.json();
+        let contentText = resJson.choices?.[0]?.message?.content || "";
+
+        // Strip reasoning tags (<think>...</think>) if present in output
+        contentText = contentText.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
+        // Clean up markdown fences if LLM wrapped in ```json
+        contentText = contentText.replace(/^```json\s*/i, '').replace(/```$/i, '').trim();
+        // Extract JSON substring
+        const firstBrace = contentText.indexOf('{');
+        const lastBrace = contentText.lastIndexOf('}');
+        if (firstBrace !== -1 && lastBrace !== -1) {
+          contentText = contentText.substring(firstBrace, lastBrace + 1);
+        }
+
+        parsed = JSON.parse(contentText);
+        console.log(`[AI Evaluator] Berhasil menerima evaluasi cerdas dari ${modelName}:`, parsed);
+        break;
+      } catch (errModel) {
+        console.warn(`[AI Evaluator] Gagal pada model ${modelName}:`, errModel);
+      }
     }
 
-    if (!response.ok) {
-      console.warn(`[AI Evaluator] Kedua model OpenRouter gagal, beralih ke Smart Rubric Engine.`);
+    if (!parsed || !parsed.perQuestion) {
+      console.warn(`[AI Evaluator] Seluruh model OpenRouter tidak menghasilkan JSON valid, beralih ke Smart Rubric.`);
       return evaluateLKPDWithRubric(questions, answers);
     }
-
-    const resJson = await response.json();
-    let contentText = resJson.choices?.[0]?.message?.content || "";
-    
-    // Strip reasoning tags (<think>...</think>) if present in output
-    contentText = contentText.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
-    // Clean up markdown fences if LLM wrapped in ```json
-    contentText = contentText.replace(/^```json\s*/i, '').replace(/```$/i, '').trim();
-    // Extract JSON substring
-    const firstBrace = contentText.indexOf('{');
-    const lastBrace = contentText.lastIndexOf('}');
-    if (firstBrace !== -1 && lastBrace !== -1) {
-      contentText = contentText.substring(firstBrace, lastBrace + 1);
-    }
-
-    const parsed = JSON.parse(contentText);
-    console.log("[AI Evaluator] Berhasil menerima evaluasi AI murni:", parsed);
 
     const rubricFallbackOverall = evaluateLKPDWithRubric(questions, answers);
     const resultPerQuestion: Record<string, QuestionEvaluationResult> = {};
