@@ -56,7 +56,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
       <Modal
         isOpen={modalType === 'lkpd'}
         onClose={() => setModalType(null)}
-        title="LKPD Digital Berbantuan Asisten AI"
+        title="LKPD"
       >
         <div className="space-y-4 text-xs sm:text-sm text-slate-700">
           <p className="font-medium leading-relaxed">

@@ -418,7 +418,7 @@ export const SiswaMateri: React.FC<{
                 className="flex-1 sm:flex-initial font-black text-xs"
                 onClick={() => onNavigate('siswa/lkpd')}
               >
-                <span>LKPD Digital</span>
+                <span>LKPD</span>
                 <ArrowRight size={15} />
               </Button>
             </div>

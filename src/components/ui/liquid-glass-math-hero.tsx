@@ -19,7 +19,7 @@ export const LiquidGlassMathHero: React.FC<LiquidGlassMathHeroProps> = ({
   const navLinks = [
     { label: 'Home', active: true, action: () => onNavigate('siswa') },
     { label: 'Materi Pecahan', dropdown: true, action: () => onOpenModal?.('materi') },
-    { label: 'LKPD Digital AI', action: () => onOpenModal?.('lkpd') },
+    { label: 'LKPD', action: () => onOpenModal?.('lkpd') },
     { label: 'Evaluasi Uraian', action: () => onOpenModal?.('evaluasi') },
   ];
 
@@ -99,7 +99,7 @@ export const LiquidGlassMathHero: React.FC<LiquidGlassMathHeroProps> = ({
                     className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-left text-white/90 hover:bg-white/15 font-semibold transition"
                   >
                     <FileText size={14} className="text-[#38bdf8]" />
-                    <span>LKPD Digital AI</span>
+                    <span>LKPD</span>
                   </button>
                   <button
                     onClick={() => handleNavClick(() => onOpenModal?.('evaluasi'))}

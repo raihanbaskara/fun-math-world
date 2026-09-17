@@ -65,7 +65,7 @@ export const SiswaLanding: React.FC<SiswaLandingProps> = ({ onNavigate, currentU
       <Modal
         isOpen={modalType === 'lkpd'}
         onClose={() => setModalType(null)}
-        title="LKPD Digital Asisten AI"
+        title="LKPD"
       >
         <div className="space-y-4 text-xs font-bold text-slate-900">
           <p className="leading-relaxed">

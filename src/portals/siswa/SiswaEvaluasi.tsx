@@ -168,7 +168,7 @@ export const SiswaEvaluasi: React.FC<{
           </div>
 
           <p className="text-sm font-bold text-slate-800 dark:text-slate-300 leading-relaxed max-w-2xl">
-            Sesuai urutan alur belajar matematika: Kamu harus menyelesaikan <b>LKPD Digital (Tahap 1)</b> dan <b>Latihan Soal Quizizz (Tahap 2)</b> terlebih dahulu sebelum dapat mengerjakan Evaluasi Sumatif.
+            Sesuai urutan alur belajar matematika: Kamu harus menyelesaikan <b>LKPD (Tahap 1)</b> dan <b>Latihan Soal (Tahap 2)</b> terlebih dahulu sebelum dapat mengerjakan Evaluasi Sumatif.
           </p>
 
           <div className="flex flex-wrap gap-3 pt-2">
@@ -177,7 +177,7 @@ export const SiswaEvaluasi: React.FC<{
                 onClick={() => onNavigate('siswa/lkpd')}
                 className="px-6 py-3.5 bg-[#ffe600] hover:bg-yellow-400 text-slate-950 font-mono font-black text-xs uppercase tracking-wider border-3 border-slate-950 dark:border-slate-800 rounded-2xl shadow-[4px_4px_0px_0px_#0f172a] dark:shadow-[4px_4px_0px_0px_#000000] transition-all cursor-pointer flex items-center gap-2"
               >
-                <span>Buka LKPD Digital (Tahap 1)</span>
+                <span>Buka LKPD (Tahap 1)</span>
                 <ArrowRight size={16} />
               </button>
             )}
@@ -186,7 +186,7 @@ export const SiswaEvaluasi: React.FC<{
                 onClick={() => onNavigate('siswa/latsol')}
                 className="px-6 py-3.5 bg-[#a5f3fc] hover:bg-cyan-300 text-slate-950 font-mono font-black text-xs uppercase tracking-wider border-3 border-slate-950 dark:border-slate-800 rounded-2xl shadow-[4px_4px_0px_0px_#0f172a] dark:shadow-[4px_4px_0px_0px_#000000] transition-all cursor-pointer flex items-center gap-2"
               >
-                <span>Buka Latihan Soal Quizizz (Tahap 2)</span>
+                <span>Buka Latihan Soal (Tahap 2)</span>
                 <ArrowRight size={16} />
               </button>
             )}

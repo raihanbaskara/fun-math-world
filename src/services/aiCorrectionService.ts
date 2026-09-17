@@ -2,6 +2,7 @@ export interface QuestionEvaluationResult {
   questionId: string;
   score: number;
   maxScore: number;
+  aiAnswer?: string;
   diagnosa?: string;
   conceptFeedback: string;
   discussion: string;
@@ -34,6 +35,7 @@ export function evaluateLKPDWithRubric(
     const hasPhoto = Boolean(ans?.photoUrl && ans.photoUrl.length > 50);
 
     let earnedRatio = 0.2; // Default low ratio if text is minimal or uncertain
+    let aiSolutionText = "";
 
     if (text.length < 3 && !hasPhoto) {
       earnedRatio = 0;
@@ -46,6 +48,8 @@ export function evaluateLKPDWithRubric(
       else if (hasFraction && hasRemainder) earnedRatio = 0.80;
       else if (hasFraction || hasRemainder) earnedRatio = 0.50;
       else earnedRatio = 0.20;
+
+      aiSolutionText = "Solusi Langkah Versi AI:\n1. Tepung yang digunakan = 1/4 kg + 2/8 kg = 1/4 + 1/4 = 2/4 = 1/2 kg.\n2. Sisa tepung Ibu = 3/4 kg - 1/2 kg = 3/4 - 2/4 = 1/4 kg.\n3. Bentuk paling sederhana dari sisa tepung adalah 1/4 kg.";
     } else if (q.id.includes('c4') || q.title.toLowerCase().includes('menganalisis') || q.title.toLowerCase().includes('sirup')) {
       const mentionsBenar = text.includes('benar') || text.includes('tepat');
       const mentionsSalah = text.includes('salah') || text.includes('keliru');
@@ -56,6 +60,8 @@ export function evaluateLKPDWithRubric(
       else if (mentionsBenar && (mentionsKPK || mentionsResult)) earnedRatio = 0.75;
       else if (mentionsSalah) earnedRatio = 0.35; // Penalized for wrong conclusion
       else earnedRatio = 0.20;
+
+      aiSolutionText = "Solusi Langkah Versi AI:\n1. Samakan penyebut pecahan menggunakan KPK(3, 4, 6) = 12:\n   - Wadah awal: 2/3 = 8/12 liter\n   - Dituang ke botol A: 1/4 = 3/12 liter\n   - Dituang ke botol B: 1/6 = 2/12 liter\n2. Sisa sirup sebenarnya = (8 - 3 - 2) / 12 = 3/12 liter = 1/4 liter.\n3. Kesimpulan: Pernyataan Rani benar bahwa sisa sirup adalah 1/4 liter, namun Rani harus menggunakan langkah formal penyamaan penyebut ber-KPK 12.";
     } else if (q.id.includes('c5') || q.title.toLowerCase().includes('mengevaluasi') || q.title.toLowerCase().includes('pita')) {
       const mentionsCaraB = text.includes('cara b') || (text.includes('b') && !text.includes('cara a benar'));
       const mentionsAlasan = text.includes('penyebut') || text.includes('kpk') || text.includes('samakan');
@@ -65,10 +71,14 @@ export function evaluateLKPDWithRubric(
       else if (mentionsCaraB && (mentionsAlasan || mentionsCukup)) earnedRatio = 0.75;
       else if (text.includes('cara a')) earnedRatio = 0.20; // Penalized for choosing wrong method
       else earnedRatio = 0.20;
+
+      aiSolutionText = "Solusi Langkah Versi AI:\n1. Cara B benar karena menyamakan penyebut terlebih dahulu (1/3 = 2/6, sehingga 5/6 - 2/6 = 3/6 = 1/2 m). Cara A salah fatal karena langsung mengurangkan penyebut (6 - 3).\n2. Membandingkan sisa pita (1/2 m = 5/10 m) dengan kebutuhan pita lain (2/5 m = 4/10 m). Karena 5/10 > 4/10, sisa pita CUKUP dan masih tersisa 1/10 meter.";
     } else {
       if (text.length > 30) earnedRatio = 0.85;
       else if (text.length > 10) earnedRatio = 0.60;
       else earnedRatio = 0;
+
+      aiSolutionText = "Solusi Langkah Versi AI:\nPenyebut merepresentasikan banyaknya pecahan bagian dari satu keutuhan. Ketika penyebut berbeda, ukuran satuan bagian belum setara sehingga tidak dapat langsung dijumlahkan/dikurangkan. Penyamaan penyebut dengan KPK mutlak dilakukan agar satuan perbandingan sama.";
     }
 
     if (hasPhoto && earnedRatio < 0.95 && earnedRatio > 0) {
@@ -82,6 +92,7 @@ export function evaluateLKPDWithRubric(
       questionId: q.id,
       score: qScore,
       maxScore: weight,
+      aiAnswer: aiSolutionText,
       diagnosa:
         earnedRatio === 0
           ? "Siswa tidak mengumpulkan jawaban / lembar kerja kosong."
@@ -149,6 +160,7 @@ Prinsip Penilaian:
 2. Jika siswa hanya mengetik kata acak, ngawur, atau tidak menjawab sama sekali (serta foto kosong/tidak ada), berikan skor 0.
 3. Jika langkah perhitungan di foto/teks sudah tepat namun terdapat sedikit kekeliruan aritmatika, berikan skor sebagian secara proporsional.
 4. Jika langkah penyelesaian dan kesimpulan akhir benar sesuai kunci pembahasan resmi, berikan nilai penuh sesuai maxScore.
+5. Berikan "aiAnswer" yang berisi uraian langkah penyelesaian dan jawaban versi AI secara runtut dan mandiri.
 
 Kembalikan HANYA format JSON murni tanpa pembungkus teks markdown atau kutipan lain:
 {
@@ -158,6 +170,7 @@ Kembalikan HANYA format JSON murni tanpa pembungkus teks markdown atau kutipan l
     "<questionId>": {
       "score": number,
       "maxScore": number,
+      "aiAnswer": string,
       "diagnosa": string,
       "conceptFeedback": string
     }
@@ -279,6 +292,7 @@ export async function evaluateLKPDWithAI(
         questionId: q.id,
         score: qScore,
         maxScore: maxScore,
+        aiAnswer: qEval?.aiAnswer || undefined,
         diagnosa:
           studentAnsText.length === 0 && !hasPhoto
             ? "Siswa tidak mengumpulkan jawaban / lembar kerja kosong."

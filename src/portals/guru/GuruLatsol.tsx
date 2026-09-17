@@ -267,7 +267,7 @@ export const GuruLatsol: React.FC<{
           <div className="space-y-3 max-w-2xl">
             <div className="flex flex-wrap items-center gap-2">
               <span className="px-3 py-1 bg-white text-slate-950 border-2 border-slate-950 rounded-xl text-xs font-mono font-black shadow-[2px_2px_0px_0px_#0f172a]">
-                KONTROL RUANG KUIS (QUIZIZZ MODE)
+                KONTROL RUANG LATIHAN SOAL
               </span>
               <span className="px-3 py-1 bg-white/80 text-slate-900 border-2 border-slate-950 rounded-xl text-xs font-bold font-mono">
                 {rooms.length} Ruang Kuis Interaktif
@@ -332,7 +332,7 @@ export const GuruLatsol: React.FC<{
             >
               {/* Card Body (Top Portion) */}
               <div className="space-y-4">
-                <div className="flex items-start justify-between gap-3 min-h-[105px]">
+                <div className="flex items-start justify-between gap-3 min-h-[85px]">
                   <div className="space-y-1.5 flex-1 min-w-0 flex flex-col justify-start">
                     <div className="flex items-center gap-2">
                       <span className="px-2.5 py-0.5 rounded-lg bg-[#ffe600] text-slate-950 font-mono font-black text-xs border-2 border-slate-950 shadow-[1.5px_1.5px_0px_0px_#0f172a]">
@@ -343,7 +343,6 @@ export const GuruLatsol: React.FC<{
                       </span>
                     </div>
                     <h3 className="font-black text-slate-950 dark:text-slate-100 text-lg leading-snug line-clamp-2">{room.title}</h3>
-                    <p className="text-xs font-bold text-slate-600 dark:text-slate-400 line-clamp-1">{room.topic}</p>
                   </div>
 
                   {/* Lock/Unlock Badge */}
@@ -474,7 +473,7 @@ export const GuruLatsol: React.FC<{
           <div>
             <h2 className="text-xl font-black text-slate-950 dark:text-slate-100 font-mono flex items-center gap-2">
               <Trophy className="text-amber-500" />
-              <span>Hasil Pengerjaan Kuis Siswa (Quizizz Scores)</span>
+              <span>Hasil Pengerjaan Latihan Soal Siswa</span>
             </h2>
             <p className="text-xs text-slate-600 dark:text-slate-400 font-bold">
               Skor langsung, durasi pengerjaan, dan audit keluar tab ujian.
@@ -954,7 +953,7 @@ export const GuruLatsol: React.FC<{
           <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-1">
             <div className="p-3.5 rounded-2xl bg-amber-50 dark:bg-slate-800/80 border-2 border-slate-950 dark:border-slate-700 text-xs font-bold space-y-1">
               <div className="font-black text-slate-950 dark:text-amber-400 font-mono">Informasi Ruang Kuis:</div>
-              <p className="text-slate-800 dark:text-slate-200">Topik: {selectedRoom.topic} • Durasi Timer: {Math.round(selectedRoom.durationSeconds / 60)} Menit • Status: {selectedRoom.isLockedByTeacher ? 'Terkunci' : 'Terbuka'}</p>
+              <p className="text-slate-800 dark:text-slate-200">{selectedRoom.topic ? `Topik: ${selectedRoom.topic} • ` : ''}Durasi Timer: {Math.round(selectedRoom.durationSeconds / 60)} Menit • Status: {selectedRoom.isLockedByTeacher ? 'Terkunci' : 'Terbuka'}</p>
             </div>
 
             <div className="space-y-3">
@@ -1015,7 +1014,7 @@ export const GuruLatsol: React.FC<{
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-3">
               <div className="p-3 bg-purple-50 dark:bg-purple-950/40 rounded-2xl border-2 border-slate-950 dark:border-purple-800">
-                <div className="text-xs font-bold text-slate-600 dark:text-slate-400">Skor Quizizz</div>
+                <div className="text-xs font-bold text-slate-600 dark:text-slate-400">Skor Latihan Soal</div>
                 <div className="text-2xl font-black font-mono text-purple-900 dark:text-purple-300">{viewDetailSub.score}/100</div>
               </div>
               <div className="p-3 bg-amber-50 dark:bg-slate-800 rounded-2xl border-2 border-slate-950 dark:border-slate-700">

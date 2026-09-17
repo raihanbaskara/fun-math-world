@@ -30,6 +30,7 @@ import { SiswaEvaluasi } from '@/portals/siswa/SiswaEvaluasi';
 import { SiswaRefleksi } from '@/portals/siswa/SiswaRefleksi';
 import { SiswaPengumuman } from '@/portals/siswa/SiswaPengumuman';
 import { SiswaProfil } from '@/portals/siswa/SiswaProfil';
+import { SiswaNilai } from '@/portals/siswa/SiswaNilai';
 
 // Guru Modules
 import { GuruDashboard } from '@/portals/guru/GuruDashboard';
@@ -443,6 +444,7 @@ export function App() {
               {currentRoute === 'siswa/refleksi' && <SiswaRefleksi currentUser={currentUser} onNavigate={navigateTo} showToast={showToast} />}
               {currentRoute === 'siswa/pengumuman' && <SiswaPengumuman currentUser={currentUser} showToast={showToast} />}
               {currentRoute === 'siswa/profil' && <SiswaProfil currentUser={currentUser} onLogout={() => handleLogout('siswa')} showToast={showToast} />}
+              {currentRoute === 'siswa/nilai' && <SiswaNilai currentUser={currentUser} onNavigate={navigateTo} showToast={showToast} />}
 
               {/* Guru Portals */}
               {currentRoute === 'guru/dashboard' && <GuruDashboard currentUser={currentUser} onNavigate={navigateTo} />}
@@ -483,7 +485,7 @@ export function App() {
           <div className="p-3 bg-slate-50 dark:bg-slate-900 rounded-2xl space-y-1.5 font-bold text-xs text-slate-500 dark:text-slate-400">
             <div className="flex items-center gap-2"><span className="text-brand-600">✓</span><span>Hak Akses 3 Peran Terisolasi (Siswa, Guru, Admin)</span></div>
             <div className="flex items-center gap-2"><span className="text-brand-600">✓</span><span>Kebijakan Keamanan 1 Akun 1 Device (Single Device Policy)</span></div>
-            <div className="flex items-center gap-2"><span className="text-brand-600">✓</span><span>Asisten Koreksi AI pada LKPD Digital Tulisan Tangan</span></div>
+            <div className="flex items-center gap-2"><span className="text-brand-600">✓</span><span>Asisten Koreksi AI pada LKPD Tulisan Tangan</span></div>
             <div className="flex items-center gap-2"><span className="text-brand-600">✓</span><span>Evaluasi Soal Uraian HOTS dengan Pengawas Tab Terintegrasi</span></div>
             <div className="flex items-center gap-2"><span className="text-brand-600">✓</span><span>Rekapitulasi Nilai Otomatis Siap Ekspor ke Format Excel (.xlsx)</span></div>
           </div>

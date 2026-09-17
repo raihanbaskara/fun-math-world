@@ -95,7 +95,7 @@ export const SiswaProfil: React.FC<{
   const competencies = [
     {
       title: 'Materi & Konsep Visual',
-      desc: 'Pemahaman materi pecahan & modul teori',
+      desc: '',
       score: materiScore,
       icon: BookOpen,
       bg: 'bg-[#38bdf8]',
@@ -103,15 +103,15 @@ export const SiswaProfil: React.FC<{
     },
     {
       title: 'Studio & Video Interaktif',
-      desc: 'Eksperimen pizza, balok, & peraga pecahan',
+      desc: '',
       score: videoScore,
       icon: Layers,
       bg: 'bg-[#a3e635]',
       badge: 'SIMULASI'
     },
     {
-      title: 'LKPD Digital AI',
-      desc: 'Penyelesaian lembar kerja & koreksi AI per soal',
+      title: 'LKPD',
+      desc: '',
       score: lkpdScore,
       icon: FileText,
       bg: 'bg-[#ffe600]',
@@ -119,7 +119,7 @@ export const SiswaProfil: React.FC<{
     },
     {
       title: 'Evaluasi Sumatif & Latihan',
-      desc: 'Kuis Latihan Soal & Evaluasi Essai Kurikulum',
+      desc: '',
       score: evalScore,
       icon: Trophy,
       bg: 'bg-[#ff94e8]',
@@ -299,9 +299,11 @@ export const SiswaProfil: React.FC<{
                       <h3 className="text-sm font-black font-mono text-slate-950 dark:text-slate-100 leading-tight">
                         {comp.title}
                       </h3>
-                      <p className="text-[11px] font-bold text-slate-600 dark:text-slate-400 line-clamp-1 mt-0.5">
-                        {comp.desc}
-                      </p>
+                      {comp.desc ? (
+                        <p className="text-[11px] font-bold text-slate-600 dark:text-slate-400 line-clamp-1 mt-0.5">
+                          {comp.desc}
+                        </p>
+                      ) : null}
                     </div>
                   </div>
                   <span className="px-2.5 py-1 rounded-xl bg-white dark:bg-slate-800 border-2 border-slate-950 dark:border-slate-700 font-mono font-black text-sm text-slate-950 dark:text-slate-100 shadow-[2px_2px_0px_0px_#0f172a] dark:shadow-[2px_2px_0px_0px_#000000] shrink-0">
@@ -319,59 +321,6 @@ export const SiswaProfil: React.FC<{
               </div>
             );
           })}
-        </div>
-      </div>
-
-      {/* 4. LENCANA PRESTASI & INTEGRITAS */}
-      <div className="bg-white dark:bg-[#111827] rounded-3xl border-4 border-slate-950 dark:border-slate-800 p-6 sm:p-8 shadow-[8px_8px_0px_0px_#0f172a] dark:shadow-[8px_8px_0px_0px_#000000] space-y-5">
-        <div className="flex items-center gap-3 border-b-3 border-slate-950 dark:border-slate-800 pb-4">
-          <div className="p-2.5 rounded-2xl bg-[#ff94e8] border-2 border-slate-950 dark:border-slate-800 shadow-[2px_2px_0px_0px_#0f172a] dark:shadow-[2px_2px_0px_0px_#000000]">
-            <Award size={20} className="text-slate-950" />
-          </div>
-          <div>
-            <h2 className="text-lg sm:text-xl font-black font-mono text-slate-950 dark:text-slate-100 uppercase tracking-tight">
-              Lencana & Prestasi Akademik
-            </h2>
-            <p className="text-xs font-bold text-slate-600 dark:text-slate-400">
-              Penghargaan atas kedisiplinan dan capaian nilai matematika
-            </p>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
-          <div className={`flex items-center gap-3 p-3.5 rounded-2xl border-3 border-slate-950 dark:border-slate-800 shadow-[3px_3px_0px_0px_#0f172a] dark:shadow-[3px_3px_0px_0px_#000000] ${materiScore >= 80 ? 'bg-[#fffdf5] dark:bg-slate-900' : 'bg-slate-100 dark:bg-slate-800 opacity-70'}`}>
-            <div className={`w-9 h-9 rounded-xl border-2 border-slate-950 dark:border-slate-800 flex items-center justify-center shrink-0 ${materiScore >= 80 ? 'bg-[#ffe600]' : 'bg-slate-200 dark:bg-slate-700 text-slate-500'}`}>
-              {materiScore >= 80 ? <CheckCircle2 size={18} className="text-slate-950 stroke-[2.5]" /> : <Clock size={16} />}
-            </div>
-            <div>
-              <span className="text-xs font-black font-mono text-slate-950 dark:text-slate-100 block">Master Pecahan</span>
-              <span className="text-[10px] font-bold text-slate-600 dark:text-slate-400">
-                {materiScore >= 80 ? 'Modul Teori Tuntas' : 'Pelajari Modul Teori'}
-              </span>
-            </div>
-          </div>
-
-          <div className={`flex items-center gap-3 p-3.5 rounded-2xl border-3 border-slate-950 dark:border-slate-800 shadow-[3px_3px_0px_0px_#0f172a] dark:shadow-[3px_3px_0px_0px_#000000] ${lkpdDoneCount > 0 ? 'bg-[#fffdf5] dark:bg-slate-900' : 'bg-slate-100 dark:bg-slate-800 opacity-70'}`}>
-            <div className={`w-9 h-9 rounded-xl border-2 border-slate-950 dark:border-slate-800 flex items-center justify-center shrink-0 ${lkpdDoneCount > 0 ? 'bg-[#38bdf8]' : 'bg-slate-200 dark:bg-slate-700 text-slate-500'}`}>
-              {lkpdDoneCount > 0 ? <CheckCircle2 size={18} className="text-slate-950 stroke-[2.5]" /> : <Clock size={16} />}
-            </div>
-            <div>
-              <span className="text-xs font-black font-mono text-slate-950 dark:text-slate-100 block">Disiplin LKPD AI</span>
-              <span className="text-[10px] font-bold text-slate-600 dark:text-slate-400">
-                {lkpdDoneCount > 0 ? `${lkpdDoneCount} LKPD Terkirim` : 'Belum Ada LKPD'}
-              </span>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3 p-3.5 bg-[#fffdf5] dark:bg-slate-900 rounded-2xl border-3 border-slate-950 dark:border-slate-800 shadow-[3px_3px_0px_0px_#0f172a] dark:shadow-[3px_3px_0px_0px_#000000]">
-            <div className="w-9 h-9 rounded-xl bg-[#a3e635] border-2 border-slate-950 dark:border-slate-800 flex items-center justify-center shrink-0">
-              <CheckCircle2 size={18} className="text-slate-950 stroke-[2.5]" />
-            </div>
-            <div>
-              <span className="text-xs font-black font-mono text-slate-950 dark:text-slate-100 block">Anti-Curang 100%</span>
-              <span className="text-[10px] font-bold text-slate-600 dark:text-slate-400">Fokus Tab Terjaga</span>
-            </div>
-          </div>
         </div>
       </div>
 

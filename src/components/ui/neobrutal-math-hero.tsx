@@ -84,7 +84,7 @@ export const NeobrutalMathHero: React.FC<NeobrutalMathHeroProps> = ({
                   className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs text-left text-slate-950 hover:bg-[#a5f3fc] font-black transition border-2 border-transparent hover:border-slate-950"
                 >
                   <FileText size={15} />
-                  <span>LKPD Digital AI</span>
+                  <span>LKPD</span>
                 </button>
                 <button
                   onClick={() => handleNavClick(() => onOpenModal?.('evaluasi'))}
@@ -165,7 +165,7 @@ export const NeobrutalMathHero: React.FC<NeobrutalMathHeroProps> = ({
             onClick={() => handleNavClick(() => onOpenModal?.('lkpd'))}
             className="flex items-center justify-between w-full px-4 py-3 rounded-2xl text-xs font-black uppercase tracking-wider text-left border-2 border-slate-950 bg-[#a5f3fc] shadow-[2px_2px_0px_0px_#0f172a]"
           >
-            <span>LKPD Digital AI</span>
+            <span>LKPD</span>
             <FileText size={15} />
           </button>
 

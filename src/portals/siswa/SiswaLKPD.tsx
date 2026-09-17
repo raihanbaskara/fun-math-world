@@ -4,7 +4,7 @@ import { soundService } from '@/services/soundService';
 import { User, LKPDItem, LKPDSubmission, LKPDEssayAnswer } from '@/types';
 import { compressImage } from '@/lib/utils';
 import { useAntiCheat } from '@/lib/useAntiCheat';
-import { evaluateLKPDWithAI, LKPDOverallEvaluation } from '@/services/aiCorrectionService';
+import { evaluateLKPDWithAI, evaluateLKPDWithRubric, LKPDOverallEvaluation } from '@/services/aiCorrectionService';
 import { Modal } from '@/components/ui/modal';
 import {
   FileText,
@@ -279,6 +279,7 @@ export const SiswaLKPD: React.FC<{
       finalAnswers[q.id] = {
         textAnswer: studentAns.textAnswer,
         photoUrl: studentAns.photoUrl || '',
+        aiAnswer: qEval?.aiAnswer,
         aiScore: qEval?.score ?? 0,
         aiFeedback: diagnosaNote
       };
@@ -476,7 +477,7 @@ export const SiswaLKPD: React.FC<{
               </div>
               <div>
                 <span className="text-xs font-mono font-black uppercase bg-white px-3 py-1 rounded-xl border-2 border-slate-950 dark:border-slate-800 shadow-[2px_2px_0px_0px_#0f172a] text-slate-950">
-                  LKPD DIGITAL SELESAI
+                  LKPD SELESAI
                 </span>
                 <h1 className="text-2xl font-black font-mono mt-1 text-slate-950">
                   Lembar Kerja Berhasil Dikumpulkan
@@ -500,6 +501,45 @@ export const SiswaLKPD: React.FC<{
             <span className="px-3 py-1.5 bg-emerald-200 text-emerald-950 rounded-xl border-2 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a]">
               🛡 Tab Integrity: {existingSubmission.antiCheat?.switchCount || 0}x Pindah Tab
             </span>
+          </div>
+
+          {/* Nilai & Catatan Evaluasi Guru / Status Penilaian */}
+          <div className="p-4 sm:p-5 bg-white dark:bg-[#1f2937] rounded-2xl border-3 border-slate-950 dark:border-slate-700 shadow-[4px_4px_0px_0px_#0f172a] space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b-2 border-slate-200 dark:border-slate-700 pb-2.5">
+              <div className="flex items-center gap-2 font-mono font-black text-sm text-slate-950 dark:text-slate-100">
+                <Trophy size={18} className="text-amber-500" />
+                <span>Hasil Penilaian &amp; Catatan Guru</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-mono font-black px-2.5 py-1 rounded-xl bg-purple-100 text-purple-900 border border-purple-950/20">
+                  Rekomendasi AI: {existingSubmission.aiScore} / 100
+                </span>
+                <span className={`text-xs font-mono font-black px-3 py-1 rounded-xl border-2 border-slate-950 ${
+                  existingSubmission.teacherScore !== null ? 'bg-[#ffe600] text-slate-950' : 'bg-slate-100 text-slate-700'
+                }`}>
+                  {existingSubmission.teacherScore !== null
+                    ? `Nilai Guru: ${existingSubmission.teacherScore} / 100`
+                    : 'Belum Dinilai Guru'}
+                </span>
+              </div>
+            </div>
+
+            {existingSubmission.teacherFeedback ? (
+              <div className="p-3 bg-amber-50/80 dark:bg-amber-950/20 rounded-xl border-2 border-amber-400/60 dark:border-amber-700/60 text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100">
+                <span className="font-mono font-black text-amber-950 dark:text-amber-400 block mb-1">
+                  Catatan Evaluasi / Bimbingan Guru:
+                </span>
+                <p className="whitespace-pre-line leading-relaxed">
+                  {existingSubmission.teacherFeedback}
+                </p>
+              </div>
+            ) : (
+              <p className="text-xs font-bold text-slate-600 dark:text-slate-400 italic">
+                {existingSubmission.teacherScore !== null
+                  ? 'Guru telah memberikan nilai final tanpa catatan tambahan.'
+                  : 'Guru pengampu sedang memeriksa pengerjaanmu. Nilai final dan feedback bimbingan akan segera muncul di sini dan menu Nilai.'}
+              </p>
+            )}
           </div>
 
           {/* PDF Attachment button in Review */}
@@ -632,22 +672,51 @@ export const SiswaLKPD: React.FC<{
                   </div>
                 )}
 
-                {/* Official Step-by-Step Discussion (Only shown if student pressed Koreksi AI button) */}
+                {/* Official Step-by-Step Discussion & AI Solution Separation */}
                 {aiDiscussionUnlocked ? (
-                  <div className="p-4 bg-[#a5f3fc]/30 dark:bg-cyan-950/40 border-3 border-cyan-950 dark:border-cyan-800 rounded-2xl shadow-[3px_3px_0px_0px_#083344] dark:shadow-[3px_3px_0px_0px_#000000] space-y-3 animate-in fade-in">
-                    <div className="flex items-center gap-2 text-cyan-950 dark:text-cyan-300 font-mono text-xs font-black">
-                      <Bot size={18} className="text-cyan-800 dark:text-cyan-400" />
-                      <span>PEMBAHASAN &amp; BIMBINGAN ASISTEN AI (KEGIATAN {idx + 1}):</span>
-                    </div>
+                  <div className="space-y-3 animate-in fade-in">
+                    {/* Blok Jawaban & Solusi Langkah Versi AI */}
+                    {(() => {
+                      const aiAnswerText = ans.aiAnswer || evaluateLKPDWithRubric([q], { [q.id]: ans }).perQuestion[q.id]?.aiAnswer || "Langkah penyelesaian pecahan versi AI telah dihitung.";
+                      return (
+                        <div className="p-4 bg-purple-50 dark:bg-purple-950/30 border-3 border-slate-950 dark:border-purple-800 rounded-2xl shadow-[3px_3px_0px_0px_#0f172a] space-y-2">
+                          <div className="flex items-center justify-between text-purple-950 dark:text-purple-300 font-mono text-xs font-black">
+                            <div className="flex items-center gap-2">
+                              <Bot size={18} className="text-purple-700 dark:text-purple-400" />
+                              <span>JAWABAN &amp; SOLUSI LANGKAH VERSI AI (KEGIATAN {idx + 1}):</span>
+                            </div>
+                            <span className="text-[11px] font-black bg-purple-200 dark:bg-purple-900 px-2 py-0.5 rounded-md border border-purple-950/20">
+                              Skor AI: {ans.aiScore ?? 0} Poin
+                            </span>
+                          </div>
 
-                    <div className="space-y-1">
-                      <span className="font-mono font-black text-cyan-950 dark:text-cyan-200 text-[11px] block">
-                        📘 Langkah Pembahasan Konsep Resmi:
-                      </span>
-                      <pre className="font-sans whitespace-pre-line text-xs font-bold text-slate-900 dark:text-slate-100 leading-relaxed bg-white/80 dark:bg-slate-900/90 p-3.5 rounded-xl border border-cyan-950/20 dark:border-cyan-800/40">
-                        {q.discussion}
-                      </pre>
-                    </div>
+                          <pre className="font-sans whitespace-pre-line text-xs font-bold text-slate-900 dark:text-slate-100 leading-relaxed bg-white/90 dark:bg-slate-900/90 p-3.5 rounded-xl border border-purple-950/20 dark:border-purple-800/40">
+                            {aiAnswerText}
+                          </pre>
+
+                          {ans.aiFeedback && (
+                            <div className="text-[11px] font-mono font-bold text-purple-950 dark:text-purple-300 pt-1.5 border-t border-purple-200 dark:border-purple-800 flex items-start gap-1">
+                              <span className="shrink-0 font-black">Diagnosa AI:</span>
+                              <span>{ans.aiFeedback}</span>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
+
+                    {/* Blok Pembahasan Jawaban Guru (Kunci Guru) */}
+                    {q.discussion && (
+                      <div className="p-4 bg-emerald-50 dark:bg-emerald-950/30 border-3 border-slate-950 dark:border-emerald-800 rounded-2xl shadow-[3px_3px_0px_0px_#0f172a] space-y-2">
+                        <div className="flex items-center gap-2 text-emerald-950 dark:text-emerald-300 font-mono text-xs font-black">
+                          <BookOpen size={18} className="text-emerald-700 dark:text-emerald-400" />
+                          <span>PEMBAHASAN JAWABAN (KUNCI GURU):</span>
+                        </div>
+
+                        <pre className="font-sans whitespace-pre-line text-xs font-bold text-slate-900 dark:text-slate-100 leading-relaxed bg-white/90 dark:bg-slate-900/90 p-3.5 rounded-xl border border-emerald-950/20 dark:border-emerald-800/40">
+                          {q.discussion}
+                        </pre>
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <div className="p-3 bg-slate-50 dark:bg-slate-900/40 rounded-xl border border-dashed border-slate-300 dark:border-slate-800 text-center">
@@ -668,7 +737,7 @@ export const SiswaLKPD: React.FC<{
               Tahap 1 Selesai! Lanjutkan ke Tahap 2
             </span>
             <span className="text-[11px] font-bold text-slate-600 dark:text-slate-400">
-              Latihan Soal Kuis Pilihan Ganda (Quizizz Mode) siap dikerjakan.
+              Latihan Soal Kuis Pilihan Ganda siap dikerjakan.
             </span>
           </div>
 

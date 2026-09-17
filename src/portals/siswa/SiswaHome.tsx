@@ -111,7 +111,7 @@ export const SiswaHome: React.FC<{
               </div>
 
               <div>
-                <h3 className="font-mono font-black text-base text-slate-950 dark:text-slate-100">LKPD Digital Soal Essai</h3>
+                <h3 className="font-mono font-black text-base text-slate-950 dark:text-slate-100">LKPD</h3>
               </div>
             </div>
 
@@ -126,7 +126,7 @@ export const SiswaHome: React.FC<{
             </div>
           </div>
 
-          {/* STEP 2: LATIHAN SOAL QUIZIZZ */}
+          {/* STEP 2: LATIHAN SOAL */}
           <div className={`rounded-2xl border-3 border-slate-950 dark:border-slate-700 p-5 flex flex-col justify-between transition-all ${
             !hasLKPD
               ? 'bg-slate-100 dark:bg-slate-800/40 opacity-80 shadow-[2px_2px_0px_0px_#64748b] dark:shadow-none'
@@ -157,7 +157,7 @@ export const SiswaHome: React.FC<{
               </div>
 
               <div>
-                <h3 className="font-mono font-black text-base text-slate-950 dark:text-slate-100">Latihan Soal (Quizizz)</h3>
+                <h3 className="font-mono font-black text-base text-slate-950 dark:text-slate-100">Latihan Soal</h3>
               </div>
             </div>
 
@@ -278,7 +278,7 @@ export const SiswaHome: React.FC<{
                 </div>
 
                 <div className="pt-1 flex items-center justify-between text-xs font-mono">
-                  <span className="text-slate-500 dark:text-slate-400 font-bold">{sch.topic}</span>
+                  {sch.topic ? <span className="text-slate-500 dark:text-slate-400 font-bold">{sch.topic}</span> : <span />}
                   <span className="font-black text-slate-950 bg-white dark:bg-slate-700 dark:text-slate-100 px-2 py-0.5 rounded border border-slate-950 dark:border-slate-600">
                     {sch.status}
                   </span>

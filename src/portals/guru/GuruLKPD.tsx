@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Modal } from '@/components/ui/modal';
 import { storageService } from '@/services/storageService';
 import { soundService } from '@/services/soundService';
-import { evaluateLKPDWithAI } from '@/services/aiCorrectionService';
+import { evaluateLKPDWithAI, evaluateLKPDWithRubric } from '@/services/aiCorrectionService';
 import { LKPDSubmission, LKPDItem, EssayQuestion } from '@/types';
 import { FileText, Image as ImageIcon, Bot, ExternalLink, Plus, Trash2, Pencil, ChevronLeft, ChevronRight, CheckCircle2, Clock, Loader2, Sparkles, RefreshCw, BookOpen, Download } from 'lucide-react';
 import { PdfCanvasViewer } from '@/components/ui/PdfCanvasViewer';
@@ -23,19 +23,50 @@ export const GuruLKPD: React.FC<{
 
   const submissions = dbState.lkpdSubmissions || [];
   const lkpdList = dbState.lkpdList || [];
+  const [selectedLkpdId, setSelectedLkpdId] = useState<string>(lkpdList[0]?.id || 'lkpd_1');
 
   // Grade Modal State
   const [selectedSub, setSelectedSub] = useState<LKPDSubmission | null>(null);
-  const [gradeScore, setGradeScore] = useState<number>(90);
+  const [gradeScore, setGradeScore] = useState<number>(0);
   const [gradeFeedback, setGradeFeedback] = useState<string>('');
-  const [isAiCorrectionRevealed, setIsAiCorrectionRevealed] = useState<boolean>(false);
   const [isAiEvaluating, setIsAiEvaluating] = useState<boolean>(false);
+  const [isAiCorrectionRevealed, setIsAiCorrectionRevealed] = useState<boolean>(true);
+
+  // Expanded Photo Modal State
+  const [previewPhotoUrl, setPreviewPhotoUrl] = useState<string | null>(null);
+
+  // Manage LKPD State
+  const [newTitle, setNewTitle] = useState('');
+
+  // Preview Document Modal State (like SiswaMateri PDF preview)
+  const [previewDocModalOpen, setPreviewDocModalOpen] = useState(false);
+  const [previewDocItem, setPreviewDocItem] = useState<DocumentPreviewItem | null>(null);
+
+  const resolveBlobUrl = (url?: string) => {
+    if (!url) return '';
+    if (url.startsWith('storage://')) {
+      const key = url.replace('storage://', '');
+      const base64 = localStorage.getItem(`pdf_data_${key}`);
+      if (!base64) return '';
+      try {
+        const byteCharacters = atob(base64.split(',')[1] || base64);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray], { type: 'application/pdf' });
+        return URL.createObjectURL(blob);
+      } catch {
+        return url;
+      }
+    }
+    return url;
+  };
 
   // Upload LKPD Modal State
   const [isAddLKPDOpen, setIsAddLKPDOpen] = useState<boolean>(false);
-  const [previewDocItem, setPreviewDocItem] = useState<DocumentPreviewItem | null>(null);
   const [viewPhotoUrl, setViewPhotoUrl] = useState<{ urls: string[]; activeIdx: number; studentName: string } | null>(null);
-  const [newTitle, setNewTitle] = useState<string>('');
   const [newDesc, setNewDesc] = useState<string>('');
   const [newObjectives, setNewObjectives] = useState<string>('');
   const [newImageUrl, setNewImageUrl] = useState<string>('');
@@ -391,7 +422,7 @@ export const GuruLKPD: React.FC<{
             </div>
 
             <h1 className="text-2xl sm:text-4xl font-black tracking-tight text-slate-950 font-mono leading-tight">
-              Manajemen & Penilaian LKPD Digital
+              Manajemen &amp; Penilaian LKPD
             </h1>
 
             <p className="text-xs sm:text-sm text-slate-950 max-w-2xl leading-relaxed font-bold">
@@ -803,42 +834,70 @@ export const GuruLKPD: React.FC<{
                           </div>
                         )}
 
-                        {/* AI Step-by-Step Discussion (Only shown if teacher pressed Koreksi AI button) */}
-                        {isAiCorrectionRevealed && (
-                          <div className="p-3.5 bg-purple-50 dark:bg-purple-950/40 rounded-xl border-2 border-slate-950 dark:border-purple-800 text-xs space-y-2 shadow-[2px_2px_0px_0px_#0f172a] animate-in fade-in">
-                            <div className="font-black text-purple-950 dark:text-purple-300 flex items-center justify-between font-mono">
-                              <div className="flex items-center gap-1.5">
-                                <Bot size={15} className="text-purple-700 dark:text-purple-400" />
-                                <span>Pembahasan &amp; Kunci Konsep AI:</span>
+                        {/* 1. AI Step-by-Step Solution & Teacher Key Separation */}
+                        {(() => {
+                          const aiAnswerText = ans?.aiAnswer || evaluateLKPDWithRubric([q], { [q.id]: ans || { textAnswer: '' } }).perQuestion[q.id]?.aiAnswer || "Langkah kalkulasi pecahan versi AI telah dihitung.";
+                          return (
+                            <div className="space-y-2.5">
+                              {/* Blok Jawaban & Solusi Langkah Versi AI */}
+                              <div className="p-3.5 bg-purple-50 dark:bg-purple-950/40 rounded-xl border-2 border-slate-950 dark:border-purple-800 text-xs space-y-2 shadow-[2px_2px_0px_0px_#0f172a] animate-in fade-in">
+                                <div className="font-black text-purple-950 dark:text-purple-300 flex items-center justify-between font-mono">
+                                  <div className="flex items-center gap-1.5">
+                                    <Bot size={15} className="text-purple-700 dark:text-purple-400" />
+                                    <span>Jawaban &amp; Solusi Langkah Versi AI:</span>
+                                  </div>
+                                  <span className="text-[11px] font-black bg-purple-200 dark:bg-purple-900 px-2 py-0.5 rounded-md border border-purple-950/20">
+                                    Rekomendasi AI: {ans?.aiScore !== undefined ? ans.aiScore : 0} Poin
+                                  </span>
+                                </div>
+                                <p className="text-slate-800 dark:text-purple-200 font-bold whitespace-pre-line leading-relaxed">
+                                  {aiAnswerText}
+                                </p>
+                                {ans?.aiFeedback && (
+                                  <div className="text-[11px] font-mono font-bold text-purple-950 dark:text-purple-300 pt-1.5 border-t border-purple-200 dark:border-purple-800 flex items-start gap-1">
+                                    <span className="shrink-0 font-black">Diagnosa AI:</span>
+                                    <span>{ans.aiFeedback}</span>
+                                  </div>
+                                )}
                               </div>
-                              <span className="text-[11px] font-black">
-                                Rekomendasi: {ans?.aiScore !== undefined ? ans.aiScore : 0} Poin
-                              </span>
+
+                              {/* Blok Pembahasan Jawaban Guru (Kunci Guru) */}
+                              {q.discussion && (
+                                <div className="p-3.5 bg-emerald-50 dark:bg-emerald-950/40 rounded-xl border-2 border-slate-950 dark:border-emerald-800 text-xs space-y-1.5 shadow-[2px_2px_0px_0px_#0f172a]">
+                                  <div className="font-black text-emerald-950 dark:text-emerald-300 flex items-center gap-1.5 font-mono">
+                                    <BookOpen size={15} className="text-emerald-700 dark:text-emerald-400" />
+                                    <span>Pembahasan Jawaban (Kunci Guru):</span>
+                                  </div>
+                                  <p className="text-slate-800 dark:text-emerald-200 font-bold whitespace-pre-line leading-relaxed">
+                                    {q.discussion}
+                                  </p>
+                                </div>
+                              )}
                             </div>
-                            <p className="text-slate-800 dark:text-purple-200 font-bold whitespace-pre-line leading-relaxed">
-                              {q.discussion}
-                            </p>
-                            {ans?.aiFeedback && (
-                              <div className="text-[11px] font-mono font-bold text-purple-950 dark:text-purple-300 pt-1.5 border-t border-purple-200 dark:border-purple-800 flex items-start gap-1">
-                                <span className="shrink-0 font-black">Diagnosa AI:</span>
-                                <span>{ans.aiFeedback}</span>
-                              </div>
-                            )}
-                          </div>
-                        )}
+                          );
+                        })()}
                       </div>
                     );
                   })}
                 </div>
 
-                {/* AI Score Recommendation Summary (Only shown if teacher pressed Koreksi AI button) */}
-                {isAiCorrectionRevealed ? (
-                  <div className="p-4 bg-sky-50 dark:bg-sky-950/40 rounded-2xl border-3 border-slate-950 dark:border-sky-800 text-xs space-y-2.5 shadow-[3px_3px_0px_0px_#0f172a] animate-in fade-in">
-                    <div className="font-black text-sky-950 dark:text-sky-300 flex flex-col sm:flex-row sm:items-center justify-between gap-2 font-mono">
-                      <div className="flex items-center gap-2">
-                        <Bot size={18} className="text-sky-700 dark:text-sky-400" />
-                        <span className="text-sm">Rekomendasi Total Skor AI: {selectedSub.aiScore !== undefined ? selectedSub.aiScore : 0} / 100</span>
-                      </div>
+                {/* AI Score Recommendation Summary */}
+                <div className="p-4 bg-sky-50 dark:bg-sky-950/40 rounded-2xl border-3 border-slate-950 dark:border-sky-800 text-xs space-y-2.5 shadow-[3px_3px_0px_0px_#0f172a] animate-in fade-in">
+                  <div className="font-black text-sky-950 dark:text-sky-300 flex flex-col sm:flex-row sm:items-center justify-between gap-2 font-mono">
+                    <div className="flex items-center gap-2">
+                      <Bot size={18} className="text-sky-700 dark:text-sky-400" />
+                      <span className="text-sm">Rekomendasi Total Skor AI: {selectedSub.aiScore !== undefined ? selectedSub.aiScore : 0} / 100</span>
+                    </div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <button
+                        type="button"
+                        disabled={isAiEvaluating}
+                        onClick={() => handleRunLiveAiEvaluation(true)}
+                        className="px-3 py-1.5 bg-white dark:bg-slate-800 text-slate-950 dark:text-slate-100 border-2 border-slate-950 rounded-xl text-xs font-mono font-black shadow-[2px_2px_0px_0px_#0f172a] cursor-pointer hover:bg-slate-100 flex items-center gap-1.5 disabled:opacity-50"
+                      >
+                        {isAiEvaluating ? <Loader2 size={13} className="animate-spin" /> : <RefreshCw size={13} />}
+                        <span>Koreksi Ulang AI (Live)</span>
+                      </button>
                       <button
                         type="button"
                         onClick={() => {
@@ -851,27 +910,11 @@ export const GuruLKPD: React.FC<{
                         Terapkan ke Nilai Final Guru
                       </button>
                     </div>
-                    <p className="text-slate-800 dark:text-sky-200 font-bold leading-relaxed">
-                      {selectedSub.aiFeedback || (selectedSub.aiScore === 0 ? "Siswa belum mengumpulkan jawaban pengerjaan." : "Hasil evaluasi pengerjaan siswa.")}
-                    </p>
                   </div>
-                ) : (
-                  <div className="p-4 bg-slate-50 dark:bg-slate-900/60 rounded-2xl border-2 border-dashed border-slate-300 dark:border-slate-700 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
-                    <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400 text-xs font-bold">
-                      <Bot size={18} className="shrink-0 text-slate-500" />
-                      <span>Pembahasan konsep resmi dan rekomendasi skor AI sedang disembunyikan.</span>
-                    </div>
-                    <button
-                      type="button"
-                      disabled={isAiEvaluating}
-                      onClick={() => handleRunLiveAiEvaluation(false)}
-                      className="px-4 py-2 bg-[#a5f3fc] hover:bg-cyan-300 text-slate-950 font-mono text-xs font-black rounded-xl border-2 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a] cursor-pointer shrink-0 flex items-center gap-1.5"
-                    >
-                      <Sparkles size={14} />
-                      <span>Jalankan Koreksi AI (Live)</span>
-                    </button>
-                  </div>
-                )}
+                  <p className="text-slate-800 dark:text-sky-200 font-bold leading-relaxed">
+                    {selectedSub.aiFeedback || (selectedSub.aiScore === 0 ? "Siswa belum mengumpulkan jawaban pengerjaan." : "Hasil evaluasi pengerjaan siswa.")}
+                  </p>
+                </div>
 
                 {/* Teacher Grading Inputs */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2 border-t-3 border-slate-950 dark:border-slate-700">
@@ -937,7 +980,7 @@ export const GuruLKPD: React.FC<{
           <form onSubmit={handleAddLKPD} className="space-y-4">
             <div>
               <label className="block text-xs font-mono font-black uppercase tracking-wider text-slate-950 dark:text-slate-200 mb-1.5">
-                Judul LKPD Digital:
+                Judul LKPD:
               </label>
               <input
                 type="text"

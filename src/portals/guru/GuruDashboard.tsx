@@ -295,7 +295,7 @@ export const GuruDashboard: React.FC<{
             </div>
             <h3 className="font-black text-base text-slate-950 dark:text-slate-100">Ruang Latihan Soal</h3>
             <p className="text-xs text-slate-600 dark:text-slate-400 font-bold leading-relaxed">
-              Buka / kunci akses ruang kuis interaktif Quizizz dan atur batas waktu timer pengerjaan.
+              Buka / kunci akses ruang latihan soal interaktif dan atur batas waktu timer pengerjaan.
             </p>
           </div>
           <Button

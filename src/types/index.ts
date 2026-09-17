@@ -54,6 +54,7 @@ export interface EssayQuestion {
   sampleAnswer?: string;
   discussion: string;
   weight: number;
+  rubric?: string;
 }
 
 export interface LKPDItem {
@@ -82,6 +83,7 @@ export interface AntiCheatReport {
 export interface LKPDEssayAnswer {
   textAnswer: string;
   photoUrl?: string;
+  aiAnswer?: string;
   aiFeedback?: string;
   aiScore?: number;
 }

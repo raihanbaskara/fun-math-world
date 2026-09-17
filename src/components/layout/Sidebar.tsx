@@ -162,9 +162,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
   ];
 
   const siswaTugasEvaluasi: NavItemConfig[] = [
-    { id: 'siswa/lkpd', label: 'LKPD Digital AI', icon: FileText, color: 'yellow', mathSymbol: 'LKPD' },
-    { id: 'siswa/latsol', label: 'Latihan Soal Kuis', icon: HelpCircle, color: 'pink', mathSymbol: 'QZ' },
+    { id: 'siswa/lkpd', label: 'LKPD', icon: FileText, color: 'yellow', mathSymbol: 'LKPD' },
+    { id: 'siswa/latsol', label: 'Latihan Soal', icon: HelpCircle, color: 'pink', mathSymbol: 'LS' },
     { id: 'siswa/evaluasi', label: 'Evaluasi Soal Essai', icon: PenTool, color: 'orange', mathSymbol: '7.A' },
+    { id: 'siswa/nilai', label: 'Nilai & Feedback', icon: Trophy, color: 'lime', mathSymbol: '100' },
   ];
 
   const siswaInteraksiAkun: NavItemConfig[] = [

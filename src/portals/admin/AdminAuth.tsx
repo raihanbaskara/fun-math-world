@@ -101,7 +101,7 @@ export const AdminAuth: React.FC<AdminAuthProps> = ({
               KONTROL ADMINISTRATOR
             </span>
             <h2 className="text-xl font-black text-slate-950 dark:text-slate-100 font-mono mt-0.5">
-              Terminal Admin
+              Admin
             </h2>
           </div>
         </div>

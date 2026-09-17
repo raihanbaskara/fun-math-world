@@ -177,7 +177,7 @@ export const SiswaLatsol: React.FC<{
           </div>
 
           <p className="text-sm font-bold text-slate-800 dark:text-slate-300 leading-relaxed max-w-2xl">
-            Sesuai aturan alur pembelajaran berurutan: Kamu harus menyelesaikan dan mengumpulkan <b>LKPD Digital (Tahap 1)</b> terlebih dahulu sebelum dapat membuka kuis interaktif Latihan Soal Quizizz.
+            Sesuai aturan alur pembelajaran berurutan: Kamu harus menyelesaikan dan mengumpulkan <b>LKPD (Tahap 1)</b> terlebih dahulu sebelum dapat membuka kuis interaktif Latihan Soal.
           </p>
 
           <div className="pt-2">
@@ -194,7 +194,7 @@ export const SiswaLatsol: React.FC<{
     );
   }
 
-  // QUIZIZZ SUMMARY SCREEN
+  // LATIHAN SOAL SUMMARY SCREEN
   if (activeRoom && isQuizCompleted && latestSubmission) {
     return (
       <div className="space-y-6 max-w-4xl mx-auto font-sans pb-12 animate-in fade-in zoom-in-95 duration-300">
@@ -206,7 +206,7 @@ export const SiswaLatsol: React.FC<{
           </div>
 
           <span className="font-mono text-xs font-black uppercase px-3 py-1 bg-white rounded-xl border-2 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a] inline-block">
-            HASIL KUIS QUIZIZZ — {activeRoom.title}
+            HASIL LATIHAN SOAL — {activeRoom.title}
           </span>
 
           <div className="text-6xl sm:text-7xl font-mono font-black tracking-tight">
@@ -446,7 +446,7 @@ export const SiswaLatsol: React.FC<{
                 LATIHAN SOAL INTERAKTIF
               </span>
               <span className="px-3 py-1 bg-[#a5f3fc] text-slate-950 border-2 border-slate-950 rounded-xl text-xs font-mono font-black shadow-[2px_2px_0px_0px_#0f172a]">
-                TAHAP 2 (QUIZIZZ STYLE)
+                TAHAP 2
               </span>
             </div>
             <h1 className="text-2xl sm:text-4xl font-black font-mono tracking-tight">
@@ -511,9 +511,6 @@ export const SiswaLatsol: React.FC<{
                   <h3 className="text-lg font-black font-mono text-slate-950 dark:text-slate-100">
                     {room.title}
                   </h3>
-                  <p className="text-xs font-bold text-slate-600 dark:text-slate-400 mt-1">
-                    {room.topic}
-                  </p>
                 </div>
 
                 <div className="flex items-center gap-4 text-xs font-mono font-bold text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-800 p-3 rounded-2xl border-2 border-slate-950 dark:border-slate-700">
@@ -549,7 +546,7 @@ export const SiswaLatsol: React.FC<{
                   ) : (
                     <>
                       <Zap size={15} />
-                      <span>Mulai Kuis Quizizz Ini</span>
+                      <span>Mulai Latihan Soal Ini</span>
                     </>
                   )}
                 </button>
