@@ -355,26 +355,7 @@ export const SiswaNilai: React.FC<SiswaNilaiProps> = ({ currentUser, onNavigate,
                           </div>
                         )}
 
-                        {/* AI Diagnostic Micro-Telemetry Strip */}
-                        {submission.isAiEvaluated && (
-                          <div className="flex flex-wrap items-center justify-between gap-2 px-3.5 py-2 rounded-xl bg-purple-50/50 dark:bg-purple-950/20 border border-purple-200/40 dark:border-purple-900/30 text-xs">
-                            <div className="flex items-center gap-2 font-mono font-bold text-purple-950 dark:text-purple-300">
-                              <Sparkles size={13} className="text-purple-600 dark:text-purple-400" />
-                              <span>Verifikasi AI: {submission.aiScore ?? 0}/100</span>
-                              {submission.aiFeedback && (
-                                <span className="font-sans font-medium text-purple-800/80 dark:text-purple-300/80 line-clamp-1">
-                                  · {submission.aiFeedback}
-                                </span>
-                              )}
-                            </div>
-                            <button
-                              onClick={() => onNavigate?.('siswa/lkpd')}
-                              className="text-[11px] font-mono font-bold text-purple-700 hover:text-purple-900 dark:text-purple-300 hover:underline flex items-center gap-1 cursor-pointer"
-                            >
-                              Buka Solusi Lengkap <span>→</span>
-                            </button>
-                          </div>
-                        )}
+
                       </div>
                     )}
 
