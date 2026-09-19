@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Logo } from '@/components/ui/logo';
+import { Modal } from '@/components/ui/modal';
 import { soundService } from '@/services/soundService';
-import { Cpu, ShieldCheck, ArrowRight, Menu, X, Home, Users, GraduationCap } from 'lucide-react';
+import { Cpu, ShieldCheck, ArrowRight, Menu, X, Users, KeyRound, Database } from 'lucide-react';
 
 export interface AdminLandingProps {
   onNavigate: (route: string) => void;
@@ -9,6 +10,7 @@ export interface AdminLandingProps {
 
 export const AdminLanding: React.FC<AdminLandingProps> = ({ onNavigate }) => {
   const [menuOpen, setMenuOpen] = useState<boolean>(false);
+  const [modalType, setModalType] = useState<'users' | 'device' | 'backup' | 'audit' | null>(null);
 
   const handlePortalNavigate = (route: string) => {
     soundService.click();
@@ -54,57 +56,83 @@ export const AdminLanding: React.FC<AdminLandingProps> = ({ onNavigate }) => {
           </button>
         </div>
 
-        {/* Mobile Menu Drawer (Gambar 3 Neobrutalism Standard) */}
+        {/* Mobile Menu Drawer (Gambar 3 Neobrutalism Standard - Fitur Admin) */}
         {menuOpen && (
           <div className="mt-3 relative z-50 md:hidden bg-[#fffdf5] border-3 border-slate-950 rounded-3xl p-5 shadow-[8px_8px_0px_0px_#0f172a] flex flex-col gap-2.5 animate-in fade-in slide-in-from-top-2">
             <div className="flex items-center justify-between pb-2 border-b-2 border-slate-950/15">
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-[#c084fc] text-slate-950 border-2 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a] font-mono font-black text-[11px] uppercase tracking-wider">
                 <ShieldCheck size={13} className="text-slate-950" />
-                <span>Portal Admin</span>
+                <span>Fitur Administrator</span>
               </div>
-              <span className="text-[11px] font-mono font-bold text-slate-500">Menu Navigasi</span>
+              <span className="text-[11px] font-mono font-bold text-slate-500">Pilih Modul</span>
             </div>
 
+            {/* Feature 1: Manajemen Akun Pengguna */}
             <button
-              onClick={() => handlePortalNavigate('landing')}
-              className="flex items-center justify-between w-full px-4 py-3 rounded-2xl text-xs font-mono font-black uppercase tracking-wider text-left border-2 border-slate-950 bg-white hover:bg-slate-50 shadow-[2px_2px_0px_0px_#0f172a] active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
+              onClick={() => {
+                soundService.click();
+                setMenuOpen(false);
+                setModalType('users');
+              }}
+              className="flex items-center justify-between w-full px-4 py-3 rounded-2xl text-xs font-mono font-black uppercase tracking-wider text-left border-2 border-slate-950 bg-[#c084fc] shadow-[2px_2px_0px_0px_#0f172a] active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
             >
-              <div className="flex items-center gap-2.5">
-                <Home size={15} />
-                <span>Beranda Utama</span>
-              </div>
-              <ArrowRight size={14} className="text-slate-500" />
+              <span>Manajemen Akun Pengguna</span>
+              <Users size={16} />
             </button>
 
+            {/* Feature 2: Keamanan 1-Device Lock */}
             <button
-              onClick={() => handlePortalNavigate('guru')}
-              className="flex items-center justify-between w-full px-4 py-3 rounded-2xl text-xs font-mono font-black uppercase tracking-wider text-left border-2 border-slate-950 bg-[#ffe600] hover:bg-yellow-400 shadow-[2px_2px_0px_0px_#0f172a] active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
+              onClick={() => {
+                soundService.click();
+                setMenuOpen(false);
+                setModalType('device');
+              }}
+              className="flex items-center justify-between w-full px-4 py-3 rounded-2xl text-xs font-mono font-black uppercase tracking-wider text-left border-2 border-slate-950 bg-[#fbcfe8] shadow-[2px_2px_0px_0px_#0f172a] active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
             >
-              <div className="flex items-center gap-2.5">
-                <GraduationCap size={15} />
-                <span>Portal Guru</span>
-              </div>
-              <ArrowRight size={14} className="text-slate-950" />
+              <span>Keamanan 1-Device Lock</span>
+              <KeyRound size={16} />
             </button>
 
+            {/* Feature 3: Pencadangan Database (JSON) */}
             <button
-              onClick={() => handlePortalNavigate('siswa')}
-              className="flex items-center justify-between w-full px-4 py-3 rounded-2xl text-xs font-mono font-black uppercase tracking-wider text-left border-2 border-slate-950 bg-[#38bdf8] hover:bg-sky-400 shadow-[2px_2px_0px_0px_#0f172a] active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
+              onClick={() => {
+                soundService.click();
+                setMenuOpen(false);
+                setModalType('backup');
+              }}
+              className="flex items-center justify-between w-full px-4 py-3 rounded-2xl text-xs font-mono font-black uppercase tracking-wider text-left border-2 border-slate-950 bg-[#a5f3fc] shadow-[2px_2px_0px_0px_#0f172a] active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
             >
-              <div className="flex items-center gap-2.5">
-                <Users size={15} />
-                <span>Portal Siswa</span>
-              </div>
-              <ArrowRight size={14} className="text-slate-950" />
+              <span>Pencadangan Data (JSON)</span>
+              <Database size={16} />
             </button>
 
-            <div className="mt-1 pt-3 border-t-2 border-slate-950">
+            {/* Feature 4: Tata Kelola Infrastruktur */}
+            <button
+              onClick={() => {
+                soundService.click();
+                setMenuOpen(false);
+                setModalType('audit');
+              }}
+              className="flex items-center justify-between w-full px-4 py-3 rounded-2xl text-xs font-mono font-black uppercase tracking-wider text-left border-2 border-slate-950 bg-[#fed7aa] shadow-[2px_2px_0px_0px_#0f172a] active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
+            >
+              <span>Tata Kelola Infrastruktur</span>
+              <Cpu size={16} />
+            </button>
+
+            <div className="mt-1 pt-3 border-t-2 border-slate-950 flex flex-col gap-2">
               <button
                 onClick={() => handlePortalNavigate('admin/login')}
                 className="w-full bg-[#c084fc] hover:bg-purple-400 text-slate-950 font-mono font-black text-xs py-3.5 rounded-2xl border-3 border-slate-950 shadow-[3px_3px_0px_0px_#0f172a] text-center uppercase tracking-wider flex items-center justify-center gap-2 active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
               >
                 <span>Masuk Admin (Login)</span>
                 <ArrowRight size={16} />
+              </button>
+
+              <button
+                onClick={() => handlePortalNavigate('landing')}
+                className="text-[11px] font-mono font-bold text-slate-600 hover:text-slate-950 text-center py-1 underline underline-offset-2 cursor-pointer"
+              >
+                Kembali ke Beranda Utama
               </button>
             </div>
           </div>
@@ -225,6 +253,103 @@ export const AdminLanding: React.FC<AdminLandingProps> = ({ onNavigate }) => {
         <div>© 2026 Fun Math World — Kurikulum Merdeka Kelas 7 SMP</div>
         <div className="text-slate-500 font-medium">v2.0 Neobrutal Edition</div>
       </footer>
+
+      {/* MODALS UNTUK FITUR ADMIN (Gambar 3 Standard) */}
+      <Modal
+        isOpen={modalType === 'users'}
+        onClose={() => setModalType(null)}
+        title="Manajemen Akun Pengguna"
+      >
+        <div className="space-y-4 text-xs sm:text-sm text-slate-800 font-medium">
+          <p className="leading-relaxed">
+            Kendali terpusat hak akses dan otorisasi seluruh civitas sekolah:
+          </p>
+          <div className="p-3.5 bg-purple-50 rounded-2xl border-2 border-slate-900 space-y-2 text-xs">
+            <div>✓ <b>Kelola Akun Siswa &amp; Guru:</b> Tambah, edit, dan hapus data kredensial login dengan mudah.</div>
+            <div>✓ <b>Role-Based Access Control:</b> Pemisahan hak akses mutlak antara siswa, pendidik, dan admin.</div>
+            <div>✓ <b>Status Aktivitas:</b> Pantau akun yang sedang aktif dan riwayat aktivitas pembelajaran.</div>
+          </div>
+          <button
+            className="w-full py-3 rounded-xl bg-[#c084fc] hover:bg-purple-400 text-slate-950 font-mono font-black text-xs uppercase tracking-wider border-2 border-slate-950 shadow-[3px_3px_0px_0px_#0f172a] active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer flex items-center justify-center gap-2"
+            onClick={() => { setModalType(null); handlePortalNavigate('admin/login'); }}
+          >
+            <span>Masuk Kelola Akun</span>
+            <ArrowRight size={14} />
+          </button>
+        </div>
+      </Modal>
+
+      <Modal
+        isOpen={modalType === 'device'}
+        onClose={() => setModalType(null)}
+        title="Keamanan Sesi 1-Device Lock"
+      >
+        <div className="space-y-4 text-xs sm:text-sm text-slate-800 font-medium">
+          <p className="leading-relaxed">
+            Perlindungan anti-joki dan pencegahan kebocoran akun saat asesmen:
+          </p>
+          <div className="p-3.5 bg-pink-50 rounded-2xl border-2 border-slate-900 space-y-2 text-xs">
+            <div>✓ <b>Binding Identifier Perangkat:</b> Sesi akun dikunci pada hardware/browser pertama yang digunakan siswa.</div>
+            <div>✓ <b>Pencegahan Login Ganda:</b> Upaya login di HP/komputer lain otomatis ditolak sistem.</div>
+            <div>✓ <b>Otorisasi Reset Admin:</b> Administrator dapat mereset kunci perangkat siswa jika terjadi kendala teknis.</div>
+          </div>
+          <button
+            className="w-full py-3 rounded-xl bg-[#c084fc] hover:bg-purple-400 text-slate-950 font-mono font-black text-xs uppercase tracking-wider border-2 border-slate-950 shadow-[3px_3px_0px_0px_#0f172a] active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer flex items-center justify-center gap-2"
+            onClick={() => { setModalType(null); handlePortalNavigate('admin/login'); }}
+          >
+            <span>Buka Manajemen Kunci Sesi</span>
+            <ArrowRight size={14} />
+          </button>
+        </div>
+      </Modal>
+
+      <Modal
+        isOpen={modalType === 'backup'}
+        onClose={() => setModalType(null)}
+        title="Pencadangan Database & Pemulihan (JSON)"
+      >
+        <div className="space-y-4 text-xs sm:text-sm text-slate-800 font-medium">
+          <p className="leading-relaxed">
+            Jaminan keamanan data sekolah dengan pencadangan terenkripsi mandiri:
+          </p>
+          <div className="p-3.5 bg-sky-50 rounded-2xl border-2 border-slate-900 space-y-2 text-xs">
+            <div>✓ <b>Backup 1 Klik:</b> Ekspor seluruh master data siswa, materi, soal, dan nilai ke format file JSON aman.</div>
+            <div>✓ <b>Pemulihan Cepat (Restore):</b> Unggah file cadangan untuk mengembalikan seluruh kondisi sistem seketika.</div>
+            <div>✓ <b>Reset Sanitasi:</b> Opsi pembersihan cache dan reset data uji coba untuk menyambut tahun ajaran baru.</div>
+          </div>
+          <button
+            className="w-full py-3 rounded-xl bg-[#c084fc] hover:bg-purple-400 text-slate-950 font-mono font-black text-xs uppercase tracking-wider border-2 border-slate-950 shadow-[3px_3px_0px_0px_#0f172a] active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer flex items-center justify-center gap-2"
+            onClick={() => { setModalType(null); handlePortalNavigate('admin/login'); }}
+          >
+            <span>Buka Pemeliharaan Sistem</span>
+            <ArrowRight size={14} />
+          </button>
+        </div>
+      </Modal>
+
+      <Modal
+        isOpen={modalType === 'audit'}
+        onClose={() => setModalType(null)}
+        title="Tata Kelola Infrastruktur Sistem"
+      >
+        <div className="space-y-4 text-xs sm:text-sm text-slate-800 font-medium">
+          <p className="leading-relaxed">
+            Arsitektur cloud modern dengan reliabilitas tinggi dan nol biaya server:
+          </p>
+          <div className="p-3.5 bg-amber-50 rounded-2xl border-2 border-slate-900 space-y-2 text-xs">
+            <div>✓ <b>Jamstack Edge Deployment:</b> Didistribusikan melalui jaringan Vercel global untuk kecepatan muat sub-detik.</div>
+            <div>✓ <b>Proteksi Memori iOS Safari:</b> Mesin penyimpanan V7 dengan auto-sanitasi mencegah QuotaExceededError.</div>
+            <div>✓ <b>Zero Maintenance:</b> Sistem beroperasi stabil tanpa memerlukan konfigurasi database server yang rumit.</div>
+          </div>
+          <button
+            className="w-full py-3 rounded-xl bg-[#c084fc] hover:bg-purple-400 text-slate-950 font-mono font-black text-xs uppercase tracking-wider border-2 border-slate-950 shadow-[3px_3px_0px_0px_#0f172a] active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer flex items-center justify-center gap-2"
+            onClick={() => { setModalType(null); handlePortalNavigate('admin/login'); }}
+          >
+            <span>Masuk ke Dashboard Admin</span>
+            <ArrowRight size={14} />
+          </button>
+        </div>
+      </Modal>
 
     </div>
   );

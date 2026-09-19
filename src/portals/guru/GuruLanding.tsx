@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Logo } from '@/components/ui/logo';
+import { Modal } from '@/components/ui/modal';
 import { soundService } from '@/services/soundService';
-import { GraduationCap, Sparkles, ArrowRight, Menu, X, Home, Users, Shield } from 'lucide-react';
+import { GraduationCap, Sparkles, ArrowRight, Menu, X, BarChart3, FileCheck, FileSpreadsheet, ShieldAlert } from 'lucide-react';
 
 export interface GuruLandingProps {
   onNavigate: (route: string) => void;
@@ -9,6 +10,7 @@ export interface GuruLandingProps {
 
 export const GuruLanding: React.FC<GuruLandingProps> = ({ onNavigate }) => {
   const [menuOpen, setMenuOpen] = useState<boolean>(false);
+  const [modalType, setModalType] = useState<'analitik' | 'lkpd' | 'rekap' | 'proctoring' | null>(null);
 
   const handlePortalNavigate = (route: string) => {
     soundService.click();
@@ -54,57 +56,83 @@ export const GuruLanding: React.FC<GuruLandingProps> = ({ onNavigate }) => {
           </button>
         </div>
 
-        {/* Mobile Menu Drawer (Gambar 3 Neobrutalism Standard) */}
+        {/* Mobile Menu Drawer (Gambar 3 Neobrutalism Standard - Fitur Guru) */}
         {menuOpen && (
           <div className="mt-3 relative z-50 md:hidden bg-[#fffdf5] border-3 border-slate-950 rounded-3xl p-5 shadow-[8px_8px_0px_0px_#0f172a] flex flex-col gap-2.5 animate-in fade-in slide-in-from-top-2">
             <div className="flex items-center justify-between pb-2 border-b-2 border-slate-950/15">
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-[#ffe600] text-slate-950 border-2 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a] font-mono font-black text-[11px] uppercase tracking-wider">
                 <GraduationCap size={13} className="text-slate-950" />
-                <span>Portal Guru</span>
+                <span>Fitur Portal Guru</span>
               </div>
-              <span className="text-[11px] font-mono font-bold text-slate-500">Menu Navigasi</span>
+              <span className="text-[11px] font-mono font-bold text-slate-500">Pilih Modul</span>
             </div>
 
+            {/* Feature 1: Dashboard Analitik Kelas */}
             <button
-              onClick={() => handlePortalNavigate('landing')}
-              className="flex items-center justify-between w-full px-4 py-3 rounded-2xl text-xs font-mono font-black uppercase tracking-wider text-left border-2 border-slate-950 bg-white hover:bg-slate-50 shadow-[2px_2px_0px_0px_#0f172a] active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
+              onClick={() => {
+                soundService.click();
+                setMenuOpen(false);
+                setModalType('analitik');
+              }}
+              className="flex items-center justify-between w-full px-4 py-3 rounded-2xl text-xs font-mono font-black uppercase tracking-wider text-left border-2 border-slate-950 bg-[#ffe600] shadow-[2px_2px_0px_0px_#0f172a] active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
             >
-              <div className="flex items-center gap-2.5">
-                <Home size={15} />
-                <span>Beranda Utama</span>
-              </div>
-              <ArrowRight size={14} className="text-slate-500" />
+              <span>Dashboard Analitik Kelas</span>
+              <BarChart3 size={16} />
             </button>
 
+            {/* Feature 2: Penilaian LKPD & Asisten AI */}
             <button
-              onClick={() => handlePortalNavigate('siswa')}
-              className="flex items-center justify-between w-full px-4 py-3 rounded-2xl text-xs font-mono font-black uppercase tracking-wider text-left border-2 border-slate-950 bg-[#38bdf8] hover:bg-sky-400 shadow-[2px_2px_0px_0px_#0f172a] active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
+              onClick={() => {
+                soundService.click();
+                setMenuOpen(false);
+                setModalType('lkpd');
+              }}
+              className="flex items-center justify-between w-full px-4 py-3 rounded-2xl text-xs font-mono font-black uppercase tracking-wider text-left border-2 border-slate-950 bg-[#a5f3fc] shadow-[2px_2px_0px_0px_#0f172a] active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
             >
-              <div className="flex items-center gap-2.5">
-                <Users size={15} />
-                <span>Portal Siswa</span>
-              </div>
-              <ArrowRight size={14} className="text-slate-950" />
+              <span>Penilaian LKPD &amp; Asisten AI</span>
+              <FileCheck size={16} />
             </button>
 
+            {/* Feature 3: Ekspor Rekap Nilai Excel */}
             <button
-              onClick={() => handlePortalNavigate('admin')}
-              className="flex items-center justify-between w-full px-4 py-3 rounded-2xl text-xs font-mono font-black uppercase tracking-wider text-left border-2 border-slate-950 bg-[#c084fc] hover:bg-purple-400 shadow-[2px_2px_0px_0px_#0f172a] active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
+              onClick={() => {
+                soundService.click();
+                setMenuOpen(false);
+                setModalType('rekap');
+              }}
+              className="flex items-center justify-between w-full px-4 py-3 rounded-2xl text-xs font-mono font-black uppercase tracking-wider text-left border-2 border-slate-950 bg-[#bbf7d0] shadow-[2px_2px_0px_0px_#0f172a] active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
             >
-              <div className="flex items-center gap-2.5">
-                <Shield size={15} />
-                <span>Portal Admin</span>
-              </div>
-              <ArrowRight size={14} className="text-slate-950" />
+              <span>Ekspor Rekap Excel (.xlsx)</span>
+              <FileSpreadsheet size={16} />
             </button>
 
-            <div className="mt-1 pt-3 border-t-2 border-slate-950">
+            {/* Feature 4: Pengawasan Ujian (Anti-Cheat) */}
+            <button
+              onClick={() => {
+                soundService.click();
+                setMenuOpen(false);
+                setModalType('proctoring');
+              }}
+              className="flex items-center justify-between w-full px-4 py-3 rounded-2xl text-xs font-mono font-black uppercase tracking-wider text-left border-2 border-slate-950 bg-[#fbcfe8] shadow-[2px_2px_0px_0px_#0f172a] active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
+            >
+              <span>Pengawasan Ujian (Anti-Cheat)</span>
+              <ShieldAlert size={16} />
+            </button>
+
+            <div className="mt-1 pt-3 border-t-2 border-slate-950 flex flex-col gap-2">
               <button
                 onClick={() => handlePortalNavigate('guru/login')}
                 className="w-full bg-[#ffe600] hover:bg-yellow-400 text-slate-950 font-mono font-black text-xs py-3.5 rounded-2xl border-3 border-slate-950 shadow-[3px_3px_0px_0px_#0f172a] text-center uppercase tracking-wider flex items-center justify-center gap-2 active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
               >
                 <span>Masuk Guru (Login)</span>
                 <ArrowRight size={16} />
+              </button>
+
+              <button
+                onClick={() => handlePortalNavigate('landing')}
+                className="text-[11px] font-mono font-bold text-slate-600 hover:text-slate-950 text-center py-1 underline underline-offset-2 cursor-pointer"
+              >
+                Kembali ke Beranda Utama
               </button>
             </div>
           </div>
@@ -225,6 +253,103 @@ export const GuruLanding: React.FC<GuruLandingProps> = ({ onNavigate }) => {
         <div>© 2026 Fun Math World — Kurikulum Merdeka Kelas 7 SMP</div>
         <div className="text-slate-500 font-medium">v2.0 Neobrutal Edition</div>
       </footer>
+
+      {/* MODALS UNTUK FITUR GURU (Gambar 3 Standard) */}
+      <Modal
+        isOpen={modalType === 'analitik'}
+        onClose={() => setModalType(null)}
+        title="Dashboard Analitik & Nilai Kelas"
+      >
+        <div className="space-y-4 text-xs sm:text-sm text-slate-800 font-medium">
+          <p className="leading-relaxed">
+            Pusat pemantauan capaian belajar siswa kelas 7 SMP secara real-time:
+          </p>
+          <div className="p-3.5 bg-yellow-50 rounded-2xl border-2 border-slate-900 space-y-2 text-xs">
+            <div>✓ <b>Rata-rata Nilai &amp; KKM:</b> Pantau tingkat kelulusan dan distribusi skor siswa secara instan.</div>
+            <div>✓ <b>Progress Modul Siswa:</b> Pantau siswa yang telah menyelesaikan materi, LKPD, latihan soal, dan evaluasi.</div>
+            <div>✓ <b>Peringatan Dini:</b> Identifikasi siswa yang memerlukan bimbingan remedial pada materi pecahan tertentu.</div>
+          </div>
+          <button
+            className="w-full py-3 rounded-xl bg-[#ffe600] hover:bg-yellow-400 text-slate-950 font-mono font-black text-xs uppercase tracking-wider border-2 border-slate-950 shadow-[3px_3px_0px_0px_#0f172a] active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer flex items-center justify-center gap-2"
+            onClick={() => { setModalType(null); handlePortalNavigate('guru/login'); }}
+          >
+            <span>Masuk ke Dashboard Guru</span>
+            <ArrowRight size={14} />
+          </button>
+        </div>
+      </Modal>
+
+      <Modal
+        isOpen={modalType === 'lkpd'}
+        onClose={() => setModalType(null)}
+        title="Penilaian LKPD & Asisten AI"
+      >
+        <div className="space-y-4 text-xs sm:text-sm text-slate-800 font-medium">
+          <p className="leading-relaxed">
+            Efisiensi pemeriksaan lembar kerja siswa berbantuan kecerdasan buatan:
+          </p>
+          <div className="p-3.5 bg-sky-50 rounded-2xl border-2 border-slate-900 space-y-2 text-xs">
+            <div>✓ <b>Quick Scoring Dock:</b> Tombol preset skor instan (0, 70, 85, 90, 100) untuk memangkas waktu penilaian.</div>
+            <div>✓ <b>Verifikasi Foto Fisik:</b> Asisten AI memeriksa bukti foto pengerjaan fisik bersusun siswa.</div>
+            <div>✓ <b>Diagnosa Pedagogis:</b> Rekomendasi umpan balik langkah hitung yang dapat langsung diedit atau disetujui guru.</div>
+          </div>
+          <button
+            className="w-full py-3 rounded-xl bg-[#ffe600] hover:bg-yellow-400 text-slate-950 font-mono font-black text-xs uppercase tracking-wider border-2 border-slate-950 shadow-[3px_3px_0px_0px_#0f172a] active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer flex items-center justify-center gap-2"
+            onClick={() => { setModalType(null); handlePortalNavigate('guru/login'); }}
+          >
+            <span>Buka Penilaian LKPD</span>
+            <ArrowRight size={14} />
+          </button>
+        </div>
+      </Modal>
+
+      <Modal
+        isOpen={modalType === 'rekap'}
+        onClose={() => setModalType(null)}
+        title="Ekspor Rekapitulasi Nilai Excel (.xlsx)"
+      >
+        <div className="space-y-4 text-xs sm:text-sm text-slate-800 font-medium">
+          <p className="leading-relaxed">
+            Otomasi pelaporan akademik terstruktur tanpa input manual berulang:
+          </p>
+          <div className="p-3.5 bg-emerald-50 rounded-2xl border-2 border-slate-900 space-y-2 text-xs">
+            <div>✓ <b>Format Standar Spreadsheet:</b> Skor LKPD, latihan soal, dan evaluasi tersusun rapi per siswa.</div>
+            <div>✓ <b>Ekspor 1 Klik:</b> Menghasilkan file .xlsx resmi yang siap dicetak atau disetor ke rapor sekolah.</div>
+            <div>✓ <b>Riwayat Waktu &amp; Tanggal:</b> Tercatat lengkap tanggal dan jam penyelesaian tiap kegiatan.</div>
+          </div>
+          <button
+            className="w-full py-3 rounded-xl bg-[#ffe600] hover:bg-yellow-400 text-slate-950 font-mono font-black text-xs uppercase tracking-wider border-2 border-slate-950 shadow-[3px_3px_0px_0px_#0f172a] active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer flex items-center justify-center gap-2"
+            onClick={() => { setModalType(null); handlePortalNavigate('guru/login'); }}
+          >
+            <span>Akses Rekap Nilai Guru</span>
+            <ArrowRight size={14} />
+          </button>
+        </div>
+      </Modal>
+
+      <Modal
+        isOpen={modalType === 'proctoring'}
+        onClose={() => setModalType(null)}
+        title="Pengawasan Ujian & Anti-Cheat Monitor"
+      >
+        <div className="space-y-4 text-xs sm:text-sm text-slate-800 font-medium">
+          <p className="leading-relaxed">
+            Perlindungan integritas dan kejujuran asesmen sumatif siswa:
+          </p>
+          <div className="p-3.5 bg-pink-50 rounded-2xl border-2 border-slate-900 space-y-2 text-xs">
+            <div>✓ <b>Deteksi Pindah Tab Peramban:</b> Sistem mencatat setiap kali siswa beralih ke jendela atau tab lain saat ujian.</div>
+            <div>✓ <b>Durasi Pelanggaran:</b> Menghitung total detik siswa berada di luar halaman ujian evaluasi.</div>
+            <div>✓ <b>Transparansi Log:</b> Catatan pelanggaran tersimpan otomatis di dashboard guru untuk bahan evaluasi.</div>
+          </div>
+          <button
+            className="w-full py-3 rounded-xl bg-[#ffe600] hover:bg-yellow-400 text-slate-950 font-mono font-black text-xs uppercase tracking-wider border-2 border-slate-950 shadow-[3px_3px_0px_0px_#0f172a] active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer flex items-center justify-center gap-2"
+            onClick={() => { setModalType(null); handlePortalNavigate('guru/login'); }}
+          >
+            <span>Masuk untuk Pantau Ujian</span>
+            <ArrowRight size={14} />
+          </button>
+        </div>
+      </Modal>
 
     </div>
   );
