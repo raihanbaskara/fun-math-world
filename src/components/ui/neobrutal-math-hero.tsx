@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { ChevronDown, Infinity, Menu, X, BookOpen, FileText, PenTool, ArrowRight, Sparkles, Calculator, PieChart, Layers } from 'lucide-react';
+import { ChevronDown, Menu, X, BookOpen, FileText, PenTool, ArrowRight, Sparkles, Calculator, PieChart, Layers } from 'lucide-react';
 import { Fraction } from '@/components/ui/fraction';
+import { Logo } from '@/components/ui/logo';
 import { soundService } from '@/services/soundService';
 
 export interface NeobrutalMathHeroProps {
@@ -43,18 +44,12 @@ export const NeobrutalMathHero: React.FC<NeobrutalMathHeroProps> = ({
       {/* 3. NEOBRUTAL NAVBAR */}
       <nav className="relative z-30 flex items-center justify-between px-5 sm:px-8 py-5 max-w-7xl mx-auto w-full">
         
-        {/* Logo (Left) */}
-        <div
+        {/* Logo (Left - Unified Official Brand Logo) */}
+        <Logo
+          size="md"
           onClick={() => handleNavClick(() => onNavigate('siswa'))}
-          className="flex items-center gap-2.5 text-slate-950 font-black text-lg sm:text-xl tracking-tight cursor-pointer group select-none"
-        >
-          <div className="w-10 h-10 rounded-2xl bg-[#ffe600] border-3 border-slate-950 shadow-[3px_3px_0px_0px_#0f172a] flex items-center justify-center text-slate-950 group-hover:translate-x-[-1px] group-hover:translate-y-[-1px] group-hover:shadow-[4px_4px_0px_0px_#0f172a] transition-all">
-            <Infinity size={24} strokeWidth={2.5} />
-          </div>
-          <span className="font-mono tracking-tighter text-slate-950 font-black text-xl">
-            FunMath<span className="text-amber-500">7</span>
-          </span>
-        </div>
+          className="cursor-pointer"
+        />
 
         {/* Nav Pill (Center - Desktop Neobrutalist Pill Bar Without Duplication) */}
         <div className="hidden md:flex items-center gap-1 rounded-full bg-white border-3 border-slate-950 shadow-[4px_4px_0px_0px_#0f172a] px-3 py-1.5 select-none">
