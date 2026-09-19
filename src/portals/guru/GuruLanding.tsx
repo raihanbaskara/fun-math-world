@@ -1,15 +1,18 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Logo } from '@/components/ui/logo';
 import { soundService } from '@/services/soundService';
-import { GraduationCap, Sparkles, ArrowRight } from 'lucide-react';
+import { GraduationCap, Sparkles, ArrowRight, Menu, X, Home, Users, Shield } from 'lucide-react';
 
 export interface GuruLandingProps {
   onNavigate: (route: string) => void;
 }
 
 export const GuruLanding: React.FC<GuruLandingProps> = ({ onNavigate }) => {
+  const [menuOpen, setMenuOpen] = useState<boolean>(false);
+
   const handlePortalNavigate = (route: string) => {
     soundService.click();
+    setMenuOpen(false);
     onNavigate(route);
   };
 
@@ -17,14 +20,15 @@ export const GuruLanding: React.FC<GuruLandingProps> = ({ onNavigate }) => {
     <div className="relative w-full min-h-screen overflow-hidden bg-[#fffdf5] bg-graph-grid text-slate-950 font-sans selection:bg-[#ffe600] selection:text-slate-950 flex flex-col justify-between">
       
       {/* 1. TOP FLOATING NEOBRUTAL HEADER */}
-      <header className="sticky top-0 z-50 w-full px-4 sm:px-8 py-4 bg-[#fffdf5]/90 backdrop-blur-md border-b-3 border-slate-950">
+      <header className="sticky top-0 z-50 w-full px-4 sm:px-8 py-3.5 sm:py-4 bg-[#fffdf5]/90 backdrop-blur-md border-b-3 border-slate-950">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <Logo size="md" onClick={() => handlePortalNavigate('landing')} />
 
-          <div className="flex items-center gap-3">
+          {/* Desktop Nav Actions */}
+          <div className="hidden md:flex items-center gap-3">
             <button
               onClick={() => handlePortalNavigate('landing')}
-              className="hidden sm:inline-flex px-4 py-2 rounded-xl bg-white hover:bg-slate-100 text-slate-950 font-mono font-bold text-xs border-2 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a] active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
+              className="px-4 py-2 rounded-xl bg-white hover:bg-slate-100 text-slate-950 font-mono font-bold text-xs border-2 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a] active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
             >
               Beranda Utama
             </button>
@@ -36,7 +40,75 @@ export const GuruLanding: React.FC<GuruLandingProps> = ({ onNavigate }) => {
               <ArrowRight size={14} />
             </button>
           </div>
+
+          {/* Mobile Hamburger Toggle (Neo-Brutalism Square Button as in Gambar 3) */}
+          <button
+            onClick={() => {
+              soundService.click();
+              setMenuOpen(!menuOpen);
+            }}
+            className="p-2.5 rounded-xl bg-[#ffe600] text-slate-950 border-3 border-slate-950 shadow-[3px_3px_0px_0px_#0f172a] md:hidden cursor-pointer active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-transform"
+            aria-label="Toggle Navigation Menu"
+          >
+            {menuOpen ? <X size={20} /> : <Menu size={20} />}
+          </button>
         </div>
+
+        {/* Mobile Menu Drawer (Gambar 3 Neobrutalism Standard) */}
+        {menuOpen && (
+          <div className="mt-3 relative z-50 md:hidden bg-[#fffdf5] border-3 border-slate-950 rounded-3xl p-5 shadow-[8px_8px_0px_0px_#0f172a] flex flex-col gap-2.5 animate-in fade-in slide-in-from-top-2">
+            <div className="flex items-center justify-between pb-2 border-b-2 border-slate-950/15">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-[#ffe600] text-slate-950 border-2 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a] font-mono font-black text-[11px] uppercase tracking-wider">
+                <GraduationCap size={13} className="text-slate-950" />
+                <span>Portal Guru</span>
+              </div>
+              <span className="text-[11px] font-mono font-bold text-slate-500">Menu Navigasi</span>
+            </div>
+
+            <button
+              onClick={() => handlePortalNavigate('landing')}
+              className="flex items-center justify-between w-full px-4 py-3 rounded-2xl text-xs font-mono font-black uppercase tracking-wider text-left border-2 border-slate-950 bg-white hover:bg-slate-50 shadow-[2px_2px_0px_0px_#0f172a] active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
+            >
+              <div className="flex items-center gap-2.5">
+                <Home size={15} />
+                <span>Beranda Utama</span>
+              </div>
+              <ArrowRight size={14} className="text-slate-500" />
+            </button>
+
+            <button
+              onClick={() => handlePortalNavigate('siswa')}
+              className="flex items-center justify-between w-full px-4 py-3 rounded-2xl text-xs font-mono font-black uppercase tracking-wider text-left border-2 border-slate-950 bg-[#38bdf8] hover:bg-sky-400 shadow-[2px_2px_0px_0px_#0f172a] active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
+            >
+              <div className="flex items-center gap-2.5">
+                <Users size={15} />
+                <span>Portal Siswa</span>
+              </div>
+              <ArrowRight size={14} className="text-slate-950" />
+            </button>
+
+            <button
+              onClick={() => handlePortalNavigate('admin')}
+              className="flex items-center justify-between w-full px-4 py-3 rounded-2xl text-xs font-mono font-black uppercase tracking-wider text-left border-2 border-slate-950 bg-[#c084fc] hover:bg-purple-400 shadow-[2px_2px_0px_0px_#0f172a] active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
+            >
+              <div className="flex items-center gap-2.5">
+                <Shield size={15} />
+                <span>Portal Admin</span>
+              </div>
+              <ArrowRight size={14} className="text-slate-950" />
+            </button>
+
+            <div className="mt-1 pt-3 border-t-2 border-slate-950">
+              <button
+                onClick={() => handlePortalNavigate('guru/login')}
+                className="w-full bg-[#ffe600] hover:bg-yellow-400 text-slate-950 font-mono font-black text-xs py-3.5 rounded-2xl border-3 border-slate-950 shadow-[3px_3px_0px_0px_#0f172a] text-center uppercase tracking-wider flex items-center justify-center gap-2 active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
+              >
+                <span>Masuk Guru (Login)</span>
+                <ArrowRight size={16} />
+              </button>
+            </div>
+          </div>
+        )}
       </header>
 
       {/* 2. FLOATING NEOBRUTAL MATH OPERATORS & FORMULA BADGES (In Wide Open Space Canvas) */}
