@@ -34,13 +34,6 @@ export const AdminLanding: React.FC<AdminLandingProps> = ({ onNavigate }) => {
             >
               Beranda Utama
             </button>
-            <button
-              onClick={() => handlePortalNavigate('admin/login')}
-              className="px-5 py-2 rounded-xl bg-[#c084fc] hover:bg-purple-400 text-slate-950 font-mono font-black text-xs uppercase tracking-wider border-2 border-slate-950 shadow-[2.5px_2.5px_0px_0px_#0f172a] active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer flex items-center gap-2"
-            >
-              <span>Masuk Admin</span>
-              <ArrowRight size={14} />
-            </button>
           </div>
 
           {/* Mobile Hamburger Toggle (Neo-Brutalism Square Button as in Gambar 3) */}

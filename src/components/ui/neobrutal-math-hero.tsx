@@ -124,16 +124,8 @@ export const NeobrutalMathHero: React.FC<NeobrutalMathHeroProps> = ({
 
         </div>
 
-        {/* CTAs (Right - Desktop Neobrutalist Primary Button Only) */}
-        <div className="hidden md:flex items-center gap-3">
-          <button
-            onClick={() => handleNavClick(() => onNavigate('siswa/login'))}
-            className="px-5 py-2.5 rounded-full bg-[#ffe600] text-slate-950 font-black text-xs uppercase tracking-wider border-3 border-slate-950 shadow-[3px_3px_0px_0px_#0f172a] hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[5px_5px_0px_0px_#0f172a] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all cursor-pointer flex items-center gap-1.5"
-          >
-            <span>Mulai Belajar</span>
-            <ArrowRight size={15} />
-          </button>
-        </div>
+        {/* Desktop Right Spacer (Hapus tombol Mulai Belajar duplikat & jaga simetri pill tengah) */}
+        <div className="hidden md:block w-36 lg:w-48 pointer-events-none" />
 
         {/* Mobile Toggle Button (Neobrutal Square) */}
         <button
