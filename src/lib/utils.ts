@@ -34,3 +34,26 @@ export function compressImage(dataUrl: string, maxWidth = 900, quality = 0.7): P
     img.src = dataUrl;
   });
 }
+
+export function compressImageFile(file: File, maxWidth = 1000, quality = 0.75): Promise<string> {
+  return new Promise((resolve, reject) => {
+    if (!file) {
+      resolve('');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const dataUrl = e.target?.result as string;
+      if (!dataUrl) {
+        resolve('');
+        return;
+      }
+      compressImage(dataUrl, maxWidth, quality).then(resolve).catch(() => resolve(dataUrl));
+    };
+    reader.onerror = (err) => {
+      console.warn('FileReader error:', err);
+      reject(err);
+    };
+    reader.readAsDataURL(file);
+  });
+}

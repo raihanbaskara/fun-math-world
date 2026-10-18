@@ -46,7 +46,9 @@ export const SiswaNilai: React.FC<SiswaNilaiProps> = ({ currentUser, onNavigate,
   const gradedLkpd = myLkpdSubmissions.filter(s => s.teacherScore !== null || s.aiScore !== undefined);
   const lkpdScores = gradedLkpd.map(s => (s.teacherScore !== null && s.teacherScore !== undefined ? s.teacherScore : s.aiScore || 0));
   const latsolScores = myLatsolSubmissions.map(s => s.score || 0);
-  const evalScores = myEvalSubmissions.map(s => s.score || 0);
+  const evalScores = myEvalSubmissions
+    .filter(s => s.gradingStatus !== 'needs_review' || s.teacherScore !== null && s.teacherScore !== undefined)
+    .map(s => s.teacherScore ?? s.score ?? 0);
 
   const allScores = [...lkpdScores, ...latsolScores, ...evalScores];
   const avgScore = allScores.length > 0 ? Math.round(allScores.reduce((a, b) => a + b, 0) / allScores.length) : 0;
@@ -360,14 +362,16 @@ export const SiswaNilai: React.FC<SiswaNilaiProps> = ({ currentUser, onNavigate,
                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                         {lkpd.questions.map((q, qIdx) => {
                           const ans = submission.answers?.[q.id];
-                          const score = ans?.aiScore !== undefined ? ans.aiScore : (q.weight || 0);
+                          const scoreLabel = ans?.aiReviewStatus === 'needs_review'
+                            ? 'Menunggu guru'
+                            : ans?.aiScore !== undefined ? `${ans.aiScore} pt` : 'Belum dinilai';
                           return (
                             <div key={q.id} className="p-3 rounded-xl bg-slate-100 border-2 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a] flex items-center justify-between text-xs">
                               <span className="font-mono font-black text-slate-800 truncate mr-2">
                                 Kegiatan {qIdx + 1}
                               </span>
                               <span className="font-mono font-black px-2 py-0.5 rounded bg-white border border-slate-950 text-slate-950 shrink-0">
-                                {ans ? `${score} pt` : '-'}
+                                {ans ? scoreLabel : '-'}
                               </span>
                             </div>
                           );
@@ -492,7 +496,7 @@ export const SiswaNilai: React.FC<SiswaNilaiProps> = ({ currentUser, onNavigate,
                         Evaluasi HOTS
                       </span>
                       <span className="px-2.5 py-0.5 text-xs font-black bg-emerald-100 text-emerald-950 border-2 border-slate-950 rounded-lg">
-                        {evalSub.status || 'Terkumpul'}
+                        {evalSub.gradingStatus === 'needs_review' ? 'Menunggu pemeriksaan guru' : (evalSub.status || 'Terkumpul')}
                       </span>
                       <span className="text-xs font-mono font-bold text-slate-500">
                         Tanggal: {evalSub.date}
@@ -509,7 +513,11 @@ export const SiswaNilai: React.FC<SiswaNilaiProps> = ({ currentUser, onNavigate,
                   <div className="flex items-center gap-4 shrink-0">
                     <div className="px-5 py-3 bg-rose-200 border-4 border-slate-950 rounded-2xl text-center shadow-[4px_4px_0px_0px_#0f172a]">
                       <span className="block text-[11px] font-black uppercase tracking-wider text-slate-950">Skor Evaluasi</span>
-                      <span className="text-3xl font-black font-mono text-slate-950">{evalSub.score}</span>
+                      <span className="text-xl sm:text-3xl font-black font-mono text-slate-950">
+                        {evalSub.gradingStatus === 'needs_review' && (evalSub.teacherScore === null || evalSub.teacherScore === undefined)
+                          ? 'Menunggu guru'
+                          : (evalSub.teacherScore ?? evalSub.score)}
+                      </span>
                     </div>
                     <button
                       onClick={() => onNavigate?.('siswa/evaluasi')}

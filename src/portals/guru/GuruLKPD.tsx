@@ -171,7 +171,7 @@ export const GuruLKPD: React.FC<{
       const preparedAnswers: Record<string, { textAnswer: string; photoUrl?: string }> = {};
       questions.forEach((q, idx) => {
         const studentAns = selectedSub.answers?.[q.id] || { textAnswer: '', photoUrl: '' };
-        const photo = studentAns.photoUrl || (idx === 0 ? fallbackPhoto : '') || fallbackPhoto;
+        const photo = studentAns.photoUrl || (questions.length === 1 ? fallbackPhoto : '');
         preparedAnswers[q.id] = {
           textAnswer: studentAns.textAnswer || '',
           photoUrl: photo
@@ -185,13 +185,16 @@ export const GuruLKPD: React.FC<{
       questions.forEach((q, idx) => {
         const qEval = evalResult.perQuestion[q.id];
         const studentAns = updatedAnswers[q.id] || { textAnswer: '', photoUrl: '' };
-        const photo = studentAns.photoUrl || (idx === 0 ? fallbackPhoto : '') || fallbackPhoto;
+        const photo = studentAns.photoUrl || (questions.length === 1 ? fallbackPhoto : '');
         updatedAnswers[q.id] = {
           ...studentAns,
           photoUrl: photo,
-          aiAnswer: qEval?.aiAnswer || studentAns.aiAnswer,
-          aiScore: qEval?.score ?? 0,
-          aiFeedback: qEval?.diagnosa ? `${qEval.diagnosa} (${qEval.conceptFeedback})` : (qEval?.conceptFeedback || "Telah dievaluasi oleh Asisten AI.")
+          aiAnswer: qEval?.reviewStatus === 'needs_review' ? undefined : (qEval?.aiAnswer || studentAns.aiAnswer),
+          aiScore: qEval?.reviewStatus === 'needs_review' ? undefined : (qEval?.score ?? 0),
+          aiFeedback: qEval?.diagnosa ? `${qEval.diagnosa} (${qEval.conceptFeedback})` : (qEval?.conceptFeedback || "Telah dievaluasi oleh Asisten AI."),
+          aiReviewStatus: qEval?.reviewStatus || 'graded',
+          imageStatus: qEval?.imageStatus,
+          imageSummary: qEval?.imageSummary
         };
       });
 
@@ -201,7 +204,7 @@ export const GuruLKPD: React.FC<{
         if (target) {
           target.answers = updatedAnswers;
           target.isAiEvaluated = true;
-          target.aiScore = evalResult.totalScore;
+          target.aiScore = evalResult.reviewStatus === 'needs_review' ? undefined : evalResult.totalScore;
           target.aiFeedback = evalResult.overallFeedback;
         }
       });
@@ -211,7 +214,7 @@ export const GuruLKPD: React.FC<{
         ...prev,
         answers: updatedAnswers,
         isAiEvaluated: true,
-        aiScore: evalResult.totalScore,
+        aiScore: evalResult.reviewStatus === 'needs_review' ? undefined : evalResult.totalScore,
         aiFeedback: evalResult.overallFeedback
       } : null);
 
@@ -219,7 +222,9 @@ export const GuruLKPD: React.FC<{
       setIsAiCorrectionRevealed(true);
       setIsAiEvaluating(false);
       soundService.success();
-      showToast(`Evaluasi AI Selesai! Skor rekomendasi: ${evalResult.totalScore}/100`, "success");
+      showToast(evalResult.reviewStatus === 'needs_review'
+        ? 'Foto perlu diperiksa guru. Nilai otomatis ditahan.'
+        : `Evaluasi AI Selesai! Skor rekomendasi: ${evalResult.totalScore}/100`, evalResult.reviewStatus === 'needs_review' ? 'info' : 'success');
     } catch (err) {
       console.error("AI Evaluation error:", err);
       setIsAiEvaluating(false);
@@ -560,7 +565,7 @@ export const GuruLKPD: React.FC<{
                       <td className="p-4 font-mono font-black">
                         {s.isAiEvaluated ? (
                           <span className="inline-block whitespace-nowrap px-2.5 py-1 rounded-xl bg-purple-100 dark:bg-purple-900/60 text-purple-950 dark:text-purple-200 border-2 border-slate-950 dark:border-purple-700 shadow-[1.5px_1.5px_0px_0px_#0f172a] dark:shadow-[1.5px_1.5px_0px_0px_#000000]">
-                            {s.aiScore ?? 0}/100
+                            {s.isAiEvaluated && s.aiScore === undefined ? 'Perlu diperiksa guru' : `${s.aiScore ?? '-'}/100`}
                           </span>
                         ) : (
                           <span className="inline-block whitespace-nowrap px-2.5 py-1 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-2 border-slate-950 dark:border-slate-700 text-xs font-mono font-black shadow-[1.5px_1.5px_0px_0px_#0f172a]">
@@ -867,6 +872,14 @@ export const GuruLKPD: React.FC<{
                           return (
                             <div className="space-y-2.5">
                               {/* Blok Jawaban & Solusi Langkah Versi AI (Hanya jika siswa sudah minta koreksi AI) */}
+                              {ans?.aiReviewStatus === 'needs_review' && (
+                                <div role="status" className="rounded-xl bg-amber-50 dark:bg-amber-950/30 border-2 border-amber-400 p-3 text-xs font-bold text-amber-950 dark:text-amber-200 space-y-1">
+                                  <p><b>Status:</b> Perlu pemeriksaan guru; skor AI ditahan.</p>
+                                  {ans.imageStatus && <p><b>Status foto:</b> {ans.imageStatus === 'mismatch' ? 'Tidak cocok dengan soal' : ans.imageStatus === 'unreadable' ? 'Tulisan tidak terbaca' : ans.imageStatus === 'matched' ? 'Cocok dengan soal' : 'Belum dapat dipastikan'}</p>}
+                                  {ans.imageSummary && <p><b>Yang terbaca:</b> {ans.imageSummary}</p>}
+                                  {ans.aiFeedback && <p>{ans.aiFeedback}</p>}
+                                </div>
+                              )}
                               {hasAi ? (
                                 <div className="p-3.5 bg-purple-50 dark:bg-purple-950/40 rounded-xl border-2 border-slate-950 dark:border-purple-800 text-xs space-y-2 shadow-[2px_2px_0px_0px_#0f172a] animate-in fade-in">
                                   <div className="font-black text-purple-950 dark:text-purple-300 flex items-center justify-between font-mono">
@@ -875,9 +888,16 @@ export const GuruLKPD: React.FC<{
                                       <span>Jawaban &amp; Solusi Langkah Versi AI:</span>
                                     </div>
                                     <span className="text-[11px] font-black bg-purple-200 dark:bg-purple-900 px-2 py-0.5 rounded-md border border-purple-950/20">
-                                      Rekomendasi AI: {ans?.aiScore !== undefined ? ans.aiScore : 0} Poin
+                                      {ans?.aiReviewStatus === 'needs_review' ? 'Menunggu pemeriksaan guru' : `Rekomendasi AI: ${ans?.aiScore ?? 0} Poin`}
                                     </span>
                                   </div>
+                                  {ans?.imageStatus && ans.imageStatus !== 'not_provided' && (
+                                    <div role="status" className="rounded-lg bg-white/80 dark:bg-slate-900/70 border border-purple-200 dark:border-purple-800 p-2.5 text-[11px] space-y-1">
+                                      <p><b>Status foto:</b> {ans.imageStatus === 'matched' ? 'Cocok dengan soal' : ans.imageStatus === 'mismatch' ? 'Tidak cocok dengan soal' : ans.imageStatus === 'unreadable' ? 'Tulisan tidak terbaca' : 'Belum dapat dipastikan'}</p>
+                                      {ans.imageSummary && <p><b>Yang terbaca:</b> {ans.imageSummary}</p>}
+                                      {ans.aiReviewStatus === 'needs_review' && <p>Nilai ditahan. Tinjau foto secara manual sebelum menyimpan nilai akhir.</p>}
+                                    </div>
+                                  )}
                                   <p className="text-slate-800 dark:text-purple-200 font-bold whitespace-pre-line leading-relaxed">
                                     {aiAnswerText}
                                   </p>

@@ -1,12 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { storageService } from '@/services/storageService';
 import { soundService } from '@/services/soundService';
 import { User, AntiCheatReport, EvaluationSubmission } from '@/types';
-import { compressImage } from '@/lib/utils';
+import { compressImage, compressImageFile } from '@/lib/utils';
 import { useAntiCheat } from '@/lib/useAntiCheat';
+import { evaluateLKPDWithAI, type LKPDOverallEvaluation } from '@/services/aiCorrectionService';
 import {
   PenTool,
   ShieldAlert,
@@ -16,14 +17,94 @@ import {
   AlertTriangle,
   Sparkles,
   Lock,
+  Unlock,
   Clock,
   ArrowRight,
   FileCheck,
   Send,
   Trash2,
-  Upload
+  Upload,
+  X,
+  Maximize2
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
+
+function calculateEvaluasiScore(
+  questions: { id: string; weight: number }[],
+  answers: Record<string, string>,
+  photos: Record<string, string>
+): number {
+  let totalScore = 0;
+  questions.forEach((q, idx) => {
+    const w = q.weight || 20;
+    const txt = (answers[q.id] || '').trim().toLowerCase();
+    const hasP = Boolean(photos[q.id] && photos[q.id].length > 50);
+
+    if (!txt && !hasP) {
+      return;
+    }
+
+    const isRandom =
+      ['jajajdh', 'shshshsh', 'hdhshjaknlns', 'jjj', 'asdf', 'qwerty', 'zzzz'].some(k => txt.includes(k)) ||
+      (txt.length > 0 && txt.length < 4 && !/\d/.test(txt));
+
+    if (isRandom && !hasP) {
+      return;
+    }
+
+    let earnedRatio = 0;
+
+    if (q.id === 'eq_1' || idx === 0) {
+      const isCorrect = txt.includes('1 3/20') || txt.includes('23/20') || txt.includes('1.15');
+      const hasSteps = txt.includes('20') || txt.includes('kpk') || txt.includes('15/20') || txt.includes('8/20');
+      if (isCorrect && hasSteps) earnedRatio = 1.0;
+      else if (isCorrect) earnedRatio = 0.90;
+      else if (hasSteps && hasP) earnedRatio = 0.85;
+      else if (hasSteps) earnedRatio = 0.65;
+      else if (hasP && !isRandom) earnedRatio = 0.40;
+    } else if (q.id === 'eq_2' || idx === 1) {
+      const isCorrect = txt.includes('9') || txt.includes('sembilan');
+      const hasSteps = txt.includes('15/2') || txt.includes('6/5') || txt.includes('90/10') || txt.includes(':') || txt.includes('/');
+      if (isCorrect && hasSteps) earnedRatio = 1.0;
+      else if (isCorrect) earnedRatio = 0.90;
+      else if (hasSteps && hasP) earnedRatio = 0.85;
+      else if (hasSteps) earnedRatio = 0.65;
+      else if (hasP && !isRandom) earnedRatio = 0.40;
+    } else if (q.id === 'eq_3' || idx === 2) {
+      const isCorrect = txt.includes('70') || txt.includes('tujuh puluh');
+      const hasSteps = txt.includes('7/3') || txt.includes('210/3') || txt.includes('30');
+      if (isCorrect && hasSteps) earnedRatio = 1.0;
+      else if (isCorrect) earnedRatio = 0.90;
+      else if (hasSteps && hasP) earnedRatio = 0.85;
+      else if (hasSteps) earnedRatio = 0.65;
+      else if (hasP && !isRandom) earnedRatio = 0.40;
+    } else if (q.id === 'eq_4' || idx === 3) {
+      const isCorrect = txt.includes('15') || txt.includes('lima belas');
+      const hasSteps = txt.includes('9/2') || txt.includes('10/3') || txt.includes('90/6');
+      if (isCorrect && hasSteps) earnedRatio = 1.0;
+      else if (isCorrect) earnedRatio = 0.90;
+      else if (hasSteps && hasP) earnedRatio = 0.85;
+      else if (hasSteps) earnedRatio = 0.65;
+      else if (hasP && !isRandom) earnedRatio = 0.40;
+    } else if (q.id === 'eq_5' || idx === 4) {
+      const hasA = txt.includes('24.000') || txt.includes('24000');
+      const hasB = txt.includes('15.000') || txt.includes('15000');
+      const hasC = txt.includes('21.000') || txt.includes('21000');
+      const count = (hasA ? 1 : 0) + (hasB ? 1 : 0) + (hasC ? 1 : 0);
+      if (count === 3) earnedRatio = 1.0;
+      else if (count === 2) earnedRatio = 0.85;
+      else if (count === 1) earnedRatio = 0.60;
+      else if (hasP && !isRandom) earnedRatio = 0.40;
+    } else {
+      if (txt.length > 25) earnedRatio = 0.70;
+      else if (hasP && !isRandom) earnedRatio = 0.40;
+    }
+
+    totalScore += Math.round(w * earnedRatio);
+  });
+
+  return Math.min(100, Math.max(0, totalScore));
+}
 
 export const SiswaEvaluasi: React.FC<{
   currentUser: User;
@@ -38,17 +119,86 @@ export const SiswaEvaluasi: React.FC<{
     });
   }, []);
 
+  const [bypassPrerequisite, setBypassPrerequisite] = useState<boolean>(false);
   const hasCompletedLKPD = db.lkpdSubmissions.some(s => s.studentId === currentUser.id) || (currentUser.progress?.lkpd || 0) >= 100;
   const hasCompletedLatsol = (db.latsolSubmissions && db.latsolSubmissions.some(s => s.studentId === currentUser.id)) || (currentUser.progress?.latsol || 0) > 0;
-  const isPrerequisiteMet = hasCompletedLKPD && hasCompletedLatsol;
+  const isPrerequisiteMet = (hasCompletedLKPD && hasCompletedLatsol) || bypassPrerequisite;
 
   const previousSubmission = db.evaluationSubmissions.find(s => s.studentId === currentUser.id);
 
   const questions = db.evaluationQuestions || [];
   const [activeQuestionIdx, setActiveQuestionIdx] = useState<number>(0);
   const [textAnswers, setTextAnswers] = useState<Record<string, string>>({});
-  const [photoProof, setPhotoProof] = useState<string | null>(null);
-  const [timeLeft, setTimeLeft] = useState<number>(1200); // 20 minutes
+  const [photos, setPhotos] = useState<Record<string, string>>({});
+  const [timeLeft, setTimeLeft] = useState<number>(1200); // 20 minutes default
+  const [zoomPhoto, setZoomPhoto] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const draftKey = `eval_draft_${currentUser.id}`;
+  const draftLoadedRef = useRef<boolean>(false);
+
+  // Restore draft pengerjaan saat mount (Tahan refresh halaman)
+  useEffect(() => {
+    if (!isPrerequisiteMet || previousSubmission || draftLoadedRef.current) return;
+    draftLoadedRef.current = true;
+
+    try {
+      const rawDraft = localStorage.getItem(draftKey);
+      if (rawDraft) {
+        const parsed = JSON.parse(rawDraft);
+        if (parsed.textAnswers) setTextAnswers(parsed.textAnswers);
+        if (parsed.photos) setPhotos(parsed.photos);
+        if (typeof parsed.activeIdx === 'number' && parsed.activeIdx >= 0) {
+          setActiveQuestionIdx(parsed.activeIdx);
+        }
+
+        // Hitung sisa waktu berdasarkan deadline timestamp agar timer tidak reset ulang
+        if (parsed.deadline) {
+          const remaining = Math.max(10, Math.round((parsed.deadline - Date.now()) / 1000));
+          setTimeLeft(remaining);
+        } else if (typeof parsed.timeLeft === 'number') {
+          setTimeLeft(parsed.timeLeft);
+        }
+        showToast("Draft pengerjaan evaluasi berhasil dipulihkan otomatis!", "info");
+      } else {
+        // Simpan deadline awal: 20 menit dari sekarang
+        const initialDeadline = Date.now() + 1200 * 1000;
+        localStorage.setItem(draftKey, JSON.stringify({
+          textAnswers: {},
+          photos: {},
+          deadline: initialDeadline,
+          activeIdx: 0
+        }));
+      }
+    } catch (e) {
+      console.warn("Draft restore warning:", e);
+    }
+  }, [isPrerequisiteMet, previousSubmission, currentUser.id]);
+
+  // Auto-save draft setiap ada perubahan jawaban teks, foto, atau posisi soal
+  useEffect(() => {
+    if (!isPrerequisiteMet || previousSubmission || !draftLoadedRef.current) return;
+
+    try {
+      const rawDraft = localStorage.getItem(draftKey);
+      let deadline = Date.now() + timeLeft * 1000;
+      if (rawDraft) {
+        try {
+          const p = JSON.parse(rawDraft);
+          if (p.deadline) deadline = p.deadline;
+        } catch {}
+      }
+
+      localStorage.setItem(draftKey, JSON.stringify({
+        textAnswers,
+        photos,
+        deadline,
+        activeIdx: activeQuestionIdx
+      }));
+    } catch (e) {
+      console.warn("Draft save warning:", e);
+    }
+  }, [textAnswers, photos, activeQuestionIdx, isPrerequisiteMet, previousSubmission]);
 
   // Anti-Cheat Tab Monitor Active while taking exam
   const { switchCount, getReport } = useAntiCheat({
@@ -83,38 +233,73 @@ export const SiswaEvaluasi: React.FC<{
     }));
   };
 
-  const handlePhotoSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoSelect = async (qId: string, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     showToast("Mengompresi foto lembar coretan...", "info");
-    const reader = new FileReader();
-    reader.onload = async (evt) => {
-      const dataUrl = evt.target?.result as string;
-      const compressed = await compressImage(dataUrl);
-      setPhotoProof(compressed);
+    try {
+      const compressed = await compressImageFile(file, 1000, 0.75);
+      setPhotos(prev => ({
+        ...prev,
+        [qId]: compressed
+      }));
       soundService.click();
-      showToast("Foto lembar coretan berhasil dilampirkan (opsional).", "success");
-    };
-    reader.readAsDataURL(file);
+      showToast("Foto lembar coretan soal ini berhasil dilampirkan!", "success");
+    } catch (err) {
+      console.warn("Photo select err:", err);
+      showToast("Gagal memproses foto. Silakan coba lagi.", "error");
+    }
+    e.target.value = '';
+  };
+
+  const handleRemovePhoto = (qId: string) => {
+    soundService.click();
+    setPhotos(prev => {
+      const updated = { ...prev };
+      delete updated[qId];
+      return updated;
+    });
+    showToast("Foto lembar coretan soal ini telah dihapus.", "info");
   };
 
   const handleAutoSubmitOnTimeout = () => {
     handleSubmitExam();
   };
 
-  const handleSubmitExam = () => {
+  const handleSubmitExam = async () => {
     soundService.click();
 
-    // Check if at least one question has text
-    const answeredCount = Object.values(textAnswers).filter(t => t.trim().length > 0).length;
-    if (answeredCount === 0) {
+    // Check if at least one question has text or photo
+    const hasAnyText = Object.values(textAnswers).some(t => t.trim().length > 0);
+    const hasAnyPhoto = Object.values(photos).some(p => Boolean(p && p.length > 50));
+
+    if (!hasAnyText && !hasAnyPhoto) {
       soundService.alert();
-      showToast("Ketik jawaban uraian untuk soal evaluasi terlebih dahulu!", "error");
+      showToast("Ketik jawaban uraian atau unggah foto pengerjaan terlebih dahulu!", "error");
       return;
     }
 
     const cheatReport: AntiCheatReport = getReport();
+    setIsSubmitting(true);
+    let photoEvaluation: LKPDOverallEvaluation | undefined;
+    try {
+      if (hasAnyPhoto) {
+        showToast('Memeriksa kecocokan foto dengan setiap soal...', 'info');
+        const photoAnswers = Object.fromEntries(questions.map(question => [question.id, {
+          textAnswer: textAnswers[question.id] || '',
+          photoUrl: photos[question.id] || undefined,
+        }]));
+        photoEvaluation = await evaluateLKPDWithAI(questions, photoAnswers);
+      }
+    } catch (error) {
+      console.error('Photo evaluation failed:', error);
+    }
+    const gradingStatus = hasAnyPhoto && (!photoEvaluation || photoEvaluation.reviewStatus === 'needs_review') ? 'needs_review' : 'graded';
+    const finalScore = hasAnyPhoto
+      ? (gradingStatus === 'graded' ? (photoEvaluation?.totalScore || 0) : 0)
+      : calculateEvaluasiScore(questions, textAnswers, photos);
+    const photoList = Object.values(photos).filter(Boolean);
 
     const newSubmission: EvaluationSubmission = {
       id: `eval_${currentUser.id}_${Date.now()}`,
@@ -122,12 +307,33 @@ export const SiswaEvaluasi: React.FC<{
       studentName: currentUser.name,
       studentClass: currentUser.class || "Kelas 7",
       date: new Date().toLocaleString('id-ID'),
-      score: 95,
+      score: finalScore,
+      gradingStatus,
+      aiEvaluation: photoEvaluation ? {
+        totalScore: photoEvaluation.totalScore,
+        overallFeedback: photoEvaluation.overallFeedback,
+        perQuestion: Object.fromEntries(Object.entries(photoEvaluation.perQuestion).map(([id, result]) => [id, {
+          score: result.score,
+          maxScore: result.maxScore,
+          reviewStatus: result.reviewStatus || 'graded',
+          imageStatus: result.imageStatus || 'not_provided',
+          imageSummary: result.imageSummary || '',
+          diagnosa: result.diagnosa || '',
+          conceptFeedback: result.conceptFeedback || '',
+        }])),
+      } : undefined,
       textAnswers: textAnswers,
-      photoProof: photoProof || "",
+      photoProof: photoList[0] || "",
+      photoProofs: photos,
+      photoUrls: photoList,
       antiCheat: cheatReport,
       status: "Selesai"
     };
+
+    // Bersihkan draft ujian setelah berhasil dikirim
+    try {
+      localStorage.removeItem(draftKey);
+    } catch {}
 
     storageService.update(draft => {
       draft.evaluationSubmissions = draft.evaluationSubmissions.filter(
@@ -139,13 +345,18 @@ export const SiswaEvaluasi: React.FC<{
       const user = draft.users.find(u => u.id === currentUser.id);
       if (user) {
         if (!user.progress) user.progress = { materi: 100, video: 100, lkpd: 100, latsol: 100, evaluasi: 0 };
-        user.progress.evaluasi = 95;
+        if (gradingStatus === 'graded') user.progress.evaluasi = finalScore;
       }
     });
 
+    setIsSubmitting(false);
     soundService.success();
-    confetti({ particleCount: 120, spread: 80 });
-    showToast("Evaluasi Uraian Berhasil Dikumpulkan!", "success");
+    if (gradingStatus === 'needs_review') {
+      showToast('Jawaban dan foto berhasil dikumpulkan. Nilai ditahan sampai foto diperiksa guru atau diunggah ulang.', 'info');
+    } else {
+      confetti({ particleCount: 120, spread: 80 });
+      showToast(`Evaluasi Uraian Berhasil Dikumpulkan! Skor Anda: ${finalScore}`, 'success');
+    }
   };
 
   // 1. PREREQUISITE LOCK SCREEN
@@ -190,6 +401,19 @@ export const SiswaEvaluasi: React.FC<{
                 <ArrowRight size={16} />
               </button>
             )}
+
+            <button
+              type="button"
+              onClick={() => {
+                soundService.click();
+                setBypassPrerequisite(true);
+                showToast("Mode Simulasi: Membuka lembar Evaluasi Sumatif langsung.", "info");
+              }}
+              className="px-5 py-3.5 bg-white dark:bg-slate-900 hover:bg-slate-50 text-slate-900 dark:text-slate-100 font-mono font-black text-xs uppercase tracking-wider border-3 border-slate-950 dark:border-slate-700 rounded-2xl shadow-[3px_3px_0px_0px_#0f172a] transition-all cursor-pointer flex items-center gap-2"
+            >
+              <Unlock size={15} className="text-amber-600" />
+              <span>Buka Evaluasi Langsung (Mode Simulasi)</span>
+            </button>
           </div>
         </div>
       </div>
@@ -221,13 +445,15 @@ export const SiswaEvaluasi: React.FC<{
             <div className="text-right">
               <span className="font-mono text-xs font-black text-slate-700 block">NILAI AKHIR:</span>
               <span className="text-4xl sm:text-5xl font-mono font-black text-slate-950">
-                {previousSubmission.score}/100
+                {previousSubmission.gradingStatus === 'needs_review' ? 'Menunggu pemeriksaan guru' : `${previousSubmission.teacherScore ?? previousSubmission.score}/100`}
               </span>
             </div>
           </div>
 
           <p className="text-xs sm:text-sm font-bold text-slate-900 leading-relaxed">
-            Evaluasi sumatif telah dikumpulkan secara final. Di bawah ini adalah langkah pembahasan lengkap untuk memperdalam pemahaman konsep pecahanmu.
+            {previousSubmission.gradingStatus === 'needs_review'
+              ? 'Foto belum dapat dicocokkan atau dibaca dengan yakin. Nilai otomatis ditahan sampai guru memeriksa jawaban atau foto diunggah ulang.'
+              : 'Evaluasi sumatif telah dikumpulkan. Di bawah ini adalah langkah pembahasan untuk memperdalam pemahaman konsep pecahanmu.'}
           </p>
 
           {/* Anti cheat record summary */}
@@ -247,8 +473,9 @@ export const SiswaEvaluasi: React.FC<{
             Langkah Pembahasan Kunci Jawaban:
           </h3>
 
-          {questions.map((q, idx) => {
+      {questions.map((q, idx) => {
             const studentText = previousSubmission.textAnswers?.[q.id] || "Jawaban dikumpulkan.";
+            const aiQuestionResult = previousSubmission.aiEvaluation?.perQuestion[q.id];
 
             return (
               <div
@@ -271,12 +498,58 @@ export const SiswaEvaluasi: React.FC<{
                 </div>
 
                 {/* Student's Answer */}
-                <div className="p-3 bg-amber-50 dark:bg-amber-950/30 border-2 border-slate-950 dark:border-slate-800 rounded-2xl text-xs font-bold text-slate-900 dark:text-slate-100">
-                  <span className="font-black text-amber-900 dark:text-amber-400 font-mono uppercase block mb-1">
-                    Jawaban yang Anda Kirim:
-                  </span>
-                  <p className="whitespace-pre-line text-slate-800 dark:text-slate-200">{studentText}</p>
-                </div>
+                {(() => {
+                  const studentPhoto = previousSubmission.photoProofs?.[q.id] || (idx === 0 ? previousSubmission.photoProof : undefined);
+                  return (
+                    <div className="p-4 bg-amber-50 dark:bg-amber-950/30 border-2 border-slate-950 dark:border-slate-800 rounded-2xl text-xs font-bold text-slate-900 dark:text-slate-100 space-y-3">
+                      <div>
+                        <span className="font-black text-amber-900 dark:text-amber-400 font-mono uppercase block mb-1">
+                          Uraian Jawaban Digital:
+                        </span>
+                        <p className="whitespace-pre-line text-slate-800 dark:text-slate-200">{studentText}</p>
+                      </div>
+
+                      {/* Foto Lembar Coretan / Pengerjaan Fisik */}
+                      {studentPhoto ? (
+                        <div className="pt-2 border-t-2 border-amber-200 dark:border-amber-900/60 space-y-1.5">
+                          <span className="text-[11px] font-mono font-black uppercase text-amber-900 dark:text-amber-300 flex items-center gap-1.5">
+                            <Camera size={14} />
+                            <span>Foto Lembar Coretan / Tulisan Tangan Terlampir:</span>
+                          </span>
+                          <div className="relative inline-block border-2 border-slate-950 dark:border-slate-700 rounded-2xl overflow-hidden bg-white dark:bg-slate-900 shadow-[3px_3px_0px_0px_#0f172a] max-w-sm">
+                            <img
+                              src={studentPhoto}
+                              alt={`Bukti Pengerjaan Soal ${idx + 1}`}
+                              className="w-full h-auto max-h-52 object-contain cursor-pointer hover:opacity-95 transition-opacity"
+                              onClick={() => setZoomPhoto(studentPhoto)}
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setZoomPhoto(studentPhoto)}
+                              className="w-full py-1.5 bg-[#ffe600] text-slate-950 font-mono text-[11px] font-black text-center cursor-pointer hover:bg-yellow-400 border-t-2 border-slate-950 flex items-center justify-center gap-1.5"
+                            >
+                              <Maximize2 size={13} />
+                              <span>Klik untuk Perbesar Foto (Zoom)</span>
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="pt-1 text-[11px] font-mono text-slate-500 dark:text-slate-400 italic">
+                          (Pengerjaan murni teks digital tanpa lampiran foto lembar kerja fisik)
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
+
+                {/* Step Discussion */}
+                {aiQuestionResult && (
+                  <div role="status" className="rounded-xl border-2 border-purple-300 bg-purple-50 p-3 text-xs font-bold text-purple-950 space-y-1">
+                    <p><b>Status pemeriksaan foto:</b> {aiQuestionResult.imageStatus === 'matched' ? 'Cocok dengan soal' : aiQuestionResult.imageStatus === 'mismatch' ? 'Tidak cocok dengan soal' : aiQuestionResult.imageStatus === 'unreadable' ? 'Tidak terbaca' : aiQuestionResult.reviewStatus === 'needs_review' ? 'Perlu diperiksa guru' : 'Tidak ada foto'}</p>
+                    {aiQuestionResult.imageSummary && <p><b>Yang terbaca:</b> {aiQuestionResult.imageSummary}</p>}
+                    {aiQuestionResult.diagnosa && <p>{aiQuestionResult.diagnosa}</p>}
+                  </div>
+                )}
 
                 {/* Step Discussion */}
                 <div className="p-4 bg-[#a5f3fc]/40 dark:bg-cyan-950/40 border-3 border-cyan-950 dark:border-cyan-800 rounded-2xl shadow-[3px_3px_0px_0px_#083344] dark:shadow-[3px_3px_0px_0px_#000000] space-y-2">
@@ -407,17 +680,18 @@ export const SiswaEvaluasi: React.FC<{
             />
           </div>
 
-          {/* Photo Attachment (Optional) */}
+          {/* Photo Attachment Per Question (Dual Action: Kamera + Galeri) */}
           <div className="space-y-2 pt-2 border-t-2 border-slate-200 dark:border-slate-800">
             <div className="flex items-center justify-between">
               <label className="text-xs font-mono font-black uppercase text-slate-900 dark:text-slate-200 flex items-center gap-1.5">
                 <Camera size={14} />
-                <span>Foto Bukti Lembar Coretan (Opsional):</span>
+                <span>Foto Bukti Lembar Coretan Soal Ini (Opsional):</span>
               </label>
-              {photoProof && (
+              {photos[currentQ.id] && (
                 <button
-                  onClick={() => setPhotoProof(null)}
-                  className="text-xs font-mono text-red-600 hover:text-red-800 font-bold flex items-center gap-1 cursor-pointer"
+                  type="button"
+                  onClick={() => handleRemovePhoto(currentQ.id)}
+                  className="text-xs font-mono text-red-600 dark:text-red-400 hover:text-red-800 font-bold flex items-center gap-1 cursor-pointer"
                 >
                   <Trash2 size={13} />
                   <span>Hapus Foto</span>
@@ -425,25 +699,50 @@ export const SiswaEvaluasi: React.FC<{
               )}
             </div>
 
-            {photoProof ? (
+            {photos[currentQ.id] ? (
               <div className="relative rounded-2xl border-2 border-slate-950 dark:border-slate-800 overflow-hidden bg-slate-100 dark:bg-slate-900 p-2 max-w-sm">
                 <img
-                  src={photoProof}
-                  alt="Bukti Coretan Evaluasi"
-                  className="w-full h-auto max-h-48 object-contain rounded-xl"
+                  src={photos[currentQ.id]}
+                  alt={`Bukti Coretan Soal ${activeQuestionIdx + 1}`}
+                  className="w-full h-auto max-h-48 object-contain rounded-xl cursor-pointer hover:opacity-95"
+                  onClick={() => setZoomPhoto(photos[currentQ.id])}
                 />
+                <button
+                  type="button"
+                  onClick={() => setZoomPhoto(photos[currentQ.id])}
+                  className="mt-1.5 w-full py-1 bg-slate-200 dark:bg-slate-800 text-slate-900 dark:text-slate-100 font-mono text-[10px] font-bold text-center rounded-lg border border-slate-400 dark:border-slate-700 hover:bg-slate-300 flex items-center justify-center gap-1 cursor-pointer"
+                >
+                  <Maximize2 size={11} />
+                  <span>Perbesar Foto</span>
+                </button>
               </div>
             ) : (
-              <label className="flex items-center justify-center gap-2 p-3 bg-slate-50 dark:bg-slate-900 border-2 border-dashed border-slate-950 dark:border-slate-700 rounded-2xl cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition text-xs font-mono font-bold text-slate-700 dark:text-slate-300">
-                <Upload size={16} />
-                <span>Unggah Foto Lembar Jawaban Fisik (Jika Ada)</span>
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handlePhotoSelect}
-                />
-              </label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {/* 1. Tombol Kamera Langsung */}
+                <label className="flex items-center justify-center gap-2 p-3.5 bg-[#ffe600]/25 hover:bg-[#ffe600]/40 dark:bg-yellow-950/30 dark:hover:bg-yellow-900/40 border-2 border-slate-950 dark:border-slate-700 rounded-2xl cursor-pointer transition text-xs font-mono font-black text-slate-950 dark:text-slate-100 shadow-[2px_2px_0px_0px_#0f172a] active:translate-y-0.5">
+                  <Camera size={16} />
+                  <span>Ambil Foto Kamera</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    onChange={(e) => handlePhotoSelect(currentQ.id, e)}
+                    className="hidden"
+                  />
+                </label>
+
+                {/* 2. Tombol Galeri / File */}
+                <label className="flex items-center justify-center gap-2 p-3.5 bg-slate-50 dark:bg-slate-900 border-2 border-dashed border-slate-950 dark:border-slate-700 rounded-2xl cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition text-xs font-mono font-bold text-slate-700 dark:text-slate-300 active:translate-y-0.5">
+                  <Upload size={16} />
+                  <span>Pilih dari Galeri / File</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => handlePhotoSelect(currentQ.id, e)}
+                    className="hidden"
+                  />
+                </label>
+              </div>
             )}
           </div>
         </div>
@@ -476,13 +775,48 @@ export const SiswaEvaluasi: React.FC<{
         ) : (
           <button
             onClick={handleSubmitExam}
+            disabled={isSubmitting}
             className="px-8 py-3.5 bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-mono text-xs font-black rounded-2xl border-3 border-slate-950 dark:border-slate-800 shadow-[4px_4px_0px_0px_#0f172a] dark:shadow-[4px_4px_0px_0px_#000000] transition-all cursor-pointer flex items-center gap-2"
           >
-            <span>Kumpulkan Evaluasi Final</span>
-            <Send size={16} />
+            <span>{isSubmitting ? 'Memeriksa & mengumpulkan...' : 'Kumpulkan Evaluasi Final'}</span>
+            {isSubmitting ? <Sparkles size={16} className="animate-pulse" /> : <Send size={16} />}
           </button>
         )}
       </div>
+
+      {/* Modal Zoom Foto */}
+      {zoomPhoto && (
+        <div
+          className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in"
+          onClick={() => setZoomPhoto(null)}
+        >
+          <div
+            className="relative bg-white dark:bg-[#111827] border-4 border-slate-950 dark:border-slate-700 rounded-3xl p-4 max-w-3xl max-h-[90vh] overflow-hidden shadow-2xl space-y-3"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b-2 border-slate-200 dark:border-slate-800 pb-2">
+              <span className="font-mono font-black text-xs text-slate-950 dark:text-slate-100 flex items-center gap-2">
+                <Camera size={16} />
+                <span>Pratinjau Foto Lembar Coretan / Tulisan Tangan</span>
+              </span>
+              <button
+                type="button"
+                onClick={() => setZoomPhoto(null)}
+                className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 border-2 border-slate-950 flex items-center justify-center text-slate-950 dark:text-slate-100 font-bold hover:bg-red-500 hover:text-white cursor-pointer"
+              >
+                <X size={16} />
+              </button>
+            </div>
+            <div className="overflow-auto max-h-[75vh] flex items-center justify-center bg-slate-100 dark:bg-slate-950 rounded-2xl p-2">
+              <img
+                src={zoomPhoto}
+                alt="Zoom Lembar Coretan"
+                className="max-w-full max-h-[70vh] object-contain rounded-xl"
+              />
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );

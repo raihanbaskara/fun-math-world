@@ -86,6 +86,9 @@ export interface LKPDEssayAnswer {
   aiAnswer?: string;
   aiFeedback?: string;
   aiScore?: number;
+  aiReviewStatus?: 'graded' | 'needs_review';
+  imageStatus?: 'matched' | 'mismatch' | 'unreadable' | 'uncertain' | 'not_provided';
+  imageSummary?: string;
 }
 
 export interface LKPDSubmission {
@@ -149,9 +152,26 @@ export interface EvaluationSubmission {
   studentClass: string;
   date: string;
   score: number;
+  gradingStatus?: 'graded' | 'needs_review';
+  aiEvaluation?: {
+    totalScore: number;
+    overallFeedback: string;
+    perQuestion: Record<string, {
+      score: number;
+      maxScore: number;
+      reviewStatus: 'graded' | 'needs_review';
+      imageStatus: 'matched' | 'mismatch' | 'unreadable' | 'uncertain' | 'not_provided';
+      imageSummary: string;
+      diagnosa: string;
+      conceptFeedback: string;
+    }>;
+  };
   textAnswers: Record<string, string>;
   photoProof: string;
   photoUrls?: string[];
+  photoProofs?: Record<string, string>;
+  teacherScore?: number | null;
+  teacherFeedback?: string;
   antiCheat: AntiCheatReport;
   status: string;
 }

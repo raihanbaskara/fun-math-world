@@ -163,7 +163,9 @@ export const GuruDaftarSiswa: React.FC<{
                       {hasLKPD ? (
                         <div className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-lime-100 text-emerald-950 border border-slate-950 text-xs font-black shadow-[1.5px_1.5px_0px_0px_#0f172a]">
                           <CheckCircle2 size={13} className="text-emerald-700" />
-                          <span>Selesai ({lkpdSub.teacherScore || lkpdSub.aiScore || 90})</span>
+                          <span>{lkpdSub.isAiEvaluated && lkpdSub.aiScore === undefined && (lkpdSub.teacherScore === null || lkpdSub.teacherScore === undefined)
+                            ? 'Perlu diperiksa guru'
+                            : `Selesai (${lkpdSub.teacherScore ?? lkpdSub.aiScore ?? '-'})`}</span>
                         </div>
                       ) : (
                         <div className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-300 dark:border-slate-700 text-xs font-bold">

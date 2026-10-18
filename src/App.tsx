@@ -169,22 +169,26 @@ export function App() {
       if (stored) {
         try {
           const parsed = JSON.parse(stored);
-          const currentInDb = storageService.getState().users.find(u => u.id === parsed.id);
-          if (
-            currentInDb &&
-            currentInDb.sessionToken &&
-            parsed.sessionToken &&
-            currentInDb.sessionToken !== parsed.sessionToken
-          ) {
-            // Guard against kicking right after login while cloud state syncs
-            const sessionAge = Date.now() - (parseInt(parsed.sessionToken.split('_').pop() || '0') || 0);
-            if (sessionAge > 8000) {
-              storageService.clearCurrentSession();
-              setCurrentUser(null);
-              currentUserRef.current = null;
-              setModalType('sessionKicked');
-              soundService.alert();
-              navigateTo('siswa', true, null);
+          // Only enforce on student role if both deviceId and sessionToken are active
+          if (parsed && parsed.role === 'siswa') {
+            const currentInDb = storageService.getState().users.find(u => u.id === parsed.id);
+            if (
+              currentInDb &&
+              currentInDb.deviceId &&
+              currentInDb.sessionToken &&
+              parsed.sessionToken &&
+              currentInDb.sessionToken !== parsed.sessionToken
+            ) {
+              // Guard against kicking right after login while cloud state syncs (increase buffer to 15s)
+              const sessionAge = Date.now() - (parseInt(parsed.sessionToken.split('_').pop() || '0') || 0);
+              if (sessionAge > 15000) {
+                storageService.clearCurrentSession();
+                setCurrentUser(null);
+                currentUserRef.current = null;
+                setModalType('sessionKicked');
+                soundService.alert();
+                navigateTo('siswa', true, null);
+              }
             }
           }
         } catch {}

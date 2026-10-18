@@ -1,5 +1,5 @@
 import { DatabaseState, User, Material } from '@/types';
-import { supabase, isSupabaseConfigured } from '@/lib/supabase';
+import { getSupabase, checkIsSupabaseConfigured, testSupabaseConnection } from '@/lib/supabase';
 import { generateChapterPdfDataUri } from '@/utils/pdfUtils';
 
 const STORAGE_KEY = "FUN_MATH_WORLD_SMP7_DB_V7";
@@ -653,6 +653,8 @@ class StorageService {
   private syncTimeout: number | null = null;
   private isInitialSyncDone: boolean = false;
   private memorySessionUser: User | null = null;
+  private cloudStatus: 'connected' | 'offline' | 'checking' = 'checking';
+  private realtimeChannel: any = null;
 
   constructor() {
     this.state = this.load();
@@ -674,13 +676,16 @@ class StorageService {
         const prunedSubmissions = (state.lkpdSubmissions || []).map(sub => {
           let prunedAnswers = sub.answers;
           if (sub.answers && typeof sub.answers === 'object') {
-            const ansMap: Record<string, { textAnswer: string; photoUrl?: string; aiFeedback?: string; aiScore?: number }> = {};
+            const ansMap: Record<string, { textAnswer: string; photoUrl?: string; aiFeedback?: string; aiScore?: number; aiReviewStatus?: 'graded' | 'needs_review'; imageStatus?: 'matched' | 'mismatch' | 'unreadable' | 'uncertain' | 'not_provided'; imageSummary?: string }> = {};
             for (const [k, v] of Object.entries(sub.answers)) {
               if (v && typeof v === 'object') {
                 ansMap[k] = {
                   textAnswer: v.textAnswer || '',
                   aiFeedback: v.aiFeedback,
                   aiScore: v.aiScore,
+                  aiReviewStatus: v.aiReviewStatus,
+                  imageStatus: v.imageStatus,
+                  imageSummary: v.imageSummary,
                   photoUrl: (typeof v.photoUrl === 'string' && v.photoUrl.length > 200) ? '' : v.photoUrl
                 };
               } else {
@@ -726,15 +731,30 @@ class StorageService {
   }
 
   private async initSupabaseSync() {
-    if (!isSupabaseConfigured || !supabase) return;
+    const client = getSupabase();
+    if (!checkIsSupabaseConfigured() || !client) {
+      this.cloudStatus = 'offline';
+      this.notify();
+      return;
+    }
 
     try {
+      this.cloudStatus = 'checking';
       // 1. Fetch current cloud state
-      const { data, error } = await supabase
+      const { data, error } = await client
         .from('app_state')
         .select('data')
         .eq('id', 'main')
         .maybeSingle();
+
+      if (error) {
+        console.warn('[StorageService] Cloud connection error:', error.message);
+        this.cloudStatus = 'offline';
+        this.notify();
+        return;
+      }
+
+      this.cloudStatus = 'connected';
 
       if (data && data.data) {
         const remoteHasValidNewQuestions =
@@ -765,16 +785,23 @@ class StorageService {
         this.notify();
       } else {
         // Row doesn't exist yet, insert current local state to cloud
-        const res = await supabase.from('app_state').upsert({ id: 'main', data: this.state, updated_at: new Date().toISOString() });
+        const res = await client.from('app_state').upsert({ id: 'main', data: this.state, updated_at: new Date().toISOString() });
         if (res.error) {
           console.error('[Supabase RLS Error]', res.error.message);
         }
         this.isInitialSyncDone = true;
       }
 
+      // Unsubscribe old channel if present
+      if (this.realtimeChannel) {
+        try {
+          client.removeChannel(this.realtimeChannel);
+        } catch {}
+      }
+
       // 2. Real-time subscription for live sync between Teacher & Student devices!
       const channelName = 'app_state_' + Math.random().toString(36).substring(2, 8);
-      supabase
+      this.realtimeChannel = client
         .channel(channelName)
         .on(
           'postgres_changes',
@@ -813,6 +840,8 @@ class StorageService {
         .subscribe();
     } catch (err) {
       console.warn('Supabase sync initialization warning:', err);
+      this.cloudStatus = 'offline';
+      this.notify();
     }
   }
 
@@ -885,16 +914,23 @@ class StorageService {
     this.notify();
 
     // Async save to Supabase cloud with lossless remote merge
-    if (isSupabaseConfigured && supabase) {
+    const client = getSupabase();
+    if (checkIsSupabaseConfigured() && client) {
       if (this.syncTimeout) window.clearTimeout(this.syncTimeout);
       this.syncTimeout = window.setTimeout(async () => {
         try {
           // Fetch latest cloud state to merge before writing
-          const { data: cloudData } = await supabase!
+          const { data: cloudData, error: fetchErr } = await client
             .from('app_state')
             .select('data')
             .eq('id', 'main')
             .maybeSingle();
+
+          if (fetchErr) {
+            console.warn('[StorageService] Save to cloud fetch check failed:', fetchErr.message);
+            this.cloudStatus = 'offline';
+            return;
+          }
 
           let stateToSave = this.state;
           if (cloudData && cloudData.data) {
@@ -916,11 +952,16 @@ class StorageService {
           }
           stateToSave = sanitizeBannedSubtitles(stateToSave);
 
-          await supabase!
+          const { error: upsertErr } = await client
             .from('app_state')
             .upsert({ id: 'main', data: stateToSave, updated_at: new Date().toISOString() });
+
+          if (!upsertErr) {
+            this.cloudStatus = 'connected';
+          }
         } catch (err) {
           console.error('Failed to sync state to Supabase:', err);
+          this.cloudStatus = 'offline';
         }
       }, 100);
     }
@@ -931,9 +972,10 @@ class StorageService {
     this.safeSaveToLocalStorage(this.state);
     this.notify();
 
-    if (isSupabaseConfigured && supabase) {
+    const client = getSupabase();
+    if (checkIsSupabaseConfigured() && client) {
       try {
-        const { data: cloudData } = await supabase
+        const { data: cloudData } = await client
           .from('app_state')
           .select('data')
           .eq('id', 'main')
@@ -944,7 +986,7 @@ class StorageService {
           this.state.users = cloudData.data.users;
         }
 
-        await supabase
+        await client
           .from('app_state')
           .upsert({ id: 'main', data: this.state, updated_at: new Date().toISOString() });
       } catch (err) {
@@ -971,14 +1013,78 @@ class StorageService {
     this.safeSaveToLocalStorage(this.state);
     this.notify();
 
-    if (isSupabaseConfigured && supabase) {
+    const client = getSupabase();
+    if (checkIsSupabaseConfigured() && client) {
       try {
-        await supabase
+        await client
           .from('app_state')
           .upsert({ id: 'main', data: this.state, updated_at: new Date().toISOString() });
       } catch (err) {
         console.error('Failed to reset cloud state in Supabase:', err);
       }
+    }
+  }
+
+  public getCloudStatus(): 'connected' | 'offline' | 'checking' {
+    return this.cloudStatus;
+  }
+
+  public async reconnectCloud(): Promise<{ ok: boolean; message: string }> {
+    this.cloudStatus = 'checking';
+    this.notify();
+    const result = await testSupabaseConnection();
+    if (result.ok) {
+      await this.initSupabaseSync();
+      return { ok: true, message: result.message };
+    } else {
+      this.cloudStatus = 'offline';
+      this.notify();
+      return { ok: false, message: result.message };
+    }
+  }
+
+  public async forcePushToCloud(): Promise<{ ok: boolean; message: string }> {
+    const client = getSupabase();
+    if (!checkIsSupabaseConfigured() || !client) {
+      return { ok: false, message: 'Supabase Cloud belum dikonfigurasi.' };
+    }
+    try {
+      const res = await client.from('app_state').upsert({
+        id: 'main',
+        data: sanitizeBannedSubtitles(this.state),
+        updated_at: new Date().toISOString()
+      });
+      if (res.error) throw res.error;
+      this.cloudStatus = 'connected';
+      this.notify();
+      return { ok: true, message: 'Data lokal berhasil dikirim ke Supabase Cloud!' };
+    } catch (e: any) {
+      return { ok: false, message: 'Gagal push ke Cloud: ' + (e?.message || String(e)) };
+    }
+  }
+
+  public exportDatabaseJson(): string {
+    return JSON.stringify(this.state, null, 2);
+  }
+
+  public importDatabaseJson(jsonStr: string): { ok: boolean; message: string } {
+    try {
+      const parsed = JSON.parse(jsonStr);
+      if (!parsed.users || !parsed.materials) {
+        return { ok: false, message: 'Format data JSON tidak valid untuk skema Fun Math World!' };
+      }
+      this.state = sanitizeBannedSubtitles(this.sanitizeStudentProgress({
+        ...defaultDatabaseState,
+        ...parsed,
+        users: mergeUsersList(parsed.users || [], defaultDatabaseState.users),
+        materials: ensureMaterialsHaveUrl(parsed.materials?.length ? parsed.materials : defaultDatabaseState.materials),
+      }));
+      this.safeSaveToLocalStorage(this.state);
+      this.notify();
+      this.forcePushToCloud();
+      return { ok: true, message: 'Data database berhasil diimpor & disinkronkan!' };
+    } catch (err: any) {
+      return { ok: false, message: 'Gagal membaca berkas JSON: ' + (err?.message || String(err)) };
     }
   }
 

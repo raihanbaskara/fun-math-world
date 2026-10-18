@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { storageService } from '@/services/storageService';
 import { soundService } from '@/services/soundService';
 import { User, LKPDItem, LKPDSubmission, LKPDEssayAnswer } from '@/types';
-import { compressImage } from '@/lib/utils';
+import { compressImage, compressImageFile } from '@/lib/utils';
 import { useAntiCheat } from '@/lib/useAntiCheat';
 import { evaluateLKPDWithAI, evaluateLKPDWithRubric, LKPDOverallEvaluation } from '@/services/aiCorrectionService';
 import { Modal } from '@/components/ui/modal';
@@ -130,12 +130,9 @@ export const SiswaLKPD: React.FC<{
     if (existingSubmission && existingSubmission.answers) {
       const loadedAnswers: Record<string, LKPDEssayAnswer> = { ...existingSubmission.answers };
       const fallbackPhoto = existingSubmission.photoUrl || existingSubmission.photoUrls?.[0] || '';
-      questions.forEach((q, idx) => {
+      questions.forEach((q) => {
         if (!loadedAnswers[q.id]) {
           loadedAnswers[q.id] = { textAnswer: '', photoUrl: '' };
-        }
-        if (!loadedAnswers[q.id].photoUrl && fallbackPhoto) {
-          loadedAnswers[q.id].photoUrl = (idx === 0 ? fallbackPhoto : '') || fallbackPhoto;
         }
       });
       setAnswers(loadedAnswers);
@@ -167,10 +164,8 @@ export const SiswaLKPD: React.FC<{
     if (!file) return;
 
     showToast("Mengompresi foto lembar pengerjaan fisik...", "info");
-    const reader = new FileReader();
-    reader.onload = async (evt) => {
-      const dataUrl = evt.target?.result as string;
-      const compressed = await compressImage(dataUrl);
+    try {
+      const compressed = await compressImageFile(file, 1000, 0.75);
       setAnswers(prev => ({
         ...prev,
         [questionId]: {
@@ -180,8 +175,12 @@ export const SiswaLKPD: React.FC<{
       }));
       soundService.click();
       showToast("Foto pengerjaan berhasil dilampirkan!", "success");
-    };
-    reader.readAsDataURL(file);
+    } catch (err) {
+      console.warn("Upload error:", err);
+      showToast("Gagal memproses foto. Silakan coba lagi.", "error");
+    }
+    // Reset input value so same file can be re-selected if needed
+    e.target.value = '';
   };
 
   const handleRemovePhoto = (questionId: string) => {
@@ -210,13 +209,12 @@ export const SiswaLKPD: React.FC<{
       return;
     }
 
-    const anyAttachedPhoto = Object.values(answers).find(a => Boolean(a.photoUrl && a.photoUrl.length > 50))?.photoUrl || '';
     const preparedAnswers: Record<string, { textAnswer: string; photoUrl?: string }> = {};
-    questions.forEach((q, idx) => {
+    questions.forEach((q) => {
       const ans = answers[q.id] || { textAnswer: '', photoUrl: '' };
       preparedAnswers[q.id] = {
         textAnswer: ans.textAnswer || '',
-        photoUrl: ans.photoUrl || (idx === 0 ? anyAttachedPhoto : '') || anyAttachedPhoto
+        photoUrl: ans.photoUrl || ''
       };
     });
 
@@ -242,7 +240,7 @@ export const SiswaLKPD: React.FC<{
     );
 
     try {
-      const evalResult = await evaluateLKPDWithAI(questions, preparedAnswers, anyAttachedPhoto);
+      const evalResult = await evaluateLKPDWithAI(questions, preparedAnswers);
       setAiEvaluationResult(evalResult);
       setAiDiscussionUnlocked(true);
       soundService.success();
@@ -284,10 +282,12 @@ export const SiswaLKPD: React.FC<{
     const preparedAnswers: Record<string, { textAnswer: string; photoUrl?: string }> = {};
     questions.forEach((q, idx) => {
       const studentAns = existingSubmission.answers?.[q.id] || { textAnswer: '', photoUrl: '' };
-      const photo = studentAns.photoUrl || (idx === 0 ? fallbackPhoto : '') || fallbackPhoto;
+      const hasDirectPhoto = Boolean(studentAns.photoUrl && studentAns.photoUrl.length > 50);
+      const isTargetFallback = !hasDirectPhoto && Boolean(fallbackPhoto) && questions.length === 1;
+
       preparedAnswers[q.id] = {
         textAnswer: studentAns.textAnswer || '',
-        photoUrl: photo
+        photoUrl: hasDirectPhoto ? studentAns.photoUrl : (isTargetFallback ? fallbackPhoto : '')
       };
     });
 
@@ -305,7 +305,7 @@ export const SiswaLKPD: React.FC<{
     try {
       let evalResult: LKPDOverallEvaluation;
       try {
-        evalResult = await evaluateLKPDWithAI(questions, preparedAnswers, fallbackPhoto);
+        evalResult = await evaluateLKPDWithAI(questions, preparedAnswers);
       } catch (e) {
         console.warn("AI service fallback to rubric:", e);
         evalResult = evaluateLKPDWithRubric(questions, preparedAnswers);
@@ -315,17 +315,20 @@ export const SiswaLKPD: React.FC<{
 
       // Persist the updated AI answers, score, and isAiEvaluated flag into storageService
       const updatedAnswers: Record<string, LKPDEssayAnswer> = { ...(existingSubmission.answers || {}) };
-      questions.forEach((q, idx) => {
+      questions.forEach((q) => {
         const qEval = evalResult.perQuestion[q.id];
         const studentAns = updatedAnswers[q.id] || { textAnswer: '', photoUrl: '' };
-        const photo = studentAns.photoUrl || (idx === 0 ? fallbackPhoto : '') || fallbackPhoto;
+        const assignedPhoto = preparedAnswers[q.id]?.photoUrl || studentAns.photoUrl || '';
         const diagnosaNote = qEval?.diagnosa ? `${qEval.diagnosa} (${qEval.conceptFeedback})` : (qEval?.conceptFeedback || "Jawaban telah diperiksa AI.");
         updatedAnswers[q.id] = {
           ...studentAns,
-          photoUrl: photo,
-          aiAnswer: qEval?.aiAnswer || studentAns.aiAnswer,
-          aiScore: qEval?.score ?? 0,
-          aiFeedback: diagnosaNote
+          photoUrl: assignedPhoto,
+          aiAnswer: qEval?.reviewStatus === 'needs_review' ? undefined : (qEval?.aiAnswer || studentAns.aiAnswer),
+          aiScore: qEval?.reviewStatus === 'needs_review' ? undefined : (qEval?.score ?? 0),
+          aiFeedback: diagnosaNote,
+          aiReviewStatus: qEval?.reviewStatus || 'graded',
+          imageStatus: qEval?.imageStatus,
+          imageSummary: qEval?.imageSummary
         };
       });
 
@@ -333,16 +336,17 @@ export const SiswaLKPD: React.FC<{
         const target = draft.lkpdSubmissions.find(s => s.id === existingSubmission.id);
         if (target) {
           target.answers = updatedAnswers;
-          target.photoUrl = fallbackPhoto || target.photoUrl;
           target.isAiEvaluated = true;
-          target.aiScore = evalResult.totalScore;
+          target.aiScore = evalResult.reviewStatus === 'needs_review' ? undefined : evalResult.totalScore;
           target.aiFeedback = evalResult.overallFeedback;
         }
       });
       setAnswers(updatedAnswers);
 
       soundService.success();
-      showToast("Koreksi AI selesai! Pembahasan konsep resmi siap dipelajari.", "success");
+      showToast(evalResult.reviewStatus === 'needs_review'
+        ? 'Foto perlu diperiksa guru. Nilai otomatis ditahan.'
+        : 'Koreksi AI selesai! Pembahasan konsep resmi siap dipelajari.', evalResult.reviewStatus === 'needs_review' ? 'info' : 'success');
     } catch (err: any) {
       console.error(err);
       setAiDiscussionUnlocked(true);
@@ -359,13 +363,12 @@ export const SiswaLKPD: React.FC<{
     soundService.click();
 
     // Jawaban dikirim murni tanpa memanggil AI
-    const anyPhoto = Object.values(answers).find(a => Boolean(a.photoUrl && a.photoUrl.length > 50))?.photoUrl || '';
     const finalAnswers: Record<string, LKPDEssayAnswer> = {};
-    questions.forEach((q, idx) => {
+    questions.forEach((q) => {
       const studentAns = answers[q.id] || { textAnswer: '', photoUrl: '' };
       finalAnswers[q.id] = {
         textAnswer: studentAns.textAnswer,
-        photoUrl: studentAns.photoUrl || (idx === 0 ? anyPhoto : '') || anyPhoto,
+        photoUrl: studentAns.photoUrl || '',
       };
     });
 
@@ -700,7 +703,13 @@ export const SiswaLKPD: React.FC<{
 
                   <button
                     type="button"
-                    onClick={() => setAiDiscussionUnlocked(!aiDiscussionUnlocked)}
+                    onClick={() => {
+                      if (!aiDiscussionUnlocked && !aiEvaluationResult) {
+                        handleRunAiCorrectionForReview(true);
+                      } else {
+                        setAiDiscussionUnlocked(!aiDiscussionUnlocked);
+                      }
+                    }}
                     className={`px-5 py-3 rounded-2xl font-mono text-xs font-black border-3 border-slate-950 shadow-[4px_4px_0px_0px_#0f172a] dark:shadow-[4px_4px_0px_0px_#000000] transition-all cursor-pointer flex items-center justify-center gap-2 ${
                       aiDiscussionUnlocked
                         ? 'bg-slate-200 dark:bg-slate-800 text-slate-900 dark:text-slate-100'
@@ -717,7 +726,8 @@ export const SiswaLKPD: React.FC<{
 
           {questions.map((q, idx) => {
             const ans = existingSubmission.answers?.[q.id] || { textAnswer: '' };
-            const photo = ans.photoUrl || (idx === 0 ? existingSubmission.photoUrl : undefined);
+            const fallbackPhoto = existingSubmission.photoUrl || existingSubmission.photoUrls?.[0] || undefined;
+            const photo = ans.photoUrl || (idx === questions.length - 1 || questions.length === 1 ? fallbackPhoto : undefined);
 
             return (
               <div
@@ -772,22 +782,33 @@ export const SiswaLKPD: React.FC<{
                   <div className="space-y-3 animate-in fade-in">
                     {/* Blok Jawaban & Solusi Langkah Versi AI */}
                     {(() => {
-                      const aiAnswerText = ans.aiAnswer || evaluateLKPDWithRubric([q], { [q.id]: ans }).perQuestion[q.id]?.aiAnswer || "Langkah penyelesaian pecahan versi AI telah dihitung.";
+                      const aiAnswerText = ans.aiReviewStatus === 'needs_review'
+                        ? ''
+                        : (ans.aiAnswer || evaluateLKPDWithRubric([q], { [q.id]: ans }).perQuestion[q.id]?.aiAnswer || "Langkah penyelesaian pecahan versi AI telah dihitung.");
                       return (
-                        <div className="p-4 bg-purple-50 dark:bg-purple-950/30 border-3 border-slate-950 dark:border-purple-800 rounded-2xl shadow-[3px_3px_0px_0px_#0f172a] space-y-2">
+                      <div className="p-4 bg-purple-50 dark:bg-purple-950/30 border-3 border-slate-950 dark:border-purple-800 rounded-2xl shadow-[3px_3px_0px_0px_#0f172a] space-y-2">
                           <div className="flex items-center justify-between text-purple-950 dark:text-purple-300 font-mono text-xs font-black">
                             <div className="flex items-center gap-2">
                               <Bot size={18} className="text-purple-700 dark:text-purple-400" />
                               <span>JAWABAN &amp; SOLUSI LANGKAH VERSI AI (KEGIATAN {idx + 1}):</span>
                             </div>
                             <span className="text-[11px] font-black bg-purple-200 dark:bg-purple-900 px-2 py-0.5 rounded-md border border-purple-950/20">
-                              Skor AI: {ans.aiScore ?? 0} Poin
+                              {ans.aiReviewStatus === 'needs_review' ? 'Menunggu pemeriksaan guru' : `Skor AI: ${ans.aiScore ?? 0} Poin`}
                             </span>
                           </div>
+                          {ans.imageStatus && ans.imageStatus !== 'not_provided' && (
+                            <div role="status" className="rounded-xl border border-purple-200 dark:border-purple-800 bg-white/80 dark:bg-slate-900/70 p-3 text-xs text-purple-950 dark:text-purple-200 space-y-1">
+                              <p><b>Status foto:</b> {ans.imageStatus === 'matched' ? 'Cocok dengan soal' : ans.imageStatus === 'mismatch' ? 'Tidak cocok dengan soal' : ans.imageStatus === 'unreadable' ? 'Tulisan tidak terbaca' : 'Belum dapat dipastikan'}</p>
+                              {ans.imageSummary && <p><b>Yang terbaca:</b> {ans.imageSummary}</p>}
+                              {ans.aiReviewStatus === 'needs_review' && <p>Nilai ditahan. Unggah ulang foto yang benar dan jelas atau minta guru memeriksanya.</p>}
+                            </div>
+                          )}
 
-                          <pre className="font-sans whitespace-pre-line text-xs font-bold text-slate-900 dark:text-slate-100 leading-relaxed bg-white/90 dark:bg-slate-900/90 p-3.5 rounded-xl border border-purple-950/20 dark:border-purple-800/40">
-                            {aiAnswerText}
-                          </pre>
+                          {aiAnswerText ? (
+                            <pre className="font-sans whitespace-pre-line text-xs font-bold text-slate-900 dark:text-slate-100 leading-relaxed bg-white/90 dark:bg-slate-900/90 p-3.5 rounded-xl border border-purple-950/20 dark:border-purple-800/40">
+                              {aiAnswerText}
+                            </pre>
+                          ) : null}
 
                           {ans.aiFeedback && (
                             <div className="text-[11px] font-mono font-bold text-purple-950 dark:text-purple-300 pt-1.5 border-t border-purple-200 dark:border-purple-800 flex items-start gap-1">
@@ -1170,16 +1191,32 @@ export const SiswaLKPD: React.FC<{
                 />
               </div>
             ) : (
-              <label className="flex items-center justify-center gap-2 p-3.5 bg-slate-50 dark:bg-slate-900 border-2 border-dashed border-slate-950 dark:border-slate-700 rounded-2xl cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition text-xs font-mono font-bold text-slate-700 dark:text-slate-300 active:translate-y-0.5">
-                <Upload size={16} />
-                <span>Unggah Foto Lembar Coretan Soal Ini</span>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => handlePhotoUpload(currentQ.id, e)}
-                  className="hidden"
-                />
-              </label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {/* 1. Tombol Kamera Langsung */}
+                <label className="flex items-center justify-center gap-2 p-3.5 bg-[#ffe600]/25 hover:bg-[#ffe600]/40 dark:bg-yellow-950/30 dark:hover:bg-yellow-900/40 border-2 border-slate-950 dark:border-slate-700 rounded-2xl cursor-pointer transition text-xs font-mono font-black text-slate-950 dark:text-slate-100 shadow-[2px_2px_0px_0px_#0f172a] active:translate-y-0.5">
+                  <Camera size={16} />
+                  <span>Ambil Foto Kamera</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    onChange={(e) => handlePhotoUpload(currentQ.id, e)}
+                    className="hidden"
+                  />
+                </label>
+
+                {/* 2. Tombol Galeri / File */}
+                <label className="flex items-center justify-center gap-2 p-3.5 bg-slate-50 dark:bg-slate-900 border-2 border-dashed border-slate-950 dark:border-slate-700 rounded-2xl cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition text-xs font-mono font-bold text-slate-700 dark:text-slate-300 active:translate-y-0.5">
+                  <Upload size={16} />
+                  <span>Pilih dari Galeri / File</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => handlePhotoUpload(currentQ.id, e)}
+                    className="hidden"
+                  />
+                </label>
+              </div>
             )}
           </div>
 
