@@ -99,7 +99,7 @@ export const GuruDashboard: React.FC<{
           </div>
 
           <h1 className="text-2xl sm:text-4xl font-black tracking-tight text-slate-950 font-mono leading-tight">
-            Dasbor Manajemen &amp; Penilaian Guru
+            Dashboard Manajemen &amp; Penilaian Guru
           </h1>
 
           <p className="text-xs sm:text-sm text-slate-950 max-w-2xl leading-relaxed font-bold">

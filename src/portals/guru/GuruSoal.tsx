@@ -663,7 +663,10 @@ export const GuruSoal: React.FC<{
 
               {questions.map((q, idx) => {
                 const textAns = selectedSub.textAnswers?.[q.id] || "(Siswa tidak mengisi jawaban teks)";
-                const photoAns = selectedSub.photoProofs?.[q.id] || (idx === 0 ? selectedSub.photoProof : undefined);
+                const hasPhotoProofsMap = Boolean(selectedSub.photoProofs && typeof selectedSub.photoProofs === 'object');
+                const photoAns = hasPhotoProofsMap
+                  ? selectedSub.photoProofs?.[q.id]
+                  : (idx === 0 ? selectedSub.photoProof : undefined);
                 const aiResult = selectedSub.aiEvaluation?.perQuestion?.[q.id];
 
                 return (
@@ -734,13 +737,17 @@ export const GuruSoal: React.FC<{
                           <Sparkles size={13} className="text-purple-600" />
                           <span>Analisis Diagnosa AI:</span>
                           <span className={`ml-auto px-2 py-0.5 rounded text-[10px] ${
-                            aiResult.imageStatus === 'matched' ? 'bg-emerald-200 text-emerald-950' : 'bg-amber-200 text-amber-950'
+                            photoAns
+                              ? (aiResult.imageStatus === 'matched' ? 'bg-emerald-200 text-emerald-950' : 'bg-amber-200 text-amber-950')
+                              : 'bg-slate-200 text-slate-900 dark:bg-slate-800 dark:text-slate-200'
                           }`}>
-                            {aiResult.imageStatus === 'matched' ? 'Foto Cocok' : 'Perlu Diperiksa'}
+                            {photoAns
+                              ? (aiResult.imageStatus === 'matched' ? 'Foto Cocok' : 'Perlu Diperiksa')
+                              : 'Pengerjaan Teks Saja'}
                           </span>
                         </div>
-                        {aiResult.imageSummary && <p className="text-[11px]"><b>Yang terbaca di foto:</b> {aiResult.imageSummary}</p>}
-                        {aiResult.diagnosa && <p className="text-[11px]"><b>Diagnosa konsep:</b> {aiResult.diagnosa}</p>}
+                        {photoAns && aiResult.imageSummary && <p className="text-[11px]"><b>Yang terbaca di foto:</b> {aiResult.imageSummary}</p>}
+                        {aiResult.diagnosa && <p className="text-[11px]"><b>Diagnosa:</b> {aiResult.diagnosa}</p>}
                       </div>
                     )}
 

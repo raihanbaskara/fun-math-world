@@ -76,3 +76,34 @@ test('API outage marks every answer pending instead of inventing a zero score', 
   assert.equal(result.reviewStatus, 'needs_review');
   assert.equal(result.perQuestion['fraction-1'].reviewStatus, 'needs_review');
 });
+
+test('multi-question exam: photo attached only on Q1 does not contaminate Q2-Q5 with photo diagnosa or imageStatus', () => {
+  const multiQuestions = [
+    { id: 'eq_1', title: 'Soal 1', prompt: 'Prompt 1', discussion: 'Disc 1', weight: 20 },
+    { id: 'eq_2', title: 'Soal 2', prompt: 'Prompt 2', discussion: 'Disc 2', weight: 20 },
+    { id: 'eq_3', title: 'Soal 3', prompt: 'Prompt 3', discussion: 'Disc 3', weight: 20 },
+    { id: 'eq_4', title: 'Soal 4', prompt: 'Prompt 4', discussion: 'Disc 4', weight: 20 },
+    { id: 'eq_5', title: 'Soal 5', prompt: 'Prompt 5', discussion: 'Disc 5', weight: 20 },
+  ];
+  const answers = {
+    eq_1: { textAnswer: 'Jawaban 1', photoUrl: 'data:image/png;base64,abc123==' },
+    eq_2: { textAnswer: 'Jawaban 2' },
+    eq_3: { textAnswer: 'Jawaban 3' },
+    eq_4: { textAnswer: '' },
+    eq_5: { textAnswer: '' },
+  };
+
+  const evalResult = createNeedsReviewEvaluation(multiQuestions, answers, 'Koreksi foto belum tersedia. Minta guru memeriksa jawaban ini.');
+
+  // Q1 has photo -> photo review reason
+  assert.equal(evalResult.perQuestion['eq_1'].imageStatus, 'uncertain');
+  assert.match(evalResult.perQuestion['eq_1'].diagnosa, /Koreksi foto belum tersedia/);
+
+  // Q2-Q5 have NO photo -> imageStatus MUST be 'not_provided' and diagnosa MUST NOT mention 'foto'
+  for (const qId of ['eq_2', 'eq_3', 'eq_4', 'eq_5']) {
+    assert.equal(evalResult.perQuestion[qId].imageStatus, 'not_provided');
+    assert.equal(evalResult.perQuestion[qId].imageSummary, '');
+    assert.doesNotMatch(evalResult.perQuestion[qId].diagnosa.toLowerCase(), /foto/);
+  }
+});
+

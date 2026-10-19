@@ -271,9 +271,16 @@ export const SiswaEvaluasi: React.FC<{
   const handleSubmitExam = async () => {
     soundService.click();
 
-    // Check if at least one question has text or photo
+    // Clean photos map to only include valid photos for registered questions
+    const cleanPhotos: Record<string, string> = {};
+    questions.forEach(q => {
+      if (photos[q.id] && typeof photos[q.id] === 'string' && photos[q.id].trim().length > 50) {
+        cleanPhotos[q.id] = photos[q.id].trim();
+      }
+    });
+    const photoList = Object.values(cleanPhotos).filter(Boolean);
+    const hasAnyPhoto = photoList.length > 0;
     const hasAnyText = Object.values(textAnswers).some(t => t.trim().length > 0);
-    const hasAnyPhoto = Object.values(photos).some(p => Boolean(p && p.length > 50));
 
     if (!hasAnyText && !hasAnyPhoto) {
       soundService.alert();
@@ -284,12 +291,13 @@ export const SiswaEvaluasi: React.FC<{
     const cheatReport: AntiCheatReport = getReport();
     setIsSubmitting(true);
     let photoEvaluation: LKPDOverallEvaluation | undefined;
+
     try {
       if (hasAnyPhoto) {
         showToast('Memeriksa kecocokan foto dengan setiap soal...', 'info');
         const photoAnswers = Object.fromEntries(questions.map(question => [question.id, {
           textAnswer: textAnswers[question.id] || '',
-          photoUrl: photos[question.id] || undefined,
+          photoUrl: cleanPhotos[question.id] || undefined,
         }]));
         photoEvaluation = await evaluateLKPDWithAI(questions, photoAnswers);
       }
@@ -299,11 +307,10 @@ export const SiswaEvaluasi: React.FC<{
     const gradingStatus = hasAnyPhoto && (!photoEvaluation || photoEvaluation.reviewStatus === 'needs_review') ? 'needs_review' : 'graded';
     
     // Calculate final score: if photo graded by AI use AI score; if needs review, compute provisional score from text
-    const textProvisionalScore = calculateEvaluasiScore(questions, textAnswers, photos);
+    const textProvisionalScore = calculateEvaluasiScore(questions, textAnswers, cleanPhotos);
     const finalScore = hasAnyPhoto
       ? (gradingStatus === 'graded' ? (photoEvaluation?.totalScore ?? textProvisionalScore) : textProvisionalScore)
       : textProvisionalScore;
-    const photoList = Object.values(photos).filter(Boolean);
 
     const newSubmission: EvaluationSubmission = {
       id: `eval_${currentUser.id}_${Date.now()}`,
@@ -327,8 +334,8 @@ export const SiswaEvaluasi: React.FC<{
         }])),
       } : undefined,
       textAnswers: textAnswers,
-      photoProof: photoList[0] || "",
-      photoProofs: photos,
+      photoProof: cleanPhotos[questions[0]?.id] || photoList[0] || "",
+      photoProofs: cleanPhotos,
       photoUrls: photoList,
       antiCheat: cheatReport,
       status: "Selesai"
@@ -503,7 +510,11 @@ export const SiswaEvaluasi: React.FC<{
 
                 {/* Student's Answer */}
                 {(() => {
-                  const studentPhoto = previousSubmission.photoProofs?.[q.id] || (idx === 0 ? previousSubmission.photoProof : undefined);
+                  const hasPhotoProofsMap = Boolean(previousSubmission.photoProofs && typeof previousSubmission.photoProofs === 'object');
+                  const studentPhoto = hasPhotoProofsMap
+                    ? previousSubmission.photoProofs?.[q.id]
+                    : (idx === 0 ? previousSubmission.photoProof : undefined);
+
                   return (
                     <div className="p-4 bg-amber-50 dark:bg-amber-950/30 border-2 border-slate-950 dark:border-slate-800 rounded-2xl text-xs font-bold text-slate-900 dark:text-slate-100 space-y-3">
                       <div>
@@ -542,18 +553,56 @@ export const SiswaEvaluasi: React.FC<{
                           (Pengerjaan murni teks digital tanpa lampiran foto lembar kerja fisik)
                         </div>
                       )}
+
+                      {/* AI Evaluation Box */}
+                      {aiQuestionResult && (
+                        studentPhoto ? (
+                          <div role="status" className="rounded-xl border-2 border-purple-300 bg-purple-50 dark:bg-purple-950/40 p-3 text-xs font-bold text-purple-950 dark:text-purple-200 space-y-1.5 mt-2">
+                            <div className="flex items-center gap-1.5 font-black text-[11px]">
+                              <Camera size={13} className="text-purple-600 dark:text-purple-400" />
+                              <span>Status Pemeriksaan Foto Coretan:</span>
+                              <span className={`ml-auto px-2 py-0.5 rounded text-[10px] ${
+                                aiQuestionResult.imageStatus === 'matched'
+                                  ? 'bg-emerald-200 text-emerald-950'
+                                  : 'bg-amber-200 text-amber-950'
+                              }`}>
+                                {aiQuestionResult.imageStatus === 'matched'
+                                  ? 'Foto Cocok dengan Soal'
+                                  : aiQuestionResult.imageStatus === 'mismatch'
+                                  ? 'Foto Tidak Cocok'
+                                  : aiQuestionResult.imageStatus === 'unreadable'
+                                  ? 'Foto Tidak Terbaca'
+                                  : 'Perlu Diperiksa Guru'}
+                              </span>
+                            </div>
+                            {aiQuestionResult.imageSummary && (
+                              <p><span className="font-bold">Terbaca di foto:</span> {aiQuestionResult.imageSummary}</p>
+                            )}
+                            {aiQuestionResult.diagnosa && (
+                              <p><span className="font-bold">Diagnosa AI:</span> {aiQuestionResult.diagnosa}</p>
+                            )}
+                          </div>
+                        ) : (
+                          <div role="status" className="rounded-xl border-2 border-slate-200 dark:border-slate-800 bg-white/70 dark:bg-slate-900/60 p-3 text-xs font-bold text-slate-800 dark:text-slate-200 space-y-1 mt-2">
+                            <div className="flex items-center gap-1.5 font-black text-[11px] text-slate-900 dark:text-slate-100">
+                              <Sparkles size={13} className="text-amber-500" />
+                              <span>Analisis Jawaban Teks AI:</span>
+                              <span className="ml-auto px-2 py-0.5 rounded text-[10px] bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-slate-200 font-mono">
+                                Pengerjaan Teks Digital
+                              </span>
+                            </div>
+                            {aiQuestionResult.diagnosa && (
+                              <p><span className="font-bold">Diagnosa:</span> {aiQuestionResult.diagnosa}</p>
+                            )}
+                            {aiQuestionResult.conceptFeedback && (
+                              <p className="text-[11px] text-slate-600 dark:text-slate-400"><span className="font-bold">Saran:</span> {aiQuestionResult.conceptFeedback}</p>
+                            )}
+                          </div>
+                        )
+                      )}
                     </div>
                   );
                 })()}
-
-                {/* Step Discussion */}
-                {aiQuestionResult && (
-                  <div role="status" className="rounded-xl border-2 border-purple-300 bg-purple-50 p-3 text-xs font-bold text-purple-950 space-y-1">
-                    <p><b>Status pemeriksaan foto:</b> {aiQuestionResult.imageStatus === 'matched' ? 'Cocok dengan soal' : aiQuestionResult.imageStatus === 'mismatch' ? 'Tidak cocok dengan soal' : aiQuestionResult.imageStatus === 'unreadable' ? 'Tidak terbaca' : aiQuestionResult.reviewStatus === 'needs_review' ? 'Perlu diperiksa guru' : 'Tidak ada foto'}</p>
-                    {aiQuestionResult.imageSummary && <p><b>Yang terbaca:</b> {aiQuestionResult.imageSummary}</p>}
-                    {aiQuestionResult.diagnosa && <p>{aiQuestionResult.diagnosa}</p>}
-                  </div>
-                )}
 
                 {/* Step Discussion */}
                 <div className="p-4 bg-[#a5f3fc]/40 dark:bg-cyan-950/40 border-3 border-cyan-950 dark:border-cyan-800 rounded-2xl shadow-[3px_3px_0px_0px_#083344] dark:shadow-[3px_3px_0px_0px_#000000] space-y-2">
@@ -630,7 +679,9 @@ export const SiswaEvaluasi: React.FC<{
       {/* Question Stepper Tabs */}
       <div className="flex flex-wrap gap-2">
         {questions.map((q, idx) => {
-          const isFilled = (textAnswers[q.id] || '').trim().length > 0;
+          const hasText = (textAnswers[q.id] || '').trim().length > 0;
+          const hasPhoto = Boolean(photos[q.id] && photos[q.id].length > 50);
+          const isFilled = hasText || hasPhoto;
           const isCurrent = activeQuestionIdx === idx;
 
           return (
@@ -649,7 +700,16 @@ export const SiswaEvaluasi: React.FC<{
               }`}
             >
               <span>Soal #{idx + 1}</span>
-              {isFilled && <CheckCircle2 size={14} className="text-emerald-700 dark:text-emerald-400" />}
+              {hasPhoto && (
+                <span title="Foto coretan fisik terlampir" className="inline-flex items-center">
+                  <Camera size={13} className="text-purple-700 dark:text-purple-300" />
+                </span>
+              )}
+              {hasText && (
+                <span title="Jawaban uraian terisi" className="inline-flex items-center">
+                  <CheckCircle2 size={14} className="text-emerald-700 dark:text-emerald-400" />
+                </span>
+              )}
             </button>
           );
         })}
@@ -724,12 +784,15 @@ export const SiswaEvaluasi: React.FC<{
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {/* 1. Tombol Kamera Langsung */}
                 <label
+                  htmlFor={`camera_input_${currentQ.id}`}
                   onClick={() => pauseAntiCheat(90000)}
                   className="flex items-center justify-center gap-2 p-3.5 bg-[#ffe600]/25 hover:bg-[#ffe600]/40 dark:bg-yellow-950/30 dark:hover:bg-yellow-900/40 border-2 border-slate-950 dark:border-slate-700 rounded-2xl cursor-pointer transition text-xs font-mono font-black text-slate-950 dark:text-slate-100 shadow-[2px_2px_0px_0px_#0f172a] active:translate-y-0.5"
                 >
                   <Camera size={16} />
                   <span>Ambil Foto Kamera</span>
                   <input
+                    key={`camera_${currentQ.id}`}
+                    id={`camera_input_${currentQ.id}`}
                     type="file"
                     accept="image/*"
                     capture="environment"
@@ -740,12 +803,15 @@ export const SiswaEvaluasi: React.FC<{
 
                 {/* 2. Tombol Galeri / File */}
                 <label
+                  htmlFor={`gallery_input_${currentQ.id}`}
                   onClick={() => pauseAntiCheat(90000)}
                   className="flex items-center justify-center gap-2 p-3.5 bg-slate-50 dark:bg-slate-900 border-2 border-dashed border-slate-950 dark:border-slate-700 rounded-2xl cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition text-xs font-mono font-bold text-slate-700 dark:text-slate-300 active:translate-y-0.5"
                 >
                   <Upload size={16} />
                   <span>Pilih dari Galeri / File</span>
                   <input
+                    key={`gallery_${currentQ.id}`}
+                    id={`gallery_input_${currentQ.id}`}
                     type="file"
                     accept="image/*"
                     onChange={(e) => handlePhotoSelect(currentQ.id, e)}
