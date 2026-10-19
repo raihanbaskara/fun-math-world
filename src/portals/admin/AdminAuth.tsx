@@ -39,10 +39,14 @@ export const AdminAuth: React.FC<AdminAuthProps> = ({
         return;
       }
 
-      const newSessionToken = "sess_admin_" + Math.random().toString(36).substring(2) + "_" + Date.now();
+      const now = Date.now();
+      const newSessionToken = "sess_admin_" + Math.random().toString(36).substring(2) + "_" + now;
+      const deviceId = "dev_" + (navigator.userAgent.replace(/\D/g, "").slice(0, 8) || "web");
       const updatedUser: User = {
         ...user,
         sessionToken: newSessionToken,
+        deviceId: deviceId,
+        sessionUpdatedAt: now,
       };
 
       // 1. Immediately register session
@@ -58,11 +62,16 @@ export const AdminAuth: React.FC<AdminAuthProps> = ({
           const target = draft.users.find(u => u.id === user.id);
           if (target) {
             target.sessionToken = newSessionToken;
+            target.deviceId = deviceId;
+            target.sessionUpdatedAt = now;
           }
         });
       } catch (updErr) {
         console.warn("Admin storage update warning:", updErr);
       }
+
+      // 3. Realtime instant broadcast to kick any other active sessions
+      storageService.broadcastLogin(user.id, newSessionToken, deviceId, now);
 
       soundService.success();
       showToast(`Selamat datang, Administrator ${updatedUser.name}!`, 'success');

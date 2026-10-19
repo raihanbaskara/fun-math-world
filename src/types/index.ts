@@ -19,6 +19,7 @@ export interface User {
   avatar: string;
   sessionToken?: string | null;
   deviceId?: string | null;
+  sessionUpdatedAt?: number;
   progress?: UserProgress;
   readAnnouncements?: string[];
 }

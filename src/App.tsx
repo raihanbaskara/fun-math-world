@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { storageService } from '@/services/storageService';
+import { storageService, getSessionTimestamp } from '@/services/storageService';
 import { soundService } from '@/services/soundService';
 import { User, DatabaseState } from '@/types';
 import { Navbar } from '@/components/layout/Navbar';
@@ -159,42 +159,111 @@ export function App() {
     return () => window.removeEventListener('hashchange', handleHash);
   }, [navigateTo, currentRoute]);
 
-  // 1 Akun 1 Device Liveness Watcher
+  // 1 Akun 1 Device Liveness Watcher (Triple Redundancy: Realtime Broadcast + Cloud Poll + Local State)
   useEffect(() => {
-    const interval = setInterval(() => {
+    let isChecking = false;
+
+    const checkTokenKick = (dbUser?: User, localToken?: string | null): boolean => {
+      if (!dbUser || !dbUser.sessionToken || !localToken) return false;
+      if (dbUser.sessionToken === localToken) return false;
+
+      const localTs = getSessionTimestamp(localToken);
+      const cloudTs = getSessionTimestamp(dbUser.sessionToken);
+
+      // If cloud/DB has a NEWER token than our local session, kick immediately!
+      return cloudTs > localTs;
+    };
+
+    const triggerKick = (role?: string) => {
+      storageService.clearCurrentSession();
+      setCurrentUser(null);
+      currentUserRef.current = null;
+      setModalType('sessionKicked');
+      soundService.alert();
+      const targetRole = (role === 'guru' ? 'guru' : role === 'admin' ? 'admin' : 'siswa') as 'siswa' | 'guru' | 'admin';
+      navigateTo(targetRole, true, null);
+    };
+
+    const checkSessionLiveness = async () => {
+      if (isChecking) return;
+      isChecking = true;
+
+      try {
+        let stored: string | null = null;
+        try {
+          stored = sessionStorage.getItem("FMW_CURRENT_USER") || localStorage.getItem("FMW_CURRENT_USER");
+        } catch {}
+
+        if (!stored) {
+          isChecking = false;
+          return;
+        }
+
+        const parsed = JSON.parse(stored);
+        if (!parsed || !parsed.id || !parsed.sessionToken) {
+          isChecking = false;
+          return;
+        }
+
+        // 1. Check local state (updated instantaneously by Realtime broadcast or sync)
+        const currentInDb = storageService.getState().users.find(u => u.id === parsed.id);
+        if (checkTokenKick(currentInDb, parsed.sessionToken)) {
+          triggerKick(parsed.role);
+          isChecking = false;
+          return;
+        }
+
+        // 2. Active Cloud Poll (fetches 14KB users in ~200ms)
+        const remoteUsers = await storageService.pullRemoteUsers();
+        const latestInDb = remoteUsers.find(u => u.id === parsed.id);
+        if (checkTokenKick(latestInDb, parsed.sessionToken)) {
+          triggerKick(parsed.role);
+          isChecking = false;
+          return;
+        }
+      } catch (err) {
+        console.warn('[Liveness] Session check error:', err);
+      } finally {
+        isChecking = false;
+      }
+    };
+
+    // Fast reactive listener to storage state changes
+    const unsubscribe = storageService.subscribe((state) => {
       let stored: string | null = null;
       try {
         stored = sessionStorage.getItem("FMW_CURRENT_USER") || localStorage.getItem("FMW_CURRENT_USER");
       } catch {}
-      if (stored) {
-        try {
-          const parsed = JSON.parse(stored);
-          // Only enforce on student role if both deviceId and sessionToken are active
-          if (parsed && parsed.role === 'siswa') {
-            const currentInDb = storageService.getState().users.find(u => u.id === parsed.id);
-            if (
-              currentInDb &&
-              currentInDb.deviceId &&
-              currentInDb.sessionToken &&
-              parsed.sessionToken &&
-              currentInDb.sessionToken !== parsed.sessionToken
-            ) {
-              // Guard against kicking right after login while cloud state syncs (increase buffer to 15s)
-              const sessionAge = Date.now() - (parseInt(parsed.sessionToken.split('_').pop() || '0') || 0);
-              if (sessionAge > 15000) {
-                storageService.clearCurrentSession();
-                setCurrentUser(null);
-                currentUserRef.current = null;
-                setModalType('sessionKicked');
-                soundService.alert();
-                navigateTo('siswa', true, null);
-              }
-            }
+      if (!stored) return;
+      try {
+        const parsed = JSON.parse(stored);
+        if (parsed?.id && parsed?.sessionToken) {
+          const dbUser = state.users.find(u => u.id === parsed.id);
+          if (checkTokenKick(dbUser, parsed.sessionToken)) {
+            triggerKick(parsed.role);
           }
-        } catch {}
+        }
+      } catch {}
+    });
+
+    // Run check every 3500ms
+    const interval = setInterval(checkSessionLiveness, 3500);
+
+    // Also run immediately on focus or when tab visibility changes
+    const onFocusOrVisible = () => {
+      if (document.visibilityState === 'visible') {
+        checkSessionLiveness();
       }
-    }, 4000);
-    return () => clearInterval(interval);
+    };
+    window.addEventListener('visibilitychange', onFocusOrVisible);
+    window.addEventListener('focus', onFocusOrVisible);
+
+    return () => {
+      unsubscribe();
+      clearInterval(interval);
+      window.removeEventListener('visibilitychange', onFocusOrVisible);
+      window.removeEventListener('focus', onFocusOrVisible);
+    };
   }, [navigateTo]);
 
   const showToast = (msg: string, type: 'info' | 'success' | 'error' = 'info') => {
@@ -211,6 +280,7 @@ export function App() {
         const user = draft.users.find(u => u.id === currentUser.id);
         if (user) {
           user.sessionToken = null;
+          user.sessionUpdatedAt = Date.now();
         }
       });
     }

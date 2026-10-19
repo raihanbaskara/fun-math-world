@@ -545,7 +545,21 @@ export const defaultDatabaseState: DatabaseState = {
 
 type Listener = (state: DatabaseState) => void;
 
-function mergeUsersList(primary: User[], secondary: User[]): User[] {
+export function getSessionTimestamp(token?: string | null): number {
+  if (!token) return 0;
+  const parts = token.split('_');
+  const ts = parseInt(parts[parts.length - 1], 10);
+  return isNaN(ts) ? 0 : ts;
+}
+
+export function getSessionTime(u: User): number {
+  if (u.sessionUpdatedAt && typeof u.sessionUpdatedAt === 'number') {
+    return u.sessionUpdatedAt;
+  }
+  return getSessionTimestamp(u.sessionToken);
+}
+
+export function mergeUsersList(primary: User[], secondary: User[]): User[] {
   const map = new Map<string, User>();
   // 1. Put default users
   defaultDatabaseState.users.forEach(u => map.set(u.id, u));
@@ -555,16 +569,32 @@ function mergeUsersList(primary: User[], secondary: User[]): User[] {
       map.set(u.id, u);
     }
   });
-  // 3. Put/overwrite with primary users
+  // 3. Put/overwrite with primary users while respecting session timestamps
   (primary || []).forEach(u => {
     if (u && u.id) {
       const exist = map.get(u.id);
-      map.set(u.id, exist ? {
-        ...exist,
-        ...u,
-        sessionToken: u.sessionToken || exist.sessionToken || null,
-        deviceId: u.deviceId || exist.deviceId || null
-      } : u);
+      if (!exist) {
+        map.set(u.id, u);
+      } else {
+        const existTs = getSessionTime(exist);
+        const primaryTs = getSessionTime(u);
+        const useSecondarySession = existTs > primaryTs;
+
+        map.set(u.id, {
+          ...exist,
+          ...u,
+          sessionToken: useSecondarySession ? exist.sessionToken : (u.sessionToken !== undefined ? u.sessionToken : exist.sessionToken),
+          deviceId: useSecondarySession ? exist.deviceId : (u.deviceId !== undefined ? u.deviceId : exist.deviceId),
+          sessionUpdatedAt: useSecondarySession ? exist.sessionUpdatedAt : (u.sessionUpdatedAt !== undefined ? u.sessionUpdatedAt : exist.sessionUpdatedAt),
+          progress: {
+            materi: Math.max(exist.progress?.materi || 0, u.progress?.materi || 0),
+            video: Math.max(exist.progress?.video || 0, u.progress?.video || 0),
+            lkpd: Math.max(exist.progress?.lkpd || 0, u.progress?.lkpd || 0),
+            latsol: Math.max(exist.progress?.latsol || 0, u.progress?.latsol || 0),
+            evaluasi: Math.max(exist.progress?.evaluasi || 0, u.progress?.evaluasi || 0),
+          }
+        });
+      }
     }
   });
   return Array.from(map.values());
@@ -757,32 +787,8 @@ class StorageService {
       this.cloudStatus = 'connected';
 
       if (data && data.data) {
-        const remoteHasValidNewQuestions =
-          (data.data.evaluationQuestions?.length === 5) &&
-          (data.data.latsolRooms?.[0]?.questions?.length === 10);
-        const remoteHasValidLKPD = Boolean(data.data.lkpdList?.[0]?.questions?.some((q: { id: string }) => q.id === 'lkpd_c3'));
-
-        const mergedUsers = mergeUsersList(this.state.users || [], data.data.users || []);
-        const mergedLkpdSub = mergeSubmissionsList(data.data.lkpdSubmissions || [], this.state.lkpdSubmissions || []);
-        const mergedLatsolSub = mergeArrayById(data.data.latsolSubmissions || [], this.state.latsolSubmissions || []);
-        const mergedEvalSub = mergeArrayById(data.data.evaluationSubmissions || [], this.state.evaluationSubmissions || []);
-
-        this.state = sanitizeBannedSubtitles(this.sanitizeStudentProgress({
-          ...defaultDatabaseState,
-          ...data.data,
-          users: mergedUsers,
-          lkpdSubmissions: mergedLkpdSub,
-          latsolSubmissions: mergedLatsolSub,
-          evaluationSubmissions: mergedEvalSub,
-          latsolRooms: remoteHasValidNewQuestions ? data.data.latsolRooms : defaultDatabaseState.latsolRooms,
-          evaluationQuestions: remoteHasValidNewQuestions ? data.data.evaluationQuestions : defaultDatabaseState.evaluationQuestions,
-          lkpdList: remoteHasValidLKPD ? data.data.lkpdList : defaultDatabaseState.lkpdList,
-          schedules: defaultDatabaseState.schedules,
-          reflections: data.data.reflections || defaultDatabaseState.reflections,
-        }));
-        this.safeSaveToLocalStorage(this.state);
+        this.applyRemoteState(data.data as DatabaseState);
         this.isInitialSyncDone = true;
-        this.notify();
       } else {
         // Row doesn't exist yet, insert current local state to cloud
         const res = await client.from('app_state').upsert({ id: 'main', data: this.state, updated_at: new Date().toISOString() });
@@ -799,41 +805,39 @@ class StorageService {
         } catch {}
       }
 
-      // 2. Real-time subscription for live sync between Teacher & Student devices!
-      const channelName = 'app_state_' + Math.random().toString(36).substring(2, 8);
+      // 2. Real-time subscription with global channel for Broadcast + Postgres Changes
+      const channelName = 'fmw_global_realtime';
       this.realtimeChannel = client
-        .channel(channelName)
+        .channel(channelName, { config: { broadcast: { self: false } } })
+        .on(
+          'broadcast',
+          { event: 'new_login' },
+          (eventPayload: any) => {
+            const payload = eventPayload?.payload;
+            if (!payload || !payload.userId || !payload.sessionToken) return;
+            const target = this.state.users.find(u => u.id === payload.userId);
+            if (target) {
+              const currentTs = getSessionTime(target);
+              if ((payload.timestamp || 0) > currentTs) {
+                target.sessionToken = payload.sessionToken;
+                target.deviceId = payload.deviceId || null;
+                target.sessionUpdatedAt = payload.timestamp;
+                this.safeSaveToLocalStorage(this.state);
+                this.notify();
+              }
+            }
+          }
+        )
         .on(
           'postgres_changes',
           { event: '*', schema: 'public', table: 'app_state', filter: 'id=eq.main' },
-          (payload) => {
+          async (payload) => {
             if (payload.new && (payload.new as { data?: DatabaseState }).data) {
-              const remoteState = (payload.new as { data: DatabaseState }).data;
-              const remoteHasValidNewQuestions =
-                (remoteState.evaluationQuestions?.length === 5) &&
-                (remoteState.latsolRooms?.[0]?.questions?.length === 10);
-              const remoteHasValidLKPD = Boolean(remoteState.lkpdList?.[0]?.questions?.some((q: { id: string }) => q.id === 'lkpd_c3'));
-
-              const mergedUsers = mergeUsersList(this.state.users || [], remoteState.users || []);
-              const mergedLkpdSub = mergeSubmissionsList(remoteState.lkpdSubmissions || [], this.state.lkpdSubmissions || []);
-              const mergedLatsolSub = mergeArrayById(remoteState.latsolSubmissions || [], this.state.latsolSubmissions || []);
-              const mergedEvalSub = mergeArrayById(remoteState.evaluationSubmissions || [], this.state.evaluationSubmissions || []);
-
-              this.state = sanitizeBannedSubtitles(this.sanitizeStudentProgress({
-                ...defaultDatabaseState,
-                ...remoteState,
-                users: mergedUsers,
-                lkpdSubmissions: mergedLkpdSub,
-                latsolSubmissions: mergedLatsolSub,
-                evaluationSubmissions: mergedEvalSub,
-                latsolRooms: remoteHasValidNewQuestions ? remoteState.latsolRooms : defaultDatabaseState.latsolRooms,
-                evaluationQuestions: remoteHasValidNewQuestions ? remoteState.evaluationQuestions : defaultDatabaseState.evaluationQuestions,
-                lkpdList: remoteHasValidLKPD ? remoteState.lkpdList : defaultDatabaseState.lkpdList,
-                schedules: defaultDatabaseState.schedules,
-                reflections: remoteState.reflections || defaultDatabaseState.reflections,
-              }));
-              this.safeSaveToLocalStorage(this.state);
-              this.notify();
+              this.applyRemoteState((payload.new as { data: DatabaseState }).data);
+            } else {
+              // Rapid sync users (14KB) so session changes kick older devices without waiting
+              await this.pullRemoteUsers();
+              this.scheduleFullRemoteSync();
             }
           }
         )
@@ -842,6 +846,102 @@ class StorageService {
       console.warn('Supabase sync initialization warning:', err);
       this.cloudStatus = 'offline';
       this.notify();
+    }
+  }
+
+  public applyRemoteState(remoteState: DatabaseState): void {
+    if (!remoteState) return;
+    const remoteHasValidNewQuestions =
+      (remoteState.evaluationQuestions?.length === 5) &&
+      (remoteState.latsolRooms?.[0]?.questions?.length === 10);
+    const remoteHasValidLKPD = Boolean(remoteState.lkpdList?.[0]?.questions?.some((q: { id: string }) => q.id === 'lkpd_c3'));
+
+    const mergedUsers = mergeUsersList(this.state.users || [], remoteState.users || []);
+    const mergedLkpdSub = mergeSubmissionsList(remoteState.lkpdSubmissions || [], this.state.lkpdSubmissions || []);
+    const mergedLatsolSub = mergeArrayById(remoteState.latsolSubmissions || [], this.state.latsolSubmissions || []);
+    const mergedEvalSub = mergeArrayById(remoteState.evaluationSubmissions || [], this.state.evaluationSubmissions || []);
+
+    this.state = sanitizeBannedSubtitles(this.sanitizeStudentProgress({
+      ...defaultDatabaseState,
+      ...remoteState,
+      users: mergedUsers,
+      lkpdSubmissions: mergedLkpdSub,
+      latsolSubmissions: mergedLatsolSub,
+      evaluationSubmissions: mergedEvalSub,
+      latsolRooms: remoteHasValidNewQuestions ? remoteState.latsolRooms : defaultDatabaseState.latsolRooms,
+      evaluationQuestions: remoteHasValidNewQuestions ? remoteState.evaluationQuestions : defaultDatabaseState.evaluationQuestions,
+      lkpdList: remoteHasValidLKPD ? remoteState.lkpdList : defaultDatabaseState.lkpdList,
+      schedules: defaultDatabaseState.schedules,
+      reflections: remoteState.reflections || defaultDatabaseState.reflections,
+    }));
+    this.safeSaveToLocalStorage(this.state);
+    this.notify();
+  }
+
+  private fullSyncTimeout: number | null = null;
+
+  public scheduleFullRemoteSync(): void {
+    if (this.fullSyncTimeout) window.clearTimeout(this.fullSyncTimeout);
+    this.fullSyncTimeout = window.setTimeout(async () => {
+      const client = getSupabase();
+      if (!checkIsSupabaseConfigured() || !client) return;
+      try {
+        const { data: cloudRow, error: fetchErr } = await client
+          .from('app_state')
+          .select('data')
+          .eq('id', 'main')
+          .maybeSingle();
+        if (!fetchErr && cloudRow?.data) {
+          this.applyRemoteState(cloudRow.data as DatabaseState);
+        }
+      } catch (err) {
+        console.warn('[StorageService] Full remote sync warning:', err);
+      }
+    }, 1200);
+  }
+
+  public async pullRemoteUsers(): Promise<User[]> {
+    const client = getSupabase();
+    if (!checkIsSupabaseConfigured() || !client) return this.state.users;
+
+    try {
+      const { data, error } = await client
+        .from('app_state')
+        .select('data->users')
+        .eq('id', 'main')
+        .maybeSingle();
+
+      if (!error && data && Array.isArray((data as any).users)) {
+        const remoteUsers = (data as any).users as User[];
+        const mergedUsers = mergeUsersList(this.state.users || [], remoteUsers);
+        this.state.users = mergedUsers;
+        this.safeSaveToLocalStorage(this.state);
+        this.notify();
+        return mergedUsers;
+      }
+    } catch (err) {
+      console.warn('[StorageService] pullRemoteUsers warning:', err);
+    }
+    return this.state.users;
+  }
+
+  public broadcastLogin(userId: string, sessionToken: string, deviceId?: string, timestamp?: number): void {
+    const client = getSupabase();
+    if (this.realtimeChannel && client) {
+      try {
+        this.realtimeChannel.send({
+          type: 'broadcast',
+          event: 'new_login',
+          payload: {
+            userId,
+            sessionToken,
+            deviceId: deviceId || null,
+            timestamp: timestamp || getSessionTimestamp(sessionToken) || Date.now()
+          }
+        });
+      } catch (e) {
+        console.warn('[StorageService] broadcastLogin warning:', e);
+      }
     }
   }
 

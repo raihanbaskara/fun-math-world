@@ -52,13 +52,15 @@ export default function SiswaAuthSwitch({
         return;
       }
 
-      const newSessionToken = "sess_" + Math.random().toString(36).substring(2) + "_" + Date.now();
+      const now = Date.now();
+      const newSessionToken = "sess_" + Math.random().toString(36).substring(2) + "_" + now;
       const deviceId = "dev_" + (navigator.userAgent.replace(/\D/g, "").slice(0, 8) || "web");
 
       const updatedUser: User = {
         ...user,
         sessionToken: newSessionToken,
         deviceId: deviceId,
+        sessionUpdatedAt: now,
       };
 
       // 1. Immediately store in session storage to ensure active session is recognized
@@ -75,11 +77,15 @@ export default function SiswaAuthSwitch({
           if (target) {
             target.sessionToken = newSessionToken;
             target.deviceId = deviceId;
+            target.sessionUpdatedAt = now;
           }
         });
       } catch (updateErr) {
         console.warn("Storage update warning:", updateErr);
       }
+
+      // 3. Realtime instant broadcast to kick any older active sessions across browsers
+      storageService.broadcastLogin(user.id, newSessionToken, deviceId, now);
 
       soundService.success();
       showToast(`Selamat datang, ${updatedUser.name}! Semangat belajar!`, "success");
@@ -109,8 +115,9 @@ export default function SiswaAuthSwitch({
         return;
       }
 
-      const newId = "siswa_" + Date.now();
-      const newSessionToken = "sess_" + Math.random().toString(36).substring(2) + "_" + Date.now();
+      const now = Date.now();
+      const newId = "siswa_" + now;
+      const newSessionToken = "sess_" + Math.random().toString(36).substring(2) + "_" + now;
       const deviceId = "dev_" + (navigator.userAgent.replace(/\D/g, "").slice(0, 8) || "web");
 
       const newUser: User = {
@@ -123,6 +130,7 @@ export default function SiswaAuthSwitch({
         avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=" + encodeURIComponent(regName.trim()),
         sessionToken: newSessionToken,
         deviceId: deviceId,
+        sessionUpdatedAt: now,
         progress: { materi: 0, video: 0, lkpd: 0, latsol: 0, evaluasi: 0 },
       };
 
@@ -139,6 +147,8 @@ export default function SiswaAuthSwitch({
       } catch (sessErr) {
         console.warn("Session storage warning on register:", sessErr);
       }
+
+      storageService.broadcastLogin(newUser.id, newSessionToken, deviceId, now);
 
       soundService.success();
       showToast(`Pendaftaran berhasil! Selamat datang, ${newUser.name}!`, "success");
