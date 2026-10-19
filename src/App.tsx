@@ -246,6 +246,54 @@ export function App() {
       } catch {}
     });
 
+    // Native HTML5 BroadcastChannel for instantaneous (0ms) kick between tabs in the same browser profile
+    let localBc: BroadcastChannel | null = null;
+    try {
+      if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+        localBc = new BroadcastChannel('fmw_session_sync');
+        localBc.onmessage = (event) => {
+          const data = event.data;
+          if (!data || !data.userId || !data.sessionToken) return;
+          let stored: string | null = null;
+          try {
+            stored = sessionStorage.getItem("FMW_CURRENT_USER") || localStorage.getItem("FMW_CURRENT_USER");
+          } catch {}
+          if (!stored) return;
+          try {
+            const parsed = JSON.parse(stored);
+            if (parsed?.id === data.userId && parsed?.sessionToken !== data.sessionToken) {
+              const localTs = getSessionTimestamp(parsed.sessionToken);
+              const incomingTs = data.timestamp || getSessionTimestamp(data.sessionToken);
+              if (incomingTs > localTs) {
+                triggerKick(parsed.role);
+              }
+            }
+          } catch {}
+        };
+      }
+    } catch {}
+
+    // Storage event listener: fires immediately on all other tabs in the same browser when localStorage updates
+    const handleStorageEvent = (e: StorageEvent) => {
+      if (e.key === 'FMW_CURRENT_USER' && e.newValue) {
+        try {
+          const incoming = JSON.parse(e.newValue);
+          let currentStored = sessionStorage.getItem("FMW_CURRENT_USER");
+          if (currentStored) {
+            const myParsed = JSON.parse(currentStored);
+            if (myParsed.id === incoming.id && myParsed.sessionToken !== incoming.sessionToken) {
+              const localTs = getSessionTimestamp(myParsed.sessionToken);
+              const incomingTs = getSessionTimestamp(incoming.sessionToken);
+              if (incomingTs > localTs) {
+                triggerKick(myParsed.role);
+              }
+            }
+          }
+        } catch {}
+      }
+    };
+    window.addEventListener('storage', handleStorageEvent);
+
     // Run check every 3500ms
     const interval = setInterval(checkSessionLiveness, 3500);
 
@@ -263,6 +311,12 @@ export function App() {
       clearInterval(interval);
       window.removeEventListener('visibilitychange', onFocusOrVisible);
       window.removeEventListener('focus', onFocusOrVisible);
+      window.removeEventListener('storage', handleStorageEvent);
+      if (localBc) {
+        try {
+          localBc.close();
+        } catch {}
+      }
     };
   }, [navigateTo]);
 

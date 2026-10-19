@@ -86,6 +86,7 @@ export default function SiswaAuthSwitch({
 
       // 3. Realtime instant broadcast to kick any older active sessions across browsers
       storageService.broadcastLogin(user.id, newSessionToken, deviceId, now);
+      storageService.pushUserSessionDirect(user.id, newSessionToken, deviceId, now);
 
       soundService.success();
       showToast(`Selamat datang, ${updatedUser.name}! Semangat belajar!`, "success");
@@ -149,6 +150,7 @@ export default function SiswaAuthSwitch({
       }
 
       storageService.broadcastLogin(newUser.id, newSessionToken, deviceId, now);
+      storageService.pushUserSessionDirect(newUser.id, newSessionToken, deviceId, now);
 
       soundService.success();
       showToast(`Pendaftaran berhasil! Selamat datang, ${newUser.name}!`, "success");

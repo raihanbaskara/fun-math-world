@@ -72,6 +72,7 @@ export const AdminAuth: React.FC<AdminAuthProps> = ({
 
       // 3. Realtime instant broadcast to kick any other active sessions
       storageService.broadcastLogin(user.id, newSessionToken, deviceId, now);
+      storageService.pushUserSessionDirect(user.id, newSessionToken, deviceId, now);
 
       soundService.success();
       showToast(`Selamat datang, Administrator ${updatedUser.name}!`, 'success');

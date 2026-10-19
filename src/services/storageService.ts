@@ -685,9 +685,13 @@ class StorageService {
   private memorySessionUser: User | null = null;
   private cloudStatus: 'connected' | 'offline' | 'checking' = 'checking';
   private realtimeChannel: any = null;
+  private realtimeStatus: string = 'CONNECTING';
+  private pendingBroadcast: { userId: string; sessionToken: string; deviceId?: string; timestamp: number } | null = null;
+  private localBroadcastChannel: BroadcastChannel | null = null;
 
   constructor() {
     this.state = this.load();
+    this.initRealtimeChannel();
     this.initSupabaseSync();
   }
 
@@ -760,6 +764,81 @@ class StorageService {
     this.listeners.forEach(l => l(this.state));
   }
 
+  public initRealtimeChannel(): void {
+    const client = getSupabase();
+    if (!checkIsSupabaseConfigured() || !client) return;
+    if (this.realtimeChannel) return;
+
+    try {
+      // 1. Native HTML5 BroadcastChannel for instantaneous same-browser / multi-tab kicking (0ms)
+      if (typeof window !== 'undefined' && 'BroadcastChannel' in window && !this.localBroadcastChannel) {
+        this.localBroadcastChannel = new BroadcastChannel('fmw_session_sync');
+        this.localBroadcastChannel.onmessage = (event) => {
+          const data = event.data;
+          if (!data || !data.userId || !data.sessionToken) return;
+          const target = this.state.users.find(u => u.id === data.userId);
+          if (target) {
+            const currentTs = getSessionTime(target);
+            if ((data.timestamp || 0) > currentTs) {
+              target.sessionToken = data.sessionToken;
+              target.deviceId = data.deviceId || null;
+              target.sessionUpdatedAt = data.timestamp;
+              this.safeSaveToLocalStorage(this.state);
+              this.notify();
+            }
+          }
+        };
+      }
+
+      // 2. Supabase Realtime channel for cross-device / cross-browser kicking (<50ms)
+      const channelName = 'fmw_global_realtime';
+      this.realtimeChannel = client
+        .channel(channelName, { config: { broadcast: { self: false } } })
+        .on(
+          'broadcast',
+          { event: 'new_login' },
+          (eventPayload: any) => {
+            const payload = eventPayload?.payload;
+            if (!payload || !payload.userId || !payload.sessionToken) return;
+            const target = this.state.users.find(u => u.id === payload.userId);
+            if (target) {
+              const currentTs = getSessionTime(target);
+              if ((payload.timestamp || 0) > currentTs) {
+                target.sessionToken = payload.sessionToken;
+                target.deviceId = payload.deviceId || null;
+                target.sessionUpdatedAt = payload.timestamp;
+                this.safeSaveToLocalStorage(this.state);
+                this.notify();
+              }
+            }
+          }
+        )
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'app_state', filter: 'id=eq.main' },
+          async (payload) => {
+            if (payload.new && (payload.new as { data?: DatabaseState }).data) {
+              this.applyRemoteState((payload.new as { data: DatabaseState }).data);
+            } else {
+              // Rapid sync users (14KB) so session changes kick older devices without waiting
+              await this.pullRemoteUsers();
+              this.scheduleFullRemoteSync();
+            }
+          }
+        )
+        .subscribe((status) => {
+          this.realtimeStatus = status;
+          if (status === 'SUBSCRIBED' && this.pendingBroadcast) {
+            const pb = this.pendingBroadcast;
+            this.pendingBroadcast = null;
+            this.broadcastLogin(pb.userId, pb.sessionToken, pb.deviceId, pb.timestamp);
+          }
+        });
+    } catch (err) {
+      console.warn('[StorageService] Realtime channel init warning:', err);
+    }
+  }
+
   private async initSupabaseSync() {
     const client = getSupabase();
     if (!checkIsSupabaseConfigured() || !client) {
@@ -797,51 +876,6 @@ class StorageService {
         }
         this.isInitialSyncDone = true;
       }
-
-      // Unsubscribe old channel if present
-      if (this.realtimeChannel) {
-        try {
-          client.removeChannel(this.realtimeChannel);
-        } catch {}
-      }
-
-      // 2. Real-time subscription with global channel for Broadcast + Postgres Changes
-      const channelName = 'fmw_global_realtime';
-      this.realtimeChannel = client
-        .channel(channelName, { config: { broadcast: { self: false } } })
-        .on(
-          'broadcast',
-          { event: 'new_login' },
-          (eventPayload: any) => {
-            const payload = eventPayload?.payload;
-            if (!payload || !payload.userId || !payload.sessionToken) return;
-            const target = this.state.users.find(u => u.id === payload.userId);
-            if (target) {
-              const currentTs = getSessionTime(target);
-              if ((payload.timestamp || 0) > currentTs) {
-                target.sessionToken = payload.sessionToken;
-                target.deviceId = payload.deviceId || null;
-                target.sessionUpdatedAt = payload.timestamp;
-                this.safeSaveToLocalStorage(this.state);
-                this.notify();
-              }
-            }
-          }
-        )
-        .on(
-          'postgres_changes',
-          { event: '*', schema: 'public', table: 'app_state', filter: 'id=eq.main' },
-          async (payload) => {
-            if (payload.new && (payload.new as { data?: DatabaseState }).data) {
-              this.applyRemoteState((payload.new as { data: DatabaseState }).data);
-            } else {
-              // Rapid sync users (14KB) so session changes kick older devices without waiting
-              await this.pullRemoteUsers();
-              this.scheduleFullRemoteSync();
-            }
-          }
-        )
-        .subscribe();
     } catch (err) {
       console.warn('Supabase sync initialization warning:', err);
       this.cloudStatus = 'offline';
@@ -926,22 +960,96 @@ class StorageService {
   }
 
   public broadcastLogin(userId: string, sessionToken: string, deviceId?: string, timestamp?: number): void {
-    const client = getSupabase();
-    if (this.realtimeChannel && client) {
-      try {
-        this.realtimeChannel.send({
-          type: 'broadcast',
-          event: 'new_login',
-          payload: {
-            userId,
-            sessionToken,
-            deviceId: deviceId || null,
-            timestamp: timestamp || getSessionTimestamp(sessionToken) || Date.now()
-          }
-        });
-      } catch (e) {
-        console.warn('[StorageService] broadcastLogin warning:', e);
+    const ts = timestamp || getSessionTimestamp(sessionToken) || Date.now();
+    const payload = {
+      userId,
+      sessionToken,
+      deviceId: deviceId || null,
+      timestamp: ts
+    };
+
+    // 1. Native HTML5 BroadcastChannel for instantaneous same-browser / multi-tab kicking (0ms)
+    try {
+      if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+        if (!this.localBroadcastChannel) {
+          this.localBroadcastChannel = new BroadcastChannel('fmw_session_sync');
+        }
+        this.localBroadcastChannel.postMessage(payload);
       }
+    } catch (e) {
+      console.warn('[StorageService] Local broadcast warning:', e);
+    }
+
+    // 2. Supabase Realtime WebSocket for cross-device / cross-browser kicking (<50ms)
+    if (!this.realtimeChannel) {
+      this.initRealtimeChannel();
+    }
+
+    const doSend = () => {
+      if (this.realtimeChannel) {
+        try {
+          this.realtimeChannel.send({
+            type: 'broadcast',
+            event: 'new_login',
+            payload
+          });
+        } catch (e) {
+          console.warn('[StorageService] WebSocket broadcast warning:', e);
+        }
+      }
+    };
+
+    if (this.realtimeStatus === 'SUBSCRIBED') {
+      doSend();
+    } else {
+      this.pendingBroadcast = payload;
+      doSend();
+    }
+
+    // Redundant pulses to ensure arrival across mobile network handshakes
+    setTimeout(doSend, 300);
+    setTimeout(doSend, 800);
+  }
+
+  public async pushUserSessionDirect(userId: string, sessionToken: string, deviceId: string, timestamp: number): Promise<void> {
+    const client = getSupabase();
+    if (!checkIsSupabaseConfigured() || !client) return;
+
+    try {
+      // 1. Fetch only 14KB users array (fast ~200ms)
+      const { data: cloudUsersData } = await client
+        .from('app_state')
+        .select('data->users')
+        .eq('id', 'main')
+        .maybeSingle();
+
+      const remoteUsers = (cloudUsersData && Array.isArray((cloudUsersData as any).users))
+        ? (cloudUsersData as any).users as User[]
+        : [];
+
+      // 2. Merge local user state into cloud users array
+      const mergedUsers = mergeUsersList(this.state.users, remoteUsers);
+      const targetUser = mergedUsers.find(u => u.id === userId);
+      if (targetUser) {
+        targetUser.sessionToken = sessionToken;
+        targetUser.deviceId = deviceId;
+        targetUser.sessionUpdatedAt = timestamp;
+      }
+      this.state.users = mergedUsers;
+      this.safeSaveToLocalStorage(this.state);
+      this.notify();
+
+      // 3. Upsert state with updated users directly to Supabase
+      const stateToSave = sanitizeBannedSubtitles({
+        ...this.state,
+        users: mergedUsers
+      });
+
+      await client
+        .from('app_state')
+        .upsert({ id: 'main', data: stateToSave, updated_at: new Date().toISOString() });
+    } catch (e) {
+      console.warn('[StorageService] pushUserSessionDirect warning:', e);
     }
   }
 
