@@ -1,4 +1,4 @@
-import { DatabaseState, User, Material } from '@/types';
+import { DatabaseState, User, Material, EvaluationSubmission, LKPDSubmission } from '@/types';
 import { getSupabase, checkIsSupabaseConfigured, testSupabaseConnection } from '@/lib/supabase';
 import { generateChapterPdfDataUri } from '@/utils/pdfUtils';
 
@@ -613,6 +613,52 @@ function mergeArrayById<T extends { id?: string }>(primary: T[], secondary: T[])
   return Array.from(map.values());
 }
 
+function mergeSingleLkpdSub(primary: any, secondary: any): any {
+  if (!primary) return secondary;
+  if (!secondary) return primary;
+
+  const merged = { ...secondary, ...primary };
+
+  // Photo URL preservation: if primary has empty photoUrl but secondary has non-empty photoUrl
+  if ((!primary.photoUrl || primary.photoUrl.trim() === '') && secondary.photoUrl && secondary.photoUrl.trim() !== '') {
+    merged.photoUrl = secondary.photoUrl;
+  }
+
+  // Photo URLs array preservation
+  const pUrls = Array.isArray(primary.photoUrls) ? primary.photoUrls : (primary.photoUrl ? [primary.photoUrl] : []);
+  const sUrls = Array.isArray(secondary.photoUrls) ? secondary.photoUrls : (secondary.photoUrl ? [secondary.photoUrl] : []);
+  const allUrls = Array.from(new Set([...pUrls, ...sUrls])).filter(u => Boolean(u && u.trim()));
+  if (allUrls.length > 0) {
+    merged.photoUrls = allUrls;
+    if (!merged.photoUrl && allUrls[0]) merged.photoUrl = allUrls[0];
+  }
+
+  // Answers merging: preserve photos in answers
+  if (primary.answers || secondary.answers) {
+    const combinedAnswers: Record<string, any> = { ...(secondary.answers || {}) };
+    for (const [qId, pAns] of Object.entries(primary.answers || {})) {
+      const sAns = combinedAnswers[qId] || {};
+      const finalPhoto = (pAns as any)?.photoUrl || (sAns as any)?.photoUrl || '';
+      combinedAnswers[qId] = {
+        ...sAns,
+        ...(pAns as any),
+        photoUrl: finalPhoto
+      };
+    }
+    merged.answers = combinedAnswers;
+  }
+
+  // Teacher feedback & score preservation
+  if (primary.teacherScore === undefined || primary.teacherScore === null) {
+    if (secondary.teacherScore !== undefined && secondary.teacherScore !== null) {
+      merged.teacherScore = secondary.teacherScore;
+      merged.teacherFeedback = secondary.teacherFeedback || merged.teacherFeedback;
+    }
+  }
+
+  return merged;
+}
+
 function mergeSubmissionsList<T extends { studentId: string; lkpdId?: string; id?: string }>(primary: T[], secondary: T[]): T[] {
   const map = new Map<string, T>();
   (secondary || []).forEach(s => {
@@ -621,7 +667,53 @@ function mergeSubmissionsList<T extends { studentId: string; lkpdId?: string; id
   });
   (primary || []).forEach(s => {
     const key = s.id || `${s.studentId}_${s.lkpdId || 'lkpd_1'}`;
+    const existing = map.get(key);
+    if (existing) {
+      map.set(key, mergeSingleLkpdSub(s, existing));
+    } else {
+      map.set(key, s);
+    }
+  });
+  return Array.from(map.values());
+}
+
+function mergeEvaluationSubmissionsList(primary: EvaluationSubmission[], secondary: EvaluationSubmission[]): EvaluationSubmission[] {
+  const map = new Map<string, EvaluationSubmission>();
+  (secondary || []).forEach(s => {
+    const key = s.id || s.studentId;
     map.set(key, s);
+  });
+  (primary || []).forEach(s => {
+    const key = s.id || s.studentId;
+    const existing = map.get(key);
+    if (existing) {
+      const merged: EvaluationSubmission = { ...existing, ...s };
+      // Preserve photoProof
+      if ((!s.photoProof || !s.photoProof.trim()) && existing.photoProof && existing.photoProof.trim()) {
+        merged.photoProof = existing.photoProof;
+      }
+      // Preserve photoProofs per question
+      if (s.photoProofs && typeof s.photoProofs === 'object') {
+        const mergedProofs: Record<string, string> = { ...(existing.photoProofs || {}) };
+        for (const [qId, proofUrl] of Object.entries(s.photoProofs)) {
+          if (typeof proofUrl === 'string' && proofUrl.trim()) {
+            mergedProofs[qId] = proofUrl;
+          }
+        }
+        merged.photoProofs = mergedProofs;
+      }
+
+      // Preserve teacherScore if primary is undefined but secondary has it
+      if (s.teacherScore === undefined || s.teacherScore === null) {
+        if (existing.teacherScore !== undefined && existing.teacherScore !== null) {
+          merged.teacherScore = existing.teacherScore;
+          merged.teacherFeedback = existing.teacherFeedback || merged.teacherFeedback;
+        }
+      }
+      map.set(key, merged);
+    } else {
+      map.set(key, s);
+    }
   });
   return Array.from(map.values());
 }
@@ -680,6 +772,9 @@ function sanitizeBannedSubtitles(state: DatabaseState): DatabaseState {
 function pruneHeavyBlobs(state: DatabaseState): DatabaseState {
   if (!state) return state;
 
+  // Max payload threshold for individual base64 photos: 800,000 chars (~600 KB)
+  const MAX_PHOTO_CHARS = 800000;
+
   // 1. LKPD Submissions
   let prunedLkpd = state.lkpdSubmissions;
   if (Array.isArray(state.lkpdSubmissions)) {
@@ -692,7 +787,7 @@ function pruneHeavyBlobs(state: DatabaseState): DatabaseState {
           if (v && typeof v === 'object') {
             cleanAnswers[k] = {
               ...v,
-              photoUrl: (typeof (v as any).photoUrl === 'string' && (v as any).photoUrl.length > 200000) ? '' : (v as any).photoUrl
+              photoUrl: (typeof (v as any).photoUrl === 'string' && (v as any).photoUrl.length > MAX_PHOTO_CHARS) ? '' : (v as any).photoUrl
             };
           } else {
             cleanAnswers[k] = v;
@@ -702,9 +797,9 @@ function pruneHeavyBlobs(state: DatabaseState): DatabaseState {
       }
       return {
         ...sub,
-        photoUrl: (sub.photoUrl && sub.photoUrl.length > 200000) ? '' : sub.photoUrl,
+        photoUrl: (sub.photoUrl && sub.photoUrl.length > MAX_PHOTO_CHARS) ? '' : sub.photoUrl,
         photoUrls: Array.isArray(sub.photoUrls)
-          ? sub.photoUrls.map(p => (p && p.length > 200000 ? '' : p)).filter(Boolean)
+          ? sub.photoUrls.map(p => (p && p.length > MAX_PHOTO_CHARS ? '' : p)).filter(Boolean)
           : undefined,
         answers: prunedAnswers
       };
@@ -721,16 +816,16 @@ function pruneHeavyBlobs(state: DatabaseState): DatabaseState {
         cleanPhotoProofs = {};
         for (const [k, v] of Object.entries(sub.photoProofs)) {
           if (typeof v === 'string') {
-            cleanPhotoProofs[k] = v.length > 200000 ? '' : v;
+            cleanPhotoProofs[k] = v.length > MAX_PHOTO_CHARS ? '' : v;
           }
         }
       }
 
       return {
         ...sub,
-        photoProof: (sub.photoProof && sub.photoProof.length > 200000) ? '' : sub.photoProof,
+        photoProof: (sub.photoProof && sub.photoProof.length > MAX_PHOTO_CHARS) ? '' : sub.photoProof,
         photoUrls: Array.isArray(sub.photoUrls)
-          ? sub.photoUrls.map(p => (p && p.length > 200000 ? '' : p)).filter(Boolean)
+          ? sub.photoUrls.map(p => (p && p.length > MAX_PHOTO_CHARS ? '' : p)).filter(Boolean)
           : undefined,
         photoProofs: cleanPhotoProofs || sub.photoProofs
       };
@@ -770,50 +865,23 @@ class StorageService {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     } catch (err) {
-      console.warn('[StorageService] Standard localStorage save failed (quota exceeded). Pruning heavy media cache...', err);
+      console.warn('[StorageService] Standard localStorage save failed (quota exceeded). Pruning materials cache...', err);
       try {
-        // Strip heavy image payloads from local storage cache only
-        // Note: Full payloads remain intact in this.state (in-memory) and Supabase (cloud database)
-        const prunedSubmissions = (state.lkpdSubmissions || []).map(sub => {
-          let prunedAnswers = sub.answers;
-          if (sub.answers && typeof sub.answers === 'object') {
-            const ansMap: Record<string, { textAnswer: string; photoUrl?: string; aiFeedback?: string; aiScore?: number; aiReviewStatus?: 'graded' | 'needs_review'; imageStatus?: 'matched' | 'mismatch' | 'unreadable' | 'uncertain' | 'not_provided'; imageSummary?: string }> = {};
-            for (const [k, v] of Object.entries(sub.answers)) {
-              if (v && typeof v === 'object') {
-                ansMap[k] = {
-                  textAnswer: v.textAnswer || '',
-                  aiFeedback: v.aiFeedback,
-                  aiScore: v.aiScore,
-                  aiReviewStatus: v.aiReviewStatus,
-                  imageStatus: v.imageStatus,
-                  imageSummary: v.imageSummary,
-                  photoUrl: (typeof v.photoUrl === 'string' && v.photoUrl.length > 200) ? '' : v.photoUrl
-                };
-              } else {
-                ansMap[k] = {
-                  textAnswer: String(v || '')
-                };
-              }
-            }
-            prunedAnswers = ansMap;
+        // Step 1: Strip heavy synthetic PDF data URIs from materials (they are regenerated automatically on load)
+        const slimMaterials = (state.materials || []).map(m => {
+          if (m.fileUrl && m.fileUrl.startsWith('data:application/pdf')) {
+            return { ...m, fileUrl: '' };
           }
-          return {
-            ...sub,
-            photoUrl: (sub.photoUrl && sub.photoUrl.length > 200) ? '' : sub.photoUrl,
-            photoUrls: Array.isArray(sub.photoUrls)
-              ? sub.photoUrls.map(p => (p && p.length > 200 ? '' : p)).filter(Boolean)
-              : undefined,
-            answers: prunedAnswers
-          };
+          return m;
         });
 
-        const slimState: DatabaseState = {
+        const intermediateState: DatabaseState = {
           ...state,
-          lkpdSubmissions: prunedSubmissions
+          materials: slimMaterials
         };
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(slimState));
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(intermediateState));
       } catch (pruneErr) {
-        console.warn('[StorageService] Fallback localStorage save also failed (private mode or zero quota):', pruneErr);
+        console.warn('[StorageService] Fallback localStorage save also failed (extreme quota):', pruneErr);
       }
     }
   }
@@ -988,7 +1056,7 @@ class StorageService {
     const mergedUsers = mergeUsersList(this.state.users || [], remoteState.users || []);
     const mergedLkpdSub = mergeSubmissionsList(remoteState.lkpdSubmissions || [], this.state.lkpdSubmissions || []);
     const mergedLatsolSub = mergeArrayById(remoteState.latsolSubmissions || [], this.state.latsolSubmissions || []);
-    const mergedEvalSub = mergeArrayById(remoteState.evaluationSubmissions || [], this.state.evaluationSubmissions || []);
+    const mergedEvalSub = mergeEvaluationSubmissionsList(remoteState.evaluationSubmissions || [], this.state.evaluationSubmissions || []);
 
     this.state = sanitizeBannedSubtitles(this.sanitizeStudentProgress({
       ...defaultDatabaseState,
@@ -1283,7 +1351,7 @@ class StorageService {
             const mergedUsers = mergeUsersList(this.state.users || [], cloudData.data.users || []);
             const mergedLkpd = mergeSubmissionsList(this.state.lkpdSubmissions || [], cloudData.data.lkpdSubmissions || []);
             const mergedLatsol = mergeArrayById(this.state.latsolSubmissions || [], cloudData.data.latsolSubmissions || []);
-            const mergedEval = mergeArrayById(this.state.evaluationSubmissions || [], cloudData.data.evaluationSubmissions || []);
+            const mergedEval = mergeEvaluationSubmissionsList(this.state.evaluationSubmissions || [], cloudData.data.evaluationSubmissions || []);
 
             stateToSave = {
               ...this.state,

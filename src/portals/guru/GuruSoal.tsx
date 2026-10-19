@@ -22,6 +22,9 @@ import {
   AlertCircle,
   Check,
   ChevronRight,
+  ChevronLeft,
+  ExternalLink,
+  ImageIcon,
   Maximize2,
   Search,
   Filter
@@ -53,6 +56,47 @@ export const GuruSoal: React.FC<{
   const [teacherScoreInput, setTeacherScoreInput] = useState<number>(0);
   const [teacherFeedbackInput, setTeacherFeedbackInput] = useState<string>('');
   const [zoomPhoto, setZoomPhoto] = useState<string | null>(null);
+  const [viewPhotoModal, setViewPhotoModal] = useState<{
+    urls: { url: string; title: string }[];
+    activeIdx: number;
+    studentName: string;
+  } | null>(null);
+
+  const extractSubmissionPhotos = (sub: EvaluationSubmission): { url: string; title: string }[] => {
+    const list: { url: string; title: string }[] = [];
+    if (sub.photoProofs && typeof sub.photoProofs === 'object') {
+      Object.entries(sub.photoProofs).forEach(([qId, url]) => {
+        if (url && typeof url === 'string' && url.trim()) {
+          const q = questions.find(item => item.id === qId);
+          list.push({
+            url,
+            title: q ? `${q.title}` : `Foto Soal (${list.length + 1})`
+          });
+        }
+      });
+    }
+    if (list.length === 0 && sub.photoProof && typeof sub.photoProof === 'string' && sub.photoProof.trim()) {
+      list.push({
+        url: sub.photoProof,
+        title: 'Foto Lembar Coretan Evaluasi'
+      });
+    }
+    return list;
+  };
+
+  const handleOpenPhotos = (sub: EvaluationSubmission) => {
+    soundService.click();
+    const photos = extractSubmissionPhotos(sub);
+    if (photos.length === 0) {
+      showToast('Siswa ini mengumpulkan evaluasi tanpa lampiran foto coretan fisik.', 'info');
+      return;
+    }
+    setViewPhotoModal({
+      urls: photos,
+      activeIdx: 0,
+      studentName: sub.studentName
+    });
+  };
 
   useEffect(() => {
     return storageService.subscribe(newState => {
@@ -333,74 +377,82 @@ export const GuruSoal: React.FC<{
               <table className="w-full text-left border-collapse bg-white dark:bg-[#111827] text-xs font-mono">
                 <thead>
                   <tr className="border-b-3 border-slate-950 dark:border-slate-800 bg-[#ffe600] text-slate-950 font-black">
-                    <th className="p-4">No</th>
-                    <th className="p-4">Siswa</th>
-                    <th className="p-4">Kelas</th>
-                    <th className="p-4">Waktu Kumpul</th>
-                    <th className="p-4 text-center">Nilai Akhir</th>
-                    <th className="p-4 text-center">Status</th>
-                    <th className="p-4 text-center">Bukti Foto</th>
-                    <th className="p-4 text-center">Anti-Cheat</th>
-                    <th className="p-4 text-center">Aksi</th>
+                    <th className="p-4 whitespace-nowrap">No</th>
+                    <th className="p-4 whitespace-nowrap min-w-[170px]">Siswa</th>
+                    <th className="p-4 whitespace-nowrap">Kelas</th>
+                    <th className="p-4 whitespace-nowrap min-w-[130px]">Waktu Kumpul</th>
+                    <th className="p-4 text-center whitespace-nowrap">Nilai Akhir</th>
+                    <th className="p-4 text-center whitespace-nowrap">Status</th>
+                    <th className="p-4 text-center whitespace-nowrap">Bukti Foto</th>
+                    <th className="p-4 text-center whitespace-nowrap">Anti-Cheat</th>
+                    <th className="p-4 text-center whitespace-nowrap">Aksi</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y-2 divide-slate-200 dark:divide-slate-800 font-bold text-slate-900 dark:text-slate-100">
                   {filteredSubmissions.map((sub, idx) => {
-                    const photoCount = Object.keys(sub.photoProofs || {}).length || (sub.photoProof ? 1 : 0);
+                    const subPhotos = extractSubmissionPhotos(sub);
+                    const photoCount = subPhotos.length;
                     const isGraded = sub.teacherScore !== undefined && sub.teacherScore !== null;
                     const needsReview = sub.gradingStatus === 'needs_review' && !isGraded;
                     const finalDisplayScore = sub.teacherScore ?? sub.score;
 
                     return (
                       <tr key={sub.id} className="hover:bg-amber-50/60 dark:hover:bg-slate-800/60 transition-colors">
-                        <td className="p-4 font-black text-slate-400">{idx + 1}</td>
-                        <td className="p-4">
+                        <td className="p-4 whitespace-nowrap font-black text-slate-400">{idx + 1}</td>
+                        <td className="p-4 whitespace-nowrap">
                           <div className="font-black text-slate-950 dark:text-slate-100">{sub.studentName}</div>
                           <div className="text-[10px] text-slate-500 font-normal">ID: {sub.studentId}</div>
                         </td>
-                        <td className="p-4">
-                          <span className="px-2 py-0.5 rounded-lg bg-sky-100 text-slate-950 border border-slate-950 text-[11px] font-black">
+                        <td className="p-4 whitespace-nowrap">
+                          <span className="inline-block whitespace-nowrap px-3 py-1 rounded-xl bg-sky-100 text-slate-950 border-2 border-slate-950 text-xs font-mono font-black shadow-[1.5px_1.5px_0px_0px_#0f172a]">
                             {sub.studentClass || 'Kelas 7-A'}
                           </span>
                         </td>
-                        <td className="p-4 text-[11px] text-slate-600 dark:text-slate-400">
+                        <td className="p-4 whitespace-nowrap text-xs text-slate-600 dark:text-slate-400 font-bold">
                           {sub.date || '-'}
                         </td>
-                        <td className="p-4 text-center">
-                          <span className="px-3 py-1 rounded-xl bg-amber-100 text-slate-950 font-black text-sm border border-slate-950 shadow-[1.5px_1.5px_0px_0px_#0f172a]">
+                        <td className="p-4 text-center whitespace-nowrap">
+                          <span className="inline-block whitespace-nowrap px-3.5 py-1.5 rounded-xl bg-amber-100 text-slate-950 font-black text-xs sm:text-sm border-2 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a]">
                             {needsReview ? 'Menunggu Review' : `${finalDisplayScore} / 100`}
                           </span>
                         </td>
-                        <td className="p-4 text-center">
+                        <td className="p-4 text-center whitespace-nowrap">
                           {isGraded ? (
-                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-emerald-100 text-emerald-950 border border-slate-950 text-[11px] font-black">
-                              <CheckCircle2 size={12} className="text-emerald-700" />
+                            <span className="inline-flex items-center gap-1.5 whitespace-nowrap px-3 py-1 rounded-xl bg-emerald-100 text-emerald-950 border-2 border-slate-950 text-xs font-black shadow-[1.5px_1.5px_0px_0px_#0f172a]">
+                              <CheckCircle2 size={13} className="text-emerald-700" />
                               <span>Dinilai Guru</span>
                             </span>
                           ) : needsReview ? (
-                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-amber-100 text-amber-950 border border-slate-950 text-[11px] font-black">
-                              <Clock size={12} className="text-amber-700" />
+                            <span className="inline-flex items-center gap-1.5 whitespace-nowrap px-3 py-1 rounded-xl bg-amber-100 text-amber-950 border-2 border-slate-950 text-xs font-black shadow-[1.5px_1.5px_0px_0px_#0f172a]">
+                              <Clock size={13} className="text-amber-700" />
                               <span>Perlu Review</span>
                             </span>
                           ) : (
-                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-sky-100 text-sky-950 border border-slate-950 text-[11px] font-black">
-                              <CheckCircle2 size={12} className="text-sky-700" />
+                            <span className="inline-flex items-center gap-1.5 whitespace-nowrap px-3 py-1 rounded-xl bg-sky-100 text-sky-950 border-2 border-slate-950 text-xs font-black shadow-[1.5px_1.5px_0px_0px_#0f172a]">
+                              <CheckCircle2 size={13} className="text-sky-700" />
                               <span>Sistem</span>
                             </span>
                           )}
                         </td>
-                        <td className="p-4 text-center">
+                        <td className="p-4 text-center whitespace-nowrap">
                           {photoCount > 0 ? (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-purple-100 text-purple-950 border border-slate-950 text-[10px] font-black">
-                              <Camera size={11} />
-                              <span>{photoCount} Foto</span>
-                            </span>
+                            <button
+                              type="button"
+                              onClick={() => handleOpenPhotos(sub)}
+                              className="inline-flex items-center gap-1.5 whitespace-nowrap px-3 py-1.5 rounded-xl bg-purple-100 hover:bg-purple-200 text-purple-950 border-2 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a] text-xs font-mono font-black cursor-pointer active:translate-x-0.5 active:translate-y-0.5 transition-all"
+                              title="Klik untuk membuka & perbesar foto coretan siswa"
+                            >
+                              <Camera size={13} className="text-purple-700" />
+                              <span>{photoCount} Foto ↗</span>
+                            </button>
                           ) : (
-                            <span className="text-[10px] text-slate-400 font-normal">Teks Saja</span>
+                            <span className="inline-block whitespace-nowrap px-2.5 py-1 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-400 border border-slate-300 dark:border-slate-700 text-[11px] font-bold">
+                              Teks Saja
+                            </span>
                           )}
                         </td>
-                        <td className="p-4 text-center">
-                          <span className={`px-2 py-0.5 rounded-lg border text-[10px] font-black ${
+                        <td className="p-4 text-center whitespace-nowrap">
+                          <span className={`inline-block whitespace-nowrap px-2.5 py-1 rounded-xl border-2 text-xs font-black shadow-[1.5px_1.5px_0px_0px_#0f172a] ${
                             (sub.antiCheat?.switchCount || 0) > 0
                               ? 'bg-red-100 text-red-950 border-red-950'
                               : 'bg-emerald-100 text-emerald-950 border-emerald-950'
@@ -408,11 +460,11 @@ export const GuruSoal: React.FC<{
                             {sub.antiCheat?.switchCount || 0}x Pindah
                           </span>
                         </td>
-                        <td className="p-4 text-center">
+                        <td className="p-4 text-center whitespace-nowrap">
                           <button
                             type="button"
                             onClick={() => handleOpenInspect(sub)}
-                            className="px-3.5 py-1.5 rounded-xl bg-[#ffe600] hover:bg-yellow-400 text-slate-950 font-black text-xs border-2 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a] cursor-pointer active:translate-x-0.5 active:translate-y-0.5 transition-all flex items-center gap-1 mx-auto"
+                            className="whitespace-nowrap px-3.5 py-1.5 rounded-xl bg-[#ffe600] hover:bg-yellow-400 text-slate-950 font-black text-xs border-2 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a] cursor-pointer active:translate-x-0.5 active:translate-y-0.5 transition-all flex items-center gap-1.5 mx-auto"
                           >
                             <Eye size={13} />
                             <span>Periksa &amp; Nilai</span>
@@ -645,12 +697,28 @@ export const GuruSoal: React.FC<{
                             src={photoAns}
                             alt={`Foto Soal ${idx + 1}`}
                             className="w-full h-auto max-h-48 object-cover cursor-pointer hover:opacity-95"
-                            onClick={() => setZoomPhoto(photoAns)}
+                            onClick={() => {
+                              const allSubPhotos = extractSubmissionPhotos(selectedSub);
+                              const matchIdx = allSubPhotos.findIndex(p => p.url === photoAns);
+                              setViewPhotoModal({
+                                urls: allSubPhotos.length > 0 ? allSubPhotos : [{ url: photoAns, title: `Soal #${idx + 1}: ${q.title}` }],
+                                activeIdx: matchIdx >= 0 ? matchIdx : 0,
+                                studentName: selectedSub.studentName
+                              });
+                            }}
                           />
                           <button
                             type="button"
-                            onClick={() => setZoomPhoto(photoAns)}
-                            className="w-full py-1 bg-[#ffe600] text-slate-950 font-mono text-[10px] font-black text-center cursor-pointer border-t-2 border-slate-950 flex items-center justify-center gap-1"
+                            onClick={() => {
+                              const allSubPhotos = extractSubmissionPhotos(selectedSub);
+                              const matchIdx = allSubPhotos.findIndex(p => p.url === photoAns);
+                              setViewPhotoModal({
+                                urls: allSubPhotos.length > 0 ? allSubPhotos : [{ url: photoAns, title: `Soal #${idx + 1}: ${q.title}` }],
+                                activeIdx: matchIdx >= 0 ? matchIdx : 0,
+                                studentName: selectedSub.studentName
+                              });
+                            }}
+                            className="w-full py-1 bg-[#ffe600] text-slate-950 font-mono text-[10px] font-black text-center cursor-pointer border-t-2 border-slate-950 flex items-center justify-center gap-1 hover:bg-yellow-400"
                           >
                             <Maximize2 size={11} />
                             <span>Perbesar Foto</span>
@@ -688,6 +756,103 @@ export const GuruSoal: React.FC<{
                   </div>
                 );
               })}
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* PHOTO GALLERY & ZOOM MODAL */}
+      {viewPhotoModal && (
+        <Modal
+          isOpen={Boolean(viewPhotoModal)}
+          onClose={() => setViewPhotoModal(null)}
+          title={`Foto Pengerjaan: ${viewPhotoModal.studentName} (${viewPhotoModal.activeIdx + 1} dari ${viewPhotoModal.urls.length})`}
+          maxWidth="max-w-4xl"
+        >
+          <div className="space-y-4 font-mono">
+            {/* Active Question Title Header */}
+            <div className="flex items-center justify-between bg-amber-100 dark:bg-amber-950/40 p-3 rounded-2xl border-2 border-slate-950">
+              <div className="flex items-center gap-2">
+                <Camera size={16} className="text-amber-800 dark:text-amber-300" />
+                <span className="font-black text-xs text-slate-950 dark:text-slate-100">
+                  {viewPhotoModal.urls[viewPhotoModal.activeIdx]?.title || 'Foto Lembar Evaluasi'}
+                </span>
+              </div>
+              <span className="px-2.5 py-0.5 rounded-lg bg-slate-950 text-white text-[11px] font-black">
+                Foto {viewPhotoModal.activeIdx + 1} / {viewPhotoModal.urls.length}
+              </span>
+            </div>
+
+            {/* Photo Container */}
+            <div className="relative rounded-2xl border-3 border-slate-950 overflow-hidden bg-slate-900 flex items-center justify-center min-h-[320px] max-h-[68vh] p-3 shadow-[4px_4px_0px_0px_#0f172a]">
+              <img
+                src={viewPhotoModal.urls[viewPhotoModal.activeIdx]?.url}
+                alt={`Lembar Pengerjaan ${viewPhotoModal.activeIdx + 1}`}
+                className="max-h-[64vh] w-auto max-w-full object-contain rounded-xl shadow-lg"
+              />
+
+              {viewPhotoModal.urls.length > 1 && (
+                <>
+                  <button
+                    type="button"
+                    disabled={viewPhotoModal.activeIdx === 0}
+                    onClick={() => setViewPhotoModal(prev => prev ? { ...prev, activeIdx: prev.activeIdx - 1 } : null)}
+                    className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-slate-900/90 text-white border-2 border-white rounded-full flex items-center justify-center font-bold shadow-lg disabled:opacity-25 hover:bg-slate-900 cursor-pointer"
+                  >
+                    <ChevronLeft size={20} />
+                  </button>
+                  <button
+                    type="button"
+                    disabled={viewPhotoModal.activeIdx === viewPhotoModal.urls.length - 1}
+                    onClick={() => setViewPhotoModal(prev => prev ? { ...prev, activeIdx: prev.activeIdx + 1 } : null)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-slate-900/90 text-white border-2 border-white rounded-full flex items-center justify-center font-bold shadow-lg disabled:opacity-25 hover:bg-slate-900 cursor-pointer"
+                  >
+                    <ChevronRight size={20} />
+                  </button>
+                </>
+              )}
+            </div>
+
+            {/* Multi-Photo Thumbnails */}
+            {viewPhotoModal.urls.length > 1 && (
+              <div className="flex items-center gap-2 overflow-x-auto pb-1">
+                {viewPhotoModal.urls.map((item, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => setViewPhotoModal(prev => prev ? { ...prev, activeIdx: i } : null)}
+                    className={`relative w-16 h-16 rounded-xl overflow-hidden border-2 shrink-0 cursor-pointer transition ${
+                      viewPhotoModal.activeIdx === i ? 'border-amber-400 scale-105 shadow-[2px_2px_0px_0px_#0f172a]' : 'border-slate-950 opacity-60 hover:opacity-100'
+                    }`}
+                  >
+                    <img src={item.url} alt={`Thumb ${i+1}`} className="w-full h-full object-cover" />
+                    <span className="absolute bottom-0 right-0 px-1 bg-slate-950 text-white text-[9px] font-black">
+                      #{i + 1}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Footer Buttons */}
+            <div className="flex items-center justify-between pt-1">
+              <a
+                href={viewPhotoModal.urls[viewPhotoModal.activeIdx]?.url}
+                target="_blank"
+                rel="noreferrer"
+                className="px-3.5 py-2 bg-[#ffe600] text-slate-950 rounded-xl text-xs font-mono font-black border-2 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a] transition flex items-center gap-1.5 hover:bg-yellow-400 cursor-pointer"
+              >
+                <ExternalLink size={14} />
+                <span>Buka Ukuran Asli di Tab Baru ↗</span>
+              </a>
+
+              <button
+                type="button"
+                onClick={() => setViewPhotoModal(null)}
+                className="px-4 py-2 bg-slate-200 dark:bg-slate-700 border-2 border-slate-950 text-slate-950 dark:text-slate-100 font-mono font-black text-xs rounded-xl cursor-pointer hover:bg-slate-300"
+              >
+                Tutup
+              </button>
             </div>
           </div>
         </Modal>

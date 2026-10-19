@@ -136,6 +136,26 @@ export const GuruLKPD: React.FC<{
     return url;
   };
 
+  const extractAllPhotos = (sub: LKPDSubmission): string[] => {
+    const list: string[] = [];
+    if (Array.isArray(sub.photoUrls)) {
+      sub.photoUrls.forEach(p => {
+        if (p && typeof p === 'string' && p.trim() && !list.includes(p)) list.push(p);
+      });
+    }
+    if (sub.photoUrl && typeof sub.photoUrl === 'string' && sub.photoUrl.trim() && !list.includes(sub.photoUrl)) {
+      list.push(sub.photoUrl);
+    }
+    if (sub.answers && typeof sub.answers === 'object') {
+      Object.values(sub.answers).forEach(ans => {
+        if (ans && ans.photoUrl && typeof ans.photoUrl === 'string' && ans.photoUrl.trim() && !list.includes(ans.photoUrl)) {
+          list.push(ans.photoUrl);
+        }
+      });
+    }
+    return list;
+  };
+
   const handleOpenGrade = (sub: LKPDSubmission) => {
     soundService.click();
     setSelectedSub(sub);
@@ -547,20 +567,31 @@ export const GuruLKPD: React.FC<{
                           {targetLkpd ? targetLkpd.title : 'LKPD 1'}
                         </span>
                       </td>
-                      <td className="p-4">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            soundService.click();
-                            const photos = s.photoUrls && s.photoUrls.length > 0 ? s.photoUrls : [s.photoUrl];
-                            const displayUrls = photos.map(p => getPhotoDisplayUrl(p));
-                            setViewPhotoUrl({ urls: displayUrls, activeIdx: 0, studentName: s.studentName });
-                          }}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-950 dark:text-slate-100 border-2 border-slate-950 dark:border-slate-700 shadow-[2px_2px_0px_0px_#0f172a] dark:shadow-[2px_2px_0px_0px_#000000] font-mono font-black text-xs cursor-pointer active:translate-x-0.5 active:translate-y-0.5 transition-all"
-                        >
-                          <ImageIcon size={14} className="text-slate-950 dark:text-slate-200" />
-                          <span>Lihat Foto ({s.photoUrls?.length || 1})</span>
-                        </button>
+                      <td className="p-4 whitespace-nowrap">
+                        {(() => {
+                          const allPhotos = extractAllPhotos(s);
+                          if (allPhotos.length === 0) {
+                            return (
+                              <span className="inline-block whitespace-nowrap px-2.5 py-1 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-400 border border-slate-300 dark:border-slate-700 font-mono text-[11px] font-bold">
+                                Tanpa Foto
+                              </span>
+                            );
+                          }
+                          return (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                soundService.click();
+                                const displayUrls = allPhotos.map(p => getPhotoDisplayUrl(p));
+                                setViewPhotoUrl({ urls: displayUrls, activeIdx: 0, studentName: s.studentName });
+                              }}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-950 dark:text-slate-100 border-2 border-slate-950 dark:border-slate-700 shadow-[2px_2px_0px_0px_#0f172a] dark:shadow-[2px_2px_0px_0px_#000000] font-mono font-black text-xs cursor-pointer active:translate-x-0.5 active:translate-y-0.5 transition-all"
+                            >
+                              <ImageIcon size={14} className="text-slate-950 dark:text-slate-200" />
+                              <span>Lihat Foto ({allPhotos.length})</span>
+                            </button>
+                          );
+                        })()}
                       </td>
                       <td className="p-4 font-mono font-black">
                         {s.isAiEvaluated ? (

@@ -53,6 +53,10 @@ export const SiswaLKPD: React.FC<{
     s => s.studentId === currentUser.id && s.lkpdId === selectedLkpd?.id
   );
 
+  const currentLkpdId = selectedLkpd?.id || selectedLkpdId;
+  const draftKey = `lkpd_draft_${currentUser.id}_${currentLkpdId}`;
+  const draftLoadedRef = useRef<string | null>(null);
+
   // Dropdown selector open/closed state
   const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -102,13 +106,14 @@ export const SiswaLKPD: React.FC<{
   };
 
   const handleSelectLkpd = (id: string) => {
-    if (isSolvingMode && id !== (selectedLkpd?.id || selectedLkpdId)) {
+    if (isSolvingMode && id !== currentLkpdId) {
       const confirmLeave = window.confirm(
         "Kamu sedang dalam lembar pengerjaan kegiatan. Beralih ke LKPD lain akan menutup pengerjaan ini. Lanjutkan?"
       );
       if (!confirmLeave) return;
     }
     soundService.click();
+    draftLoadedRef.current = null;
     setSelectedLkpdId(id);
     setIsDropdownOpen(false);
     setIsSolvingMode(false);
@@ -125,11 +130,42 @@ export const SiswaLKPD: React.FC<{
     }
   });
 
-  // Load existing answers if available
+  // Load existing answers or restore local draft (prevents photo/text loss on background sync or mobile camera reload)
   useEffect(() => {
+    if (draftLoadedRef.current === currentLkpdId) {
+      return; // Already initialized for this LKPD; prevent background sync from wiping in-progress student answers!
+    }
+    draftLoadedRef.current = currentLkpdId;
+
+    // 1. Try restoring from local draft first
+    let draftRestored = false;
+    try {
+      const rawDraft = localStorage.getItem(draftKey);
+      if (rawDraft) {
+        const parsed = JSON.parse(rawDraft);
+        if (parsed.answers && Object.keys(parsed.answers).length > 0) {
+          setAnswers(parsed.answers);
+          if (typeof parsed.activeIdx === 'number') {
+            setActiveQuestionIdx(parsed.activeIdx);
+          }
+          draftRestored = true;
+          showToast("Draft pengerjaan LKPD dipulihkan otomatis!", "info");
+        }
+      }
+    } catch (e) {
+      console.warn("Draft restore error:", e);
+    }
+
+    if (draftRestored) {
+      if (existingSubmission?.isAiEvaluated) {
+        setAiDiscussionUnlocked(true);
+      }
+      return;
+    }
+
+    // 2. Fallback to existing submitted answers
     if (existingSubmission && existingSubmission.answers) {
       const loadedAnswers: Record<string, LKPDEssayAnswer> = { ...existingSubmission.answers };
-      const fallbackPhoto = existingSubmission.photoUrl || existingSubmission.photoUrls?.[0] || '';
       questions.forEach((q) => {
         if (!loadedAnswers[q.id]) {
           loadedAnswers[q.id] = { textAnswer: '', photoUrl: '' };
@@ -147,7 +183,22 @@ export const SiswaLKPD: React.FC<{
       setAiEvaluationResult(null);
       resetReport();
     }
-  }, [selectedLkpd?.id, existingSubmission]);
+  }, [currentLkpdId]);
+
+  // Auto-save draft on any text or photo answer change
+  useEffect(() => {
+    if (!isSolvingMode) return;
+    try {
+      const hasContent = Object.values(answers).some(
+        a => Boolean((a?.textAnswer && a.textAnswer.trim()) || (a?.photoUrl && a.photoUrl.trim()))
+      );
+      if (hasContent) {
+        localStorage.setItem(draftKey, JSON.stringify({ answers, activeIdx: activeQuestionIdx }));
+      }
+    } catch (e) {
+      console.warn("LKPD draft auto-save warning:", e);
+    }
+  }, [answers, activeQuestionIdx, isSolvingMode, draftKey]);
 
   const handleTextChange = (questionId: string, text: string) => {
     setAnswers(prev => ({
@@ -166,13 +217,22 @@ export const SiswaLKPD: React.FC<{
     showToast("Mengompresi foto lembar pengerjaan fisik...", "info");
     try {
       const compressed = await compressImageFile(file, 720, 0.55);
-      setAnswers(prev => ({
-        ...prev,
-        [questionId]: {
-          ...prev[questionId],
-          photoUrl: compressed
+      setAnswers(prev => {
+        const next = {
+          ...prev,
+          [questionId]: {
+            ...prev[questionId],
+            photoUrl: compressed
+          }
+        };
+        // Immediately persist to local draft so it survives if mobile browser refreshes tab
+        try {
+          localStorage.setItem(draftKey, JSON.stringify({ answers: next, activeIdx: activeQuestionIdx }));
+        } catch (saveErr) {
+          console.warn("Draft immediate save error:", saveErr);
         }
-      }));
+        return next;
+      });
       soundService.click();
       showToast("Foto pengerjaan berhasil dilampirkan!", "success");
     } catch (err) {
@@ -185,13 +245,19 @@ export const SiswaLKPD: React.FC<{
 
   const handleRemovePhoto = (questionId: string) => {
     soundService.click();
-    setAnswers(prev => ({
-      ...prev,
-      [questionId]: {
-        ...prev[questionId],
-        photoUrl: ''
-      }
-    }));
+    setAnswers(prev => {
+      const next = {
+        ...prev,
+        [questionId]: {
+          ...prev[questionId],
+          photoUrl: ''
+        }
+      };
+      try {
+        localStorage.setItem(draftKey, JSON.stringify({ answers: next, activeIdx: activeQuestionIdx }));
+      } catch {}
+      return next;
+    });
     showToast("Foto pengerjaan telah dihapus.", "info");
   };
 
@@ -333,9 +399,11 @@ export const SiswaLKPD: React.FC<{
       });
 
       storageService.update(draft => {
-        const target = draft.lkpdSubmissions.find(s => s.id === existingSubmission.id);
+        const target = draft.lkpdSubmissions.find(s => s.id === existingSubmission.id || (s.studentId === currentUser.id && s.lkpdId === (existingSubmission.lkpdId || currentLkpdId)));
         if (target) {
           target.answers = updatedAnswers;
+          if (!target.photoUrl && existingSubmission.photoUrl) target.photoUrl = existingSubmission.photoUrl;
+          if ((!target.photoUrls || target.photoUrls.length === 0) && existingSubmission.photoUrls) target.photoUrls = existingSubmission.photoUrls;
           target.isAiEvaluated = true;
           target.aiScore = evalResult.reviewStatus === 'needs_review' ? undefined : evalResult.totalScore;
           target.aiFeedback = evalResult.overallFeedback;
@@ -372,23 +440,31 @@ export const SiswaLKPD: React.FC<{
       };
     });
 
-    const photoList = Object.values(answers).map(a => a.photoUrl).filter(Boolean) as string[];
+    // Bersihkan draft setelah submit berhasil
+    try {
+      localStorage.removeItem(draftKey);
+      draftLoadedRef.current = null;
+    } catch {}
+
+    const photoList = Object.values(finalAnswers)
+      .map(a => a.photoUrl)
+      .filter((p): p is string => Boolean(p && p.trim()));
 
     const newSubmission: LKPDSubmission = {
-      id: `sub_${currentUser.id}_${Date.now()}`,
+      id: existingSubmission?.id || `sub_${currentUser.id}_${Date.now()}`,
       studentId: currentUser.id,
       studentName: currentUser.name,
       studentClass: currentUser.class || "Kelas 7",
       lkpdId: selectedLkpd?.id || "lkpd_1",
-      photoUrl: photoList[0] || '',
-      photoUrls: photoList,
+      photoUrl: photoList[0] || existingSubmission?.photoUrl || '',
+      photoUrls: photoList.length > 0 ? photoList : (existingSubmission?.photoUrls || []),
       answers: finalAnswers,
       date: new Date().toLocaleString('id-ID'),
       isAiEvaluated: false,
       aiScore: undefined,
       aiFeedback: "",
-      teacherScore: null,
-      teacherFeedback: "",
+      teacherScore: existingSubmission?.teacherScore ?? null,
+      teacherFeedback: existingSubmission?.teacherFeedback || "",
       antiCheat: antiCheatReport,
       status: "Terkumpul"
     };
