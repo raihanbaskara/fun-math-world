@@ -165,7 +165,7 @@ export const SiswaLKPD: React.FC<{
 
     showToast("Mengompresi foto lembar pengerjaan fisik...", "info");
     try {
-      const compressed = await compressImageFile(file, 1000, 0.75);
+      const compressed = await compressImageFile(file, 720, 0.55);
       setAnswers(prev => ({
         ...prev,
         [questionId]: {

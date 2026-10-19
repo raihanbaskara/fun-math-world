@@ -589,7 +589,7 @@ export function App() {
 
               {/* Guru Portals */}
               {currentRoute === 'guru/dashboard' && <GuruDashboard currentUser={currentUser} onNavigate={navigateTo} />}
-              {currentRoute === 'guru/siswa' && <GuruDaftarSiswa currentUser={currentUser} showToast={showToast} />}
+              {currentRoute === 'guru/siswa' && <GuruDaftarSiswa currentUser={currentUser} onNavigate={navigateTo} showToast={showToast} />}
               {currentRoute === 'guru/materi' && <GuruMateri showToast={showToast} />}
               {currentRoute === 'guru/lkpd' && <GuruLKPD showToast={showToast} />}
               {currentRoute === 'guru/latsol' && <GuruLatsol currentUser={currentUser} showToast={showToast} />}

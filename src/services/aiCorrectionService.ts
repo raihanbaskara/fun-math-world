@@ -229,21 +229,38 @@ function parseClientModelJson(text: string) {
   return JSON.parse(cleaned.slice(first, last + 1));
 }
 
-async function callClientGemini(parts: Array<Record<string, unknown>>, apiKey: string, model: string, systemText: string) {
-  const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      systemInstruction: { parts: [{ text: systemText }] },
-      contents: [{ parts }],
-      generationConfig: { responseMimeType: 'application/json', temperature: 0.1 },
-    }),
-    signal: AbortSignal.timeout(30000),
-  });
-  if (!response.ok) throw new Error(`Layanan AI klien gagal (${response.status}).`);
-  const payload = await response.json() as { candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }> };
-  const text = payload.candidates?.[0]?.content?.parts?.map(part => part.text || '').join('') || '';
-  return parseClientModelJson(text);
+const CANDIDATE_MODELS = ['gemini-3.6-flash', 'gemini-3.7-flash', 'gemini-3.8-flash'];
+
+async function callClientGemini(parts: Array<Record<string, unknown>>, apiKey: string, preferredModel: string, systemText: string) {
+  const modelsToTry = [preferredModel, ...CANDIDATE_MODELS.filter(m => m !== preferredModel)];
+  let lastError: any = null;
+
+  for (const model of modelsToTry) {
+    try {
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          systemInstruction: { parts: [{ text: systemText }] },
+          contents: [{ parts }],
+          generationConfig: { responseMimeType: 'application/json', temperature: 0.1 },
+        }),
+        signal: AbortSignal.timeout(30000),
+      });
+      if (!response.ok) {
+        const errJson = await response.json().catch(() => ({}));
+        throw new Error(`Model ${model} gagal (${response.status}): ${errJson?.error?.message || response.statusText}`);
+      }
+      const payload = await response.json() as { candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }> };
+      const text = payload.candidates?.[0]?.content?.parts?.map(part => part.text || '').join('') || '';
+      return parseClientModelJson(text);
+    } catch (err) {
+      lastError = err;
+      console.warn(`[Gemini Fallback] Percobaan model ${model} gagal:`, err);
+    }
+  }
+
+  throw lastError || new Error('Semua model AI cadangan gagal merespons.');
 }
 
 async function evaluateLKPDWithDirectGemini(
@@ -251,7 +268,7 @@ async function evaluateLKPDWithDirectGemini(
   answers: Record<string, { textAnswer: string; photoUrl?: string }>
 ): Promise<LKPDOverallEvaluation> {
   const apiKey = (import.meta as any).env?.VITE_GEMINI_API_KEY || DEFAULT_GEMINI_KEY;
-  const model = 'gemini-3.8-flash';
+  const model = 'gemini-3.6-flash';
   const photoQuestions = questions.filter(q => Boolean(answers[q.id]?.photoUrl));
   const images = new Map<string, { mimeType: string; data: string }>();
 

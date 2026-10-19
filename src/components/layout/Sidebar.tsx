@@ -181,7 +181,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'guru/materi', label: 'Kelola Materi', icon: BookOpen, color: 'cyan' },
     { id: 'guru/lkpd', label: 'Kelola & Nilai LKPD', icon: FileText, color: 'purple' },
     { id: 'guru/latsol', label: 'Ruang Latihan Soal', icon: HelpCircle, color: 'pink' },
-    { id: 'guru/soal', label: 'Bank Soal Essai', icon: PenTool, color: 'orange' },
+    { id: 'guru/soal', label: 'Kelola & Nilai Evaluasi', icon: PenTool, color: 'orange', mathSymbol: 'EVAL' },
     { id: 'guru/rekap', label: 'Rekap Nilai Excel', icon: BarChart3, color: 'yellow' },
     { id: 'guru/pengumuman', label: 'Buat Pengumuman', icon: Bell, color: 'cyan' },
   ];

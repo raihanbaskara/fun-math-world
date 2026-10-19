@@ -239,7 +239,8 @@ export const SiswaEvaluasi: React.FC<{
 
     showToast("Mengompresi foto lembar coretan...", "info");
     try {
-      const compressed = await compressImageFile(file, 1000, 0.75);
+      // Compress to optimal dimensions and quality: ~35-50KB per photo
+      const compressed = await compressImageFile(file, 720, 0.55);
       setPhotos(prev => ({
         ...prev,
         [qId]: compressed
@@ -296,9 +297,12 @@ export const SiswaEvaluasi: React.FC<{
       console.error('Photo evaluation failed:', error);
     }
     const gradingStatus = hasAnyPhoto && (!photoEvaluation || photoEvaluation.reviewStatus === 'needs_review') ? 'needs_review' : 'graded';
+    
+    // Calculate final score: if photo graded by AI use AI score; if needs review, compute provisional score from text
+    const textProvisionalScore = calculateEvaluasiScore(questions, textAnswers, photos);
     const finalScore = hasAnyPhoto
-      ? (gradingStatus === 'graded' ? (photoEvaluation?.totalScore || 0) : 0)
-      : calculateEvaluasiScore(questions, textAnswers, photos);
+      ? (gradingStatus === 'graded' ? (photoEvaluation?.totalScore ?? textProvisionalScore) : textProvisionalScore)
+      : textProvisionalScore;
     const photoList = Object.values(photos).filter(Boolean);
 
     const newSubmission: EvaluationSubmission = {
@@ -345,14 +349,14 @@ export const SiswaEvaluasi: React.FC<{
       const user = draft.users.find(u => u.id === currentUser.id);
       if (user) {
         if (!user.progress) user.progress = { materi: 100, video: 100, lkpd: 100, latsol: 100, evaluasi: 0 };
-        if (gradingStatus === 'graded') user.progress.evaluasi = finalScore;
+        user.progress.evaluasi = finalScore;
       }
     });
 
     setIsSubmitting(false);
     soundService.success();
     if (gradingStatus === 'needs_review') {
-      showToast('Jawaban dan foto berhasil dikumpulkan. Nilai ditahan sampai foto diperiksa guru atau diunggah ulang.', 'info');
+      showToast('Jawaban dan foto berhasil dikumpulkan. Nilai sementara ditampilkan sambil menunggu guru memeriksa foto.', 'info');
     } else {
       confetti({ particleCount: 120, spread: 80 });
       showToast(`Evaluasi Uraian Berhasil Dikumpulkan! Skor Anda: ${finalScore}`, 'success');

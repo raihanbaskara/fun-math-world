@@ -678,37 +678,69 @@ function sanitizeBannedSubtitles(state: DatabaseState): DatabaseState {
 }
 
 function pruneHeavyBlobs(state: DatabaseState): DatabaseState {
-  if (!state.lkpdSubmissions || !Array.isArray(state.lkpdSubmissions)) return state;
-  const prunedSubmissions = state.lkpdSubmissions.map(sub => {
-    if (!sub || typeof sub !== 'object') return sub;
-    let prunedAnswers = sub.answers;
-    if (sub.answers && typeof sub.answers === 'object') {
-      const cleanAnswers: Record<string, any> = {};
-      for (const [k, v] of Object.entries(sub.answers)) {
-        if (v && typeof v === 'object') {
-          cleanAnswers[k] = {
-            ...v,
-            photoUrl: (typeof (v as any).photoUrl === 'string' && (v as any).photoUrl.length > 200) ? '' : (v as any).photoUrl
-          };
-        } else {
-          cleanAnswers[k] = v;
+  if (!state) return state;
+
+  // 1. LKPD Submissions
+  let prunedLkpd = state.lkpdSubmissions;
+  if (Array.isArray(state.lkpdSubmissions)) {
+    prunedLkpd = state.lkpdSubmissions.map(sub => {
+      if (!sub || typeof sub !== 'object') return sub;
+      let prunedAnswers = sub.answers;
+      if (sub.answers && typeof sub.answers === 'object') {
+        const cleanAnswers: Record<string, any> = {};
+        for (const [k, v] of Object.entries(sub.answers)) {
+          if (v && typeof v === 'object') {
+            cleanAnswers[k] = {
+              ...v,
+              photoUrl: (typeof (v as any).photoUrl === 'string' && (v as any).photoUrl.length > 200000) ? '' : (v as any).photoUrl
+            };
+          } else {
+            cleanAnswers[k] = v;
+          }
+        }
+        prunedAnswers = cleanAnswers;
+      }
+      return {
+        ...sub,
+        photoUrl: (sub.photoUrl && sub.photoUrl.length > 200000) ? '' : sub.photoUrl,
+        photoUrls: Array.isArray(sub.photoUrls)
+          ? sub.photoUrls.map(p => (p && p.length > 200000 ? '' : p)).filter(Boolean)
+          : undefined,
+        answers: prunedAnswers
+      };
+    });
+  }
+
+  // 2. Evaluation Submissions
+  let prunedEval = state.evaluationSubmissions;
+  if (Array.isArray(state.evaluationSubmissions)) {
+    prunedEval = state.evaluationSubmissions.map(sub => {
+      if (!sub || typeof sub !== 'object') return sub;
+      let cleanPhotoProofs: Record<string, string> | undefined = undefined;
+      if (sub.photoProofs && typeof sub.photoProofs === 'object') {
+        cleanPhotoProofs = {};
+        for (const [k, v] of Object.entries(sub.photoProofs)) {
+          if (typeof v === 'string') {
+            cleanPhotoProofs[k] = v.length > 200000 ? '' : v;
+          }
         }
       }
-      prunedAnswers = cleanAnswers;
-    }
-    return {
-      ...sub,
-      photoUrl: (sub.photoUrl && sub.photoUrl.length > 200) ? '' : sub.photoUrl,
-      photoUrls: Array.isArray(sub.photoUrls)
-        ? sub.photoUrls.map(p => (p && p.length > 200 ? '' : p)).filter(Boolean)
-        : undefined,
-      answers: prunedAnswers
-    };
-  });
+
+      return {
+        ...sub,
+        photoProof: (sub.photoProof && sub.photoProof.length > 200000) ? '' : sub.photoProof,
+        photoUrls: Array.isArray(sub.photoUrls)
+          ? sub.photoUrls.map(p => (p && p.length > 200000 ? '' : p)).filter(Boolean)
+          : undefined,
+        photoProofs: cleanPhotoProofs || sub.photoProofs
+      };
+    });
+  }
 
   return {
     ...state,
-    lkpdSubmissions: prunedSubmissions
+    lkpdSubmissions: prunedLkpd,
+    evaluationSubmissions: prunedEval
   };
 }
 

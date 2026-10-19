@@ -16,8 +16,9 @@ import {
 
 export const GuruDaftarSiswa: React.FC<{
   currentUser: User;
+  onNavigate?: (route: string) => void;
   showToast: (msg: string, type?: 'info' | 'success' | 'error') => void;
-}> = () => {
+}> = ({ onNavigate }) => {
   const [db, setDb] = useState(storageService.getState());
   const [searchTerm, setSearchTerm] = useState('');
   const [filterClass, setFilterClass] = useState('all');
@@ -167,12 +168,17 @@ export const GuruDaftarSiswa: React.FC<{
                     {/* Status LKPD */}
                     <td className="p-4 text-center">
                       {hasLKPD ? (
-                        <div className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-lime-100 text-emerald-950 border border-slate-950 text-xs font-black shadow-[1.5px_1.5px_0px_0px_#0f172a]">
+                        <button
+                          type="button"
+                          onClick={() => onNavigate && onNavigate('guru/lkpd')}
+                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-lime-100 hover:bg-lime-200 text-emerald-950 border border-slate-950 text-xs font-black shadow-[1.5px_1.5px_0px_0px_#0f172a] cursor-pointer active:translate-y-0.5 transition"
+                          title="Klik untuk membuka penilaian LKPD"
+                        >
                           <CheckCircle2 size={13} className="text-emerald-700" />
                           <span>{lkpdSub.isAiEvaluated && lkpdSub.aiScore === undefined && (lkpdSub.teacherScore === null || lkpdSub.teacherScore === undefined)
                             ? 'Perlu diperiksa guru'
                             : `Selesai (${lkpdSub.teacherScore ?? lkpdSub.aiScore ?? '-'})`}</span>
-                        </div>
+                        </button>
                       ) : (
                         <div className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-300 dark:border-slate-700 text-xs font-bold">
                           <Clock size={13} />
@@ -184,10 +190,15 @@ export const GuruDaftarSiswa: React.FC<{
                     {/* Status Latsol */}
                     <td className="p-4 text-center">
                       {hasLatsol ? (
-                        <div className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-purple-100 text-purple-950 border border-slate-950 text-xs font-black shadow-[1.5px_1.5px_0px_0px_#0f172a]">
+                        <button
+                          type="button"
+                          onClick={() => onNavigate && onNavigate('guru/latsol')}
+                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-purple-100 hover:bg-purple-200 text-purple-950 border border-slate-950 text-xs font-black shadow-[1.5px_1.5px_0px_0px_#0f172a] cursor-pointer active:translate-y-0.5 transition"
+                          title="Klik untuk membuka ruang latihan soal"
+                        >
                           <CheckCircle2 size={13} className="text-purple-700" />
                           <span>Selesai ({latsolSub.score})</span>
-                        </div>
+                        </button>
                       ) : (
                         <div className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-300 dark:border-slate-700 text-xs font-bold">
                           <Clock size={13} />
@@ -199,10 +210,15 @@ export const GuruDaftarSiswa: React.FC<{
                     {/* Status Evaluasi */}
                     <td className="p-4 text-center">
                       {hasEval ? (
-                        <div className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-amber-100 text-amber-950 border border-slate-950 text-xs font-black shadow-[1.5px_1.5px_0px_0px_#0f172a]">
+                        <button
+                          type="button"
+                          onClick={() => onNavigate && onNavigate('guru/soal')}
+                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-amber-100 hover:bg-amber-200 text-amber-950 border border-slate-950 text-xs font-black shadow-[1.5px_1.5px_0px_0px_#0f172a] cursor-pointer active:translate-y-0.5 transition"
+                          title="Klik untuk membuka penilaian Evaluasi"
+                        >
                           <CheckCircle2 size={13} className="text-amber-700" />
                           <span>Selesai ({evalSub.score})</span>
-                        </div>
+                        </button>
                       ) : (
                         <div className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-300 dark:border-slate-700 text-xs font-bold">
                           <Clock size={13} />
