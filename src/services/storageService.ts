@@ -677,6 +677,41 @@ function sanitizeBannedSubtitles(state: DatabaseState): DatabaseState {
   return state;
 }
 
+function pruneHeavyBlobs(state: DatabaseState): DatabaseState {
+  if (!state.lkpdSubmissions || !Array.isArray(state.lkpdSubmissions)) return state;
+  const prunedSubmissions = state.lkpdSubmissions.map(sub => {
+    if (!sub || typeof sub !== 'object') return sub;
+    let prunedAnswers = sub.answers;
+    if (sub.answers && typeof sub.answers === 'object') {
+      const cleanAnswers: Record<string, any> = {};
+      for (const [k, v] of Object.entries(sub.answers)) {
+        if (v && typeof v === 'object') {
+          cleanAnswers[k] = {
+            ...v,
+            photoUrl: (typeof (v as any).photoUrl === 'string' && (v as any).photoUrl.length > 200) ? '' : (v as any).photoUrl
+          };
+        } else {
+          cleanAnswers[k] = v;
+        }
+      }
+      prunedAnswers = cleanAnswers;
+    }
+    return {
+      ...sub,
+      photoUrl: (sub.photoUrl && sub.photoUrl.length > 200) ? '' : sub.photoUrl,
+      photoUrls: Array.isArray(sub.photoUrls)
+        ? sub.photoUrls.map(p => (p && p.length > 200 ? '' : p)).filter(Boolean)
+        : undefined,
+      answers: prunedAnswers
+    };
+  });
+
+  return {
+    ...state,
+    lkpdSubmissions: prunedSubmissions
+  };
+}
+
 class StorageService {
   private state: DatabaseState;
   private listeners: Set<Listener> = new Set();
@@ -1111,10 +1146,10 @@ class StorageService {
       this.notify();
 
       // 3. Upsert state with updated users directly to Supabase
-      const stateToSave = sanitizeBannedSubtitles({
+      const stateToSave = pruneHeavyBlobs(sanitizeBannedSubtitles({
         ...this.state,
         users: mergedUsers
-      });
+      }));
 
       await client
         .from('app_state')
@@ -1229,7 +1264,7 @@ class StorageService {
             this.safeSaveToLocalStorage(this.state);
             this.notify();
           }
-          stateToSave = sanitizeBannedSubtitles(stateToSave);
+          stateToSave = pruneHeavyBlobs(sanitizeBannedSubtitles(stateToSave));
 
           const { error: upsertErr } = await client
             .from('app_state')
@@ -1330,7 +1365,7 @@ class StorageService {
     try {
       const res = await client.from('app_state').upsert({
         id: 'main',
-        data: sanitizeBannedSubtitles(this.state),
+        data: pruneHeavyBlobs(sanitizeBannedSubtitles(this.state)),
         updated_at: new Date().toISOString()
       });
       if (res.error) throw res.error;
