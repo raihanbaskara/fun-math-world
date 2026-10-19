@@ -164,3 +164,67 @@ test('Realtime User Registration: New student account is merged losslessly into 
   assert.ok(found, 'Newly registered student must be present in the merged list');
   assert.equal(found.username, 'budi_baru');
 });
+
+function mergeEvaluationSubmissionsList(primary, secondary) {
+  const map = new Map();
+  (secondary || []).forEach(s => {
+    if (!s) return;
+    const key = s.studentId || s.id;
+    if (key) map.set(key, s);
+  });
+  (primary || []).forEach(s => {
+    if (!s) return;
+    const key = s.studentId || s.id;
+    if (!key) return;
+    const existing = map.get(key);
+    if (existing) {
+      const existingTime = parseInt(existing.id?.split('_').pop() || '0') || 0;
+      const primaryTime = parseInt(s.id?.split('_').pop() || '0') || 0;
+      const isPrimaryNewer = primaryTime >= existingTime;
+
+      const base = isPrimaryNewer ? existing : s;
+      const newer = isPrimaryNewer ? s : existing;
+
+      const merged = { ...base, ...newer };
+      const mergedProofs = {
+        ...(base.photoProofs || {}),
+        ...(newer.photoProofs || {})
+      };
+      for (const [k, v] of Object.entries(mergedProofs)) {
+        if (!v || typeof v !== 'string' || !v.trim()) {
+          delete mergedProofs[k];
+        }
+      }
+      merged.photoProofs = mergedProofs;
+      map.set(key, merged);
+    } else {
+      map.set(key, s);
+    }
+  });
+  return Array.from(map.values());
+}
+
+test('Evaluation Submissions Sync: Multiple photos from different questions are merged losslessly and never deleted', () => {
+  const oldCloudSubmission = {
+    id: 'eval_std_1_1729350000',
+    studentId: 'std_1',
+    photoProofs: { eq_1: 'data:image/jpeg;base64,photo1==' }
+  };
+
+  const newLocalSubmission = {
+    id: 'eval_std_1_1729360000',
+    studentId: 'std_1',
+    photoProofs: { eq_2: 'data:image/jpeg;base64,photo2==' }
+  };
+
+  const merged = mergeEvaluationSubmissionsList([newLocalSubmission], [oldCloudSubmission]);
+
+  // Exactly 1 submission for this student (no duplicates)
+  assert.equal(merged.length, 1);
+  assert.equal(merged[0].studentId, 'std_1');
+
+  // Both photos for eq_1 and eq_2 are preserved losslessly!
+  assert.ok(merged[0].photoProofs['eq_1']);
+  assert.ok(merged[0].photoProofs['eq_2']);
+});
+

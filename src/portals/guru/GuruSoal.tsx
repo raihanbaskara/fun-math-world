@@ -62,15 +62,16 @@ export const GuruSoal: React.FC<{
     studentName: string;
   } | null>(null);
 
-  const extractSubmissionPhotos = (sub: EvaluationSubmission): { url: string; title: string }[] => {
-    const list: { url: string; title: string }[] = [];
+  const extractSubmissionPhotos = (sub: EvaluationSubmission): { url: string; title: string; questionId?: string }[] => {
+    const list: { url: string; title: string; questionId?: string }[] = [];
     if (sub.photoProofs && typeof sub.photoProofs === 'object') {
       Object.entries(sub.photoProofs).forEach(([qId, url]) => {
         if (url && typeof url === 'string' && url.trim()) {
           const q = questions.find(item => item.id === qId);
           list.push({
             url,
-            title: q ? `${q.title}` : `Foto Soal (${list.length + 1})`
+            title: q ? `${q.title}` : `Foto Soal (${list.length + 1})`,
+            questionId: qId
           });
         }
       });
@@ -702,7 +703,7 @@ export const GuruSoal: React.FC<{
                             className="w-full h-auto max-h-48 object-cover cursor-pointer hover:opacity-95"
                             onClick={() => {
                               const allSubPhotos = extractSubmissionPhotos(selectedSub);
-                              const matchIdx = allSubPhotos.findIndex(p => p.url === photoAns);
+                              const matchIdx = allSubPhotos.findIndex(p => (p.questionId && p.questionId === q.id) || p.url === photoAns);
                               setViewPhotoModal({
                                 urls: allSubPhotos.length > 0 ? allSubPhotos : [{ url: photoAns, title: `Soal #${idx + 1}: ${q.title}` }],
                                 activeIdx: matchIdx >= 0 ? matchIdx : 0,
@@ -714,7 +715,7 @@ export const GuruSoal: React.FC<{
                             type="button"
                             onClick={() => {
                               const allSubPhotos = extractSubmissionPhotos(selectedSub);
-                              const matchIdx = allSubPhotos.findIndex(p => p.url === photoAns);
+                              const matchIdx = allSubPhotos.findIndex(p => (p.questionId && p.questionId === q.id) || p.url === photoAns);
                               setViewPhotoModal({
                                 urls: allSubPhotos.length > 0 ? allSubPhotos : [{ url: photoAns, title: `Soal #${idx + 1}: ${q.title}` }],
                                 activeIdx: matchIdx >= 0 ? matchIdx : 0,

@@ -124,7 +124,13 @@ export const SiswaEvaluasi: React.FC<{
   const hasCompletedLatsol = (db.latsolSubmissions && db.latsolSubmissions.some(s => s.studentId === currentUser.id)) || (currentUser.progress?.latsol || 0) > 0;
   const isPrerequisiteMet = (hasCompletedLKPD && hasCompletedLatsol) || bypassPrerequisite;
 
-  const previousSubmission = db.evaluationSubmissions.find(s => s.studentId === currentUser.id);
+  const previousSubmission = [...(db.evaluationSubmissions || [])]
+    .filter(s => s.studentId === currentUser.id)
+    .sort((a, b) => {
+      const timeA = parseInt(a.id?.split('_').pop() || '0') || 0;
+      const timeB = parseInt(b.id?.split('_').pop() || '0') || 0;
+      return timeB - timeA;
+    })[0];
 
   const questions = db.evaluationQuestions || [];
   const [activeQuestionIdx, setActiveQuestionIdx] = useState<number>(0);
@@ -350,7 +356,7 @@ export const SiswaEvaluasi: React.FC<{
       draft.evaluationSubmissions = draft.evaluationSubmissions.filter(
         s => s.studentId !== currentUser.id
       );
-      draft.evaluationSubmissions.push(newSubmission);
+      draft.evaluationSubmissions.unshift(newSubmission);
 
       // Update progress
       const user = draft.users.find(u => u.id === currentUser.id);

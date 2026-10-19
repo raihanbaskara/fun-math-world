@@ -680,34 +680,56 @@ function mergeSubmissionsList<T extends { studentId: string; lkpdId?: string; id
 function mergeEvaluationSubmissionsList(primary: EvaluationSubmission[], secondary: EvaluationSubmission[]): EvaluationSubmission[] {
   const map = new Map<string, EvaluationSubmission>();
   (secondary || []).forEach(s => {
-    const key = s.id || s.studentId;
-    map.set(key, s);
+    if (!s) return;
+    const key = s.studentId || s.id;
+    if (key) map.set(key, s);
   });
   (primary || []).forEach(s => {
-    const key = s.id || s.studentId;
+    if (!s) return;
+    const key = s.studentId || s.id;
+    if (!key) return;
     const existing = map.get(key);
     if (existing) {
-      const merged: EvaluationSubmission = { ...existing, ...s };
-      // Preserve photoProof
-      if ((!s.photoProof || !s.photoProof.trim()) && existing.photoProof && existing.photoProof.trim()) {
-        merged.photoProof = existing.photoProof;
-      }
-      // Preserve photoProofs per question
-      if (s.photoProofs && typeof s.photoProofs === 'object') {
-        const mergedProofs: Record<string, string> = { ...(existing.photoProofs || {}) };
-        for (const [qId, proofUrl] of Object.entries(s.photoProofs)) {
-          if (typeof proofUrl === 'string' && proofUrl.trim()) {
-            mergedProofs[qId] = proofUrl;
-          }
+      // Determine which one is newer based on timestamp in ID or primary precedence
+      const existingTime = parseInt(existing.id?.split('_').pop() || '0') || 0;
+      const primaryTime = parseInt(s.id?.split('_').pop() || '0') || 0;
+      const isPrimaryNewer = primaryTime >= existingTime;
+
+      const base = isPrimaryNewer ? existing : s;
+      const newer = isPrimaryNewer ? s : existing;
+
+      const merged: EvaluationSubmission = { ...base, ...newer };
+
+      // Losslessly merge photoProofs: keep photos for all question IDs, newer takes precedence on conflict
+      const mergedProofs: Record<string, string> = {
+        ...(base.photoProofs || {}),
+        ...(newer.photoProofs || {})
+      };
+      for (const [k, v] of Object.entries(mergedProofs)) {
+        if (!v || typeof v !== 'string' || !v.trim()) {
+          delete mergedProofs[k];
         }
-        merged.photoProofs = mergedProofs;
+      }
+      merged.photoProofs = mergedProofs;
+
+      // Preserve photoProof single string
+      if (!merged.photoProof || !merged.photoProof.trim()) {
+        merged.photoProof = newer.photoProof || base.photoProof || Object.values(mergedProofs)[0] || '';
       }
 
-      // Preserve teacherScore if primary is undefined but secondary has it
-      if (s.teacherScore === undefined || s.teacherScore === null) {
-        if (existing.teacherScore !== undefined && existing.teacherScore !== null) {
-          merged.teacherScore = existing.teacherScore;
-          merged.teacherFeedback = existing.teacherFeedback || merged.teacherFeedback;
+      // Preserve all photoUrls
+      const allUrls = Array.from(new Set([
+        ...(Array.isArray(base.photoUrls) ? base.photoUrls : []),
+        ...(Array.isArray(newer.photoUrls) ? newer.photoUrls : []),
+        ...Object.values(mergedProofs)
+      ])).filter(u => Boolean(u && typeof u === 'string' && u.trim()));
+      merged.photoUrls = allUrls;
+
+      // Preserve teacherScore if newer doesn't have it but older has it
+      if (merged.teacherScore === undefined || merged.teacherScore === null) {
+        if (base.teacherScore !== undefined && base.teacherScore !== null) {
+          merged.teacherScore = base.teacherScore;
+          merged.teacherFeedback = base.teacherFeedback || merged.teacherFeedback;
         }
       }
       map.set(key, merged);
@@ -815,8 +837,8 @@ function pruneHeavyBlobs(state: DatabaseState): DatabaseState {
       if (sub.photoProofs && typeof sub.photoProofs === 'object') {
         cleanPhotoProofs = {};
         for (const [k, v] of Object.entries(sub.photoProofs)) {
-          if (typeof v === 'string') {
-            cleanPhotoProofs[k] = v.length > MAX_PHOTO_CHARS ? '' : v;
+          if (typeof v === 'string' && v.trim().length > 0 && v.length <= MAX_PHOTO_CHARS) {
+            cleanPhotoProofs[k] = v;
           }
         }
       }
