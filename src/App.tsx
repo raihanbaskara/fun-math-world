@@ -7,6 +7,7 @@ import { Sidebar } from '@/components/layout/Sidebar';
 import { Footer } from '@/components/layout/Footer';
 import { Modal } from '@/components/ui/modal';
 import { Button } from '@/components/ui/button';
+import { ShieldAlert, CheckCircle2, Info, X } from 'lucide-react';
 
 // Dedicated Landing Portals (3D Robot Hero + Cards)
 import { SiswaLanding } from '@/portals/siswa/SiswaLanding';
@@ -389,21 +390,33 @@ export function App() {
   return (
     <div className="min-h-screen flex flex-col bg-[#fffdf5] dark:bg-[#090d16] text-slate-900 dark:text-slate-100 transition-colors duration-300 font-sans">
       
-      {/* Toast Notification Stack */}
-      <div className="fixed top-5 right-5 z-50 flex flex-col gap-2.5 max-w-sm pointer-events-none">
+      {/* Toast Notification Stack - Safe z-index & offset below sticky header */}
+      <div className="fixed top-20 right-4 left-4 sm:left-auto sm:right-6 sm:w-96 max-w-full z-[99999] flex flex-col gap-3 pointer-events-none">
         {toasts.map(t => (
           <div
             key={t.id}
-            className={`px-4 py-3 rounded-2xl shadow-2xl text-xs sm:text-sm font-bold flex items-center justify-between gap-3 pointer-events-auto transform transition-all animate-in fade-in slide-in-from-top-2 ${
-              t.type === 'error' ? 'bg-red-500 text-white' : t.type === 'success' ? 'bg-[#ffe600] text-slate-950 border-2 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a]' : 'bg-slate-900 text-white'
+            className={`p-3.5 sm:p-4 rounded-2xl border-3 border-slate-950 dark:border-slate-800 shadow-[4px_4px_0px_0px_#0f172a] dark:shadow-[4px_4px_0px_0px_#000000] text-xs sm:text-sm font-mono font-black flex items-center justify-between gap-3 pointer-events-auto transform transition-all animate-in fade-in slide-in-from-top-3 duration-200 ${
+              t.type === 'error'
+                ? 'bg-red-500 text-white'
+                : t.type === 'success'
+                ? 'bg-[#ffe600] text-slate-950'
+                : 'bg-white dark:bg-slate-900 text-slate-950 dark:text-slate-100'
             }`}
           >
-            <span>{t.msg}</span>
+            <div className="flex items-center gap-2.5 min-w-0">
+              {t.type === 'error' && <ShieldAlert size={18} className="shrink-0 text-white" />}
+              {t.type === 'success' && <CheckCircle2 size={18} className="shrink-0 text-slate-950" />}
+              {t.type === 'info' && <Info size={18} className="shrink-0 text-amber-500 dark:text-amber-400" />}
+              <span className="break-words leading-snug">{t.msg}</span>
+            </div>
             <button
               onClick={() => setToasts(prev => prev.filter(item => item.id !== t.id))}
-              className="text-white/80 hover:text-white text-base leading-none cursor-pointer"
+              className={`p-1 rounded-lg hover:bg-black/15 dark:hover:bg-white/15 transition cursor-pointer shrink-0 ${
+                t.type === 'error' ? 'text-white/90 hover:text-white' : 'text-slate-950 dark:text-slate-100'
+              }`}
+              title="Tutup Notifikasi"
             >
-              &times;
+              <X size={16} />
             </button>
           </div>
         ))}

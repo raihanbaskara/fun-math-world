@@ -201,7 +201,7 @@ export const SiswaEvaluasi: React.FC<{
   }, [textAnswers, photos, activeQuestionIdx, isPrerequisiteMet, previousSubmission]);
 
   // Anti-Cheat Tab Monitor Active while taking exam
-  const { switchCount, getReport } = useAntiCheat({
+  const { switchCount, getReport, pauseAntiCheat } = useAntiCheat({
     active: isPrerequisiteMet && !previousSubmission,
     onViolation: (msg) => {
       showToast(msg, 'error');
@@ -719,7 +719,10 @@ export const SiswaEvaluasi: React.FC<{
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {/* 1. Tombol Kamera Langsung */}
-                <label className="flex items-center justify-center gap-2 p-3.5 bg-[#ffe600]/25 hover:bg-[#ffe600]/40 dark:bg-yellow-950/30 dark:hover:bg-yellow-900/40 border-2 border-slate-950 dark:border-slate-700 rounded-2xl cursor-pointer transition text-xs font-mono font-black text-slate-950 dark:text-slate-100 shadow-[2px_2px_0px_0px_#0f172a] active:translate-y-0.5">
+                <label
+                  onClick={() => pauseAntiCheat(90000)}
+                  className="flex items-center justify-center gap-2 p-3.5 bg-[#ffe600]/25 hover:bg-[#ffe600]/40 dark:bg-yellow-950/30 dark:hover:bg-yellow-900/40 border-2 border-slate-950 dark:border-slate-700 rounded-2xl cursor-pointer transition text-xs font-mono font-black text-slate-950 dark:text-slate-100 shadow-[2px_2px_0px_0px_#0f172a] active:translate-y-0.5"
+                >
                   <Camera size={16} />
                   <span>Ambil Foto Kamera</span>
                   <input
@@ -732,7 +735,10 @@ export const SiswaEvaluasi: React.FC<{
                 </label>
 
                 {/* 2. Tombol Galeri / File */}
-                <label className="flex items-center justify-center gap-2 p-3.5 bg-slate-50 dark:bg-slate-900 border-2 border-dashed border-slate-950 dark:border-slate-700 rounded-2xl cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition text-xs font-mono font-bold text-slate-700 dark:text-slate-300 active:translate-y-0.5">
+                <label
+                  onClick={() => pauseAntiCheat(90000)}
+                  className="flex items-center justify-center gap-2 p-3.5 bg-slate-50 dark:bg-slate-900 border-2 border-dashed border-slate-950 dark:border-slate-700 rounded-2xl cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition text-xs font-mono font-bold text-slate-700 dark:text-slate-300 active:translate-y-0.5"
+                >
                   <Upload size={16} />
                   <span>Pilih dari Galeri / File</span>
                   <input
