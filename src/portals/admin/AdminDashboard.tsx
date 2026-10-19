@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { DoubleBezelCard, Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowFillButton } from '@/components/ui/arrow-fill-button';
@@ -11,7 +11,13 @@ export const AdminDashboard: React.FC<{
   onNavigate: (route: string) => void;
   showToast: (msg: string, type?: 'info' | 'success' | 'error') => void;
 }> = ({ currentUser, onNavigate, showToast }) => {
-  const db = storageService.getState();
+  const [db, setDb] = useState(storageService.getState());
+
+  useEffect(() => {
+    return storageService.subscribe(newState => {
+      setDb({ ...newState });
+    });
+  }, []);
 
   const handleResetAllLocks = () => {
     if (confirm('Lepas seluruh kunci sesi perangkat (Single Device Lock) untuk semua akun?')) {

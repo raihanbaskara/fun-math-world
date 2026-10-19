@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { storageService } from '@/services/storageService';
 import { User } from '@/types';
@@ -20,7 +20,13 @@ export const GuruDashboard: React.FC<{
   currentUser: User;
   onNavigate: (route: string) => void;
 }> = ({ currentUser, onNavigate }) => {
-  const db = storageService.getState();
+  const [db, setDb] = useState(storageService.getState());
+
+  useEffect(() => {
+    return storageService.subscribe(newState => {
+      setDb({ ...newState });
+    });
+  }, []);
 
   const students = db.users.filter(u => u.role === 'siswa');
   const studentCount = students.length;

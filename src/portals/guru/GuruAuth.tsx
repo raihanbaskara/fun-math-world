@@ -20,7 +20,7 @@ export const GuruAuth: React.FC<GuruAuthProps> = ({
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     soundService.click();
 
@@ -29,9 +29,17 @@ export const GuruAuth: React.FC<GuruAuthProps> = ({
       const cleanUsername = username.trim().toLowerCase();
       const cleanPassword = password.trim();
 
-      const user = db.users.find(
+      let user = db.users.find(
         u => u.username.toLowerCase() === cleanUsername && u.password.trim() === cleanPassword && u.role === 'guru'
       );
+
+      if (!user) {
+        // Quick cloud pull in case teacher was just registered from another device
+        const remoteUsers = await storageService.pullRemoteUsers();
+        user = remoteUsers.find(
+          u => u.username.toLowerCase() === cleanUsername && u.password.trim() === cleanPassword && u.role === 'guru'
+        );
+      }
 
       if (!user) {
         soundService.alert();

@@ -775,7 +775,20 @@ class StorageService {
         this.localBroadcastChannel = new BroadcastChannel('fmw_session_sync');
         this.localBroadcastChannel.onmessage = (event) => {
           const data = event.data;
-          if (!data || !data.userId || !data.sessionToken) return;
+          if (!data) return;
+
+          // Instant same-browser cross-tab sync when a new user is created
+          if ((data.type === 'user_created' || data.event === 'user_created') && data.user?.id) {
+            const exists = this.state.users.some(u => u.id === data.user.id);
+            if (!exists) {
+              this.state.users.push(data.user);
+              this.safeSaveToLocalStorage(this.state);
+              this.notify();
+            }
+            return;
+          }
+
+          if (!data.userId || !data.sessionToken) return;
           const target = this.state.users.find(u => u.id === data.userId);
           if (target) {
             const currentTs = getSessionTime(target);
@@ -807,6 +820,21 @@ class StorageService {
                 target.sessionToken = payload.sessionToken;
                 target.deviceId = payload.deviceId || null;
                 target.sessionUpdatedAt = payload.timestamp;
+                this.safeSaveToLocalStorage(this.state);
+                this.notify();
+              }
+            }
+          }
+        )
+        .on(
+          'broadcast',
+          { event: 'user_created' },
+          (eventPayload: any) => {
+            const newUser = eventPayload?.payload?.user;
+            if (newUser && newUser.id) {
+              const exists = this.state.users.some(u => u.id === newUser.id);
+              if (!exists) {
+                this.state.users.push(newUser);
                 this.safeSaveToLocalStorage(this.state);
                 this.notify();
               }
@@ -1007,6 +1035,49 @@ class StorageService {
     }
 
     // Redundant pulses to ensure arrival across mobile network handshakes
+    setTimeout(doSend, 300);
+    setTimeout(doSend, 800);
+  }
+
+  public broadcastUserCreated(user: User): void {
+    if (!user || !user.id) return;
+    const payload = { user };
+
+    // 1. Native HTML5 BroadcastChannel for instantaneous same-browser cross-tab sync (0ms)
+    try {
+      if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+        if (!this.localBroadcastChannel) {
+          this.localBroadcastChannel = new BroadcastChannel('fmw_session_sync');
+        }
+        this.localBroadcastChannel.postMessage({
+          type: 'user_created',
+          user
+        });
+      }
+    } catch (e) {
+      console.warn('[StorageService] Local broadcast user_created warning:', e);
+    }
+
+    // 2. Supabase Realtime WebSocket for cross-device sync (<50ms)
+    if (!this.realtimeChannel) {
+      this.initRealtimeChannel();
+    }
+
+    const doSend = () => {
+      if (this.realtimeChannel) {
+        try {
+          this.realtimeChannel.send({
+            type: 'broadcast',
+            event: 'user_created',
+            payload
+          });
+        } catch (e) {
+          console.warn('[StorageService] WebSocket broadcast user_created warning:', e);
+        }
+      }
+    };
+
+    doSend();
     setTimeout(doSend, 300);
     setTimeout(doSend, 800);
   }

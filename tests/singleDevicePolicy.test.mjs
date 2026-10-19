@@ -141,3 +141,26 @@ test('Single Device Policy: Out of order or older login cannot kick a newer sess
   const shouldKick = checkTokenKick(dbUserOld, localTokenNew);
   assert.equal(shouldKick, false, 'A newer local session must never be kicked by older cloud token');
 });
+
+test('Realtime User Registration: New student account is merged losslessly into admin/teacher state', () => {
+  const existingUsers = [
+    { id: 'admin_1', username: 'admin', role: 'admin' },
+    { id: 'guru_1', username: 'guru', role: 'guru' },
+  ];
+
+  const newlyRegisteredStudent = {
+    id: 'siswa_999',
+    username: 'budi_baru',
+    name: 'Budi Baru',
+    role: 'siswa',
+    class: 'Kelas 7-B',
+    sessionToken: 'sess_budi_1729312020000',
+    sessionUpdatedAt: 1729312020000
+  };
+
+  const merged = mergeUsersList([newlyRegisteredStudent], existingUsers);
+  assert.equal(merged.length, 3, 'Must contain admin, guru, and newly registered student');
+  const found = merged.find(u => u.id === 'siswa_999');
+  assert.ok(found, 'Newly registered student must be present in the merged list');
+  assert.equal(found.username, 'budi_baru');
+});

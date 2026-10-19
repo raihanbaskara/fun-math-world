@@ -30,7 +30,7 @@ export default function SiswaAuthSwitch({
   const [regClass, setRegClass] = useState("7-A");
   const [showRegPassword, setShowRegPassword] = useState(false);
 
-  const handleSignIn = (e: React.FormEvent) => {
+  const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     soundService.click();
 
@@ -39,12 +39,23 @@ export default function SiswaAuthSwitch({
       const cleanUsername = signInUsername.trim().toLowerCase();
       const cleanPassword = signInPassword.trim();
 
-      const user = db.users.find(
+      let user = db.users.find(
         (u) =>
           u.username.toLowerCase() === cleanUsername &&
           u.password.trim() === cleanPassword &&
           u.role === "siswa"
       );
+
+      if (!user) {
+        // Quick cloud pull in case account was just created from another device
+        const remoteUsers = await storageService.pullRemoteUsers();
+        user = remoteUsers.find(
+          (u) =>
+            u.username.toLowerCase() === cleanUsername &&
+            u.password.trim() === cleanPassword &&
+            u.role === "siswa"
+        );
+      }
 
       if (!user) {
         soundService.alert();
@@ -142,6 +153,8 @@ export default function SiswaAuthSwitch({
       } catch (updateErr) {
         console.warn("Storage update warning on register:", updateErr);
       }
+
+      storageService.broadcastUserCreated(newUser);
 
       try {
         storageService.setCurrentSessionUser(newUser, newSessionToken);

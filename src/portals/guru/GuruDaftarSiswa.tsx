@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { storageService } from '@/services/storageService';
 import { User } from '@/types';
 import {
@@ -18,9 +18,15 @@ export const GuruDaftarSiswa: React.FC<{
   currentUser: User;
   showToast: (msg: string, type?: 'info' | 'success' | 'error') => void;
 }> = () => {
-  const db = storageService.getState();
+  const [db, setDb] = useState(storageService.getState());
   const [searchTerm, setSearchTerm] = useState('');
   const [filterClass, setFilterClass] = useState('all');
+
+  useEffect(() => {
+    return storageService.subscribe(newState => {
+      setDb({ ...newState });
+    });
+  }, []);
 
   const students = db.users.filter(u => u.role === 'siswa');
 

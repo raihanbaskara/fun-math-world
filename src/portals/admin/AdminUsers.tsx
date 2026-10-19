@@ -112,6 +112,8 @@ export const AdminUsers: React.FC<{
       draft.users.push(newUser);
     });
 
+    storageService.broadcastUserCreated(newUser);
+
     setDbState(storageService.getState());
     setIsAddOpen(false);
     setName('');
