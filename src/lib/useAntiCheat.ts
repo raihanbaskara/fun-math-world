@@ -163,12 +163,26 @@ export function useAntiCheat({ active, onViolation }: UseAntiCheatOptions) {
     pausedUntilRef.current = 0;
   };
 
+  const restoreReport = useCallback((report?: Partial<AntiCheatReport> | null) => {
+    if (!report) return;
+    if (typeof report.switchCount === 'number') {
+      setSwitchCount(report.switchCount);
+    }
+    if (typeof report.totalLeaveSeconds === 'number') {
+      setTotalLeaveSeconds(report.totalLeaveSeconds);
+    }
+    if (Array.isArray(report.log)) {
+      setLogs(report.log);
+    }
+  }, []);
+
   return {
     switchCount,
     totalLeaveSeconds,
     logs,
     getReport,
     resetReport,
+    restoreReport,
     pauseAntiCheat,
     resumeAntiCheat,
     markFilePickerOpen,

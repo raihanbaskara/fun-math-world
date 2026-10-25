@@ -207,23 +207,11 @@ export const SiswaEvaluasi: React.FC<{
   }, [textAnswers, photos, activeQuestionIdx, isPrerequisiteMet, previousSubmission]);
 
   const [showConfirmSubmitModal, setShowConfirmSubmitModal] = useState<boolean>(false);
-  const [violationAlert, setViolationAlert] = useState<{ show: boolean; count: number; message: string }>({
-    show: false,
-    count: 0,
-    message: ''
-  });
 
-  // Anti-Cheat Tab Monitor Active while taking exam
-  const { switchCount, getReport, pauseAntiCheat, markFilePickerOpen, markFilePickerClosed } = useAntiCheat({
-    active: isPrerequisiteMet && !previousSubmission,
-    onViolation: (msg, count) => {
-      showToast(msg, 'error');
-      setViolationAlert({
-        show: true,
-        count: count || switchCount + 1,
-        message: msg
-      });
-    }
+  // Anti-Cheat is disabled in Evaluasi (active exclusively in Latsol per user requirement)
+  const { switchCount, getReport, markFilePickerOpen, markFilePickerClosed } = useAntiCheat({
+    active: false,
+    onViolation: () => {}
   });
 
   // Countdown timer
@@ -686,14 +674,6 @@ export const SiswaEvaluasi: React.FC<{
         </div>
       </div>
 
-      {/* Anti-cheat tab alert */}
-      {switchCount > 0 && (
-        <div className="bg-red-100 dark:bg-red-950/50 border-3 border-red-950 dark:border-red-800 rounded-2xl p-4 shadow-[4px_4px_0px_0px_#7f1d1d] dark:shadow-[4px_4px_0px_0px_#000000] flex items-center gap-3 text-red-950 dark:text-red-200 font-mono text-xs font-black">
-          <ShieldAlert size={22} className="text-red-600 dark:text-red-400 shrink-0" />
-          <span>Peringatan: Kamu telah berpindah tab sebanyak {switchCount}x. Seluruh durasi keluar dicatat dan dilaporkan ke Portal Guru.</span>
-        </div>
-      )}
-
       {/* Question Stepper Tabs */}
       <div className="flex flex-wrap gap-2">
         {questions.map((q, idx) => {
@@ -901,42 +881,6 @@ export const SiswaEvaluasi: React.FC<{
           </button>
         )}
       </div>
-
-      {/* Front & Center Anti-Cheat Violation Alert Modal */}
-      {violationAlert.show && (
-        <div className="fixed inset-0 z-[100000] bg-black/80 backdrop-blur-xs flex items-center justify-center p-4 animate-in zoom-in-95">
-          <div className="bg-white dark:bg-[#111827] border-4 border-red-600 dark:border-red-500 rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-[8px_8px_0px_0px_#7f1d1d] dark:shadow-[8px_8px_0px_0px_#000000] space-y-5 text-center">
-            <div className="w-16 h-16 mx-auto bg-red-100 dark:bg-red-950/60 border-3 border-red-600 rounded-2xl flex items-center justify-center text-red-600 dark:text-red-400 shadow-[4px_4px_0px_0px_#7f1d1d] animate-bounce">
-              <ShieldAlert size={36} />
-            </div>
-
-            <div className="space-y-2">
-              <span className="text-[11px] font-mono font-black uppercase tracking-wider px-3 py-1 bg-red-500 text-white border-2 border-slate-950 rounded-xl shadow-[2px_2px_0px_0px_#0f172a]">
-                PERINGATAN INTEGRITAS UJIAN
-              </span>
-              <h3 className="text-xl font-black font-mono text-slate-950 dark:text-slate-100 mt-2">
-                Terdeteksi Berpindah Tab ({violationAlert.count}x)
-              </h3>
-              <p className="text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-300 leading-relaxed">
-                Kamu meninggalkan halaman ujian. Seluruh insiden perpindahan tab dan durasi waktu di luar aplikasi dicatat otomatis dan dilaporkan kepada Guru!
-              </p>
-            </div>
-
-            <div className="pt-2">
-              <button
-                type="button"
-                onClick={() => {
-                  soundService.click();
-                  setViolationAlert({ show: false, count: 0, message: '' });
-                }}
-                className="w-full py-3.5 bg-red-500 hover:bg-red-600 text-white font-mono text-xs font-black rounded-2xl border-3 border-slate-950 shadow-[4px_4px_0px_0px_#0f172a] dark:shadow-[4px_4px_0px_0px_#000000] cursor-pointer"
-              >
-                Saya Mengerti &amp; Kembali Mengerjakan
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Confirmation Modal Before Final Evaluation Submission */}
       {showConfirmSubmitModal && (

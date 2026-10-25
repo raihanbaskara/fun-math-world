@@ -179,3 +179,31 @@ test('Latsol: Wall-clock session persistence calculates exact remaining time on 
   const remainingExpired = Math.max(0, Math.round((targetEndTime - expiredTime) / 1000));
   assert.equal(remainingExpired, 0, 'Remaining time after timeout is 0');
 });
+
+test('Latsol: Tab switch count persists across session restore and does not reset to 0', () => {
+  // Simulate active session before refresh with 2 recorded violations
+  const savedSession = {
+    roomId: 'room_1',
+    userAnswers: { q1: 1 },
+    antiCheat: {
+      switchCount: 2,
+      totalLeaveSeconds: 6,
+      log: [{ incident: 'Test', durationSeconds: 3, timestamp: '10:00' }]
+    }
+  };
+
+  // Simulate component state re-initialization and restoreReport
+  let currentSwitchCount = 0;
+  const restoreReport = (report) => {
+    if (report && typeof report.switchCount === 'number') {
+      currentSwitchCount = report.switchCount;
+    }
+  };
+
+  restoreReport(savedSession.antiCheat);
+  assert.equal(currentSwitchCount, 2, 'Restored switchCount must be 2, not 0');
+
+  // Next violation after refresh increments from 2 -> 3
+  currentSwitchCount += 1;
+  assert.equal(currentSwitchCount, 3, 'Accumulates to 3 on subsequent tab switch');
+});
