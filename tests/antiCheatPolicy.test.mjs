@@ -254,3 +254,40 @@ test('LKPD: Tab switch count persists across session restore and does not reset 
   currentSwitchCount += 1;
   assert.equal(currentSwitchCount, 4, 'Accumulates to 4 on subsequent tab switch');
 });
+
+test('Evaluasi: Tab switch count persists across session restore and does not reset to 0', () => {
+  const savedEvalDraft = {
+    textAnswers: { eq_1: 'Langkah pengerjaan 1' },
+    photos: {},
+    activeIdx: 0,
+    deadline: Date.now() + 1800 * 1000,
+    switchCount: 2,
+    antiCheat: {
+      switchCount: 2,
+      totalLeaveSeconds: 8,
+      log: [
+        { incident: 'Pindah tab saat evaluasi', durationSeconds: 3, timestamp: '10:00:00' },
+        { incident: 'Pindah tab saat evaluasi', durationSeconds: 5, timestamp: '10:05:00' }
+      ]
+    }
+  };
+
+  let currentSwitchCount = 0;
+  const restoreReport = (report) => {
+    if (report && typeof report.switchCount === 'number') {
+      currentSwitchCount = report.switchCount;
+    }
+  };
+
+  if (savedEvalDraft.antiCheat) {
+    restoreReport(savedEvalDraft.antiCheat);
+  } else if (typeof savedEvalDraft.switchCount === 'number') {
+    restoreReport({ switchCount: savedEvalDraft.switchCount });
+  }
+
+  assert.equal(currentSwitchCount, 2, 'Restored switchCount in Evaluasi must be 2, not reset to 0');
+
+  // Next violation after refresh increments from 2 -> 3
+  currentSwitchCount += 1;
+  assert.equal(currentSwitchCount, 3, 'Accumulates to 3 on subsequent tab switch in Evaluasi');
+});

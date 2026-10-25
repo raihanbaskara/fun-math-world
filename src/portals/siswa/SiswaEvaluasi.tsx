@@ -161,6 +161,13 @@ export const SiswaEvaluasi: React.FC<{
           setActiveQuestionIdx(parsed.activeIdx);
         }
 
+        // Restore anti-cheat switch count so it NEVER resets to 0 on refresh!
+        if (parsed.antiCheat) {
+          restoreReport(parsed.antiCheat);
+        } else if (typeof parsed.switchCount === 'number') {
+          restoreReport({ switchCount: parsed.switchCount, totalLeaveSeconds: 0, log: [] });
+        }
+
         // Hitung sisa waktu berdasarkan deadline timestamp agar timer tidak reset ulang
         if (parsed.deadline) {
           const remaining = Math.max(10, Math.round((parsed.deadline - Date.now()) / 1000));
@@ -203,7 +210,9 @@ export const SiswaEvaluasi: React.FC<{
         textAnswers,
         photos,
         deadline,
-        activeIdx: activeQuestionIdx
+        activeIdx: activeQuestionIdx,
+        switchCount,
+        antiCheat: getReport()
       }));
     } catch (e) {
       console.warn("Draft save warning:", e);
@@ -212,10 +221,27 @@ export const SiswaEvaluasi: React.FC<{
 
   const [showConfirmSubmitModal, setShowConfirmSubmitModal] = useState<boolean>(false);
 
-  // Anti-Cheat is disabled in Evaluasi (active exclusively in Latsol per user requirement)
-  const { switchCount, getReport, markFilePickerOpen, markFilePickerClosed } = useAntiCheat({
-    active: false,
-    onViolation: () => {}
+  // Anti-Cheat Tab Monitor Active while taking exam
+  const { switchCount, getReport, resetReport, restoreReport, pauseAntiCheat, markFilePickerOpen, markFilePickerClosed } = useAntiCheat({
+    active: isPrerequisiteMet && !previousSubmission && !isSubmitting,
+    onViolation: (msg, count) => {
+      soundService.alert();
+      showToast(msg, 'error');
+      const nextCount = count || switchCount + 1;
+
+      // Instantly persist violation to localStorage draft so it survives refresh!
+      try {
+        const rawDraft = localStorage.getItem(draftKey);
+        const currentDraft = rawDraft ? JSON.parse(rawDraft) : {};
+        currentDraft.switchCount = nextCount;
+        currentDraft.antiCheat = {
+          switchCount: nextCount,
+          totalLeaveSeconds: currentDraft.antiCheat?.totalLeaveSeconds || 0,
+          log: currentDraft.antiCheat?.log || []
+        };
+        localStorage.setItem(draftKey, JSON.stringify(currentDraft));
+      } catch {}
+    }
   });
 
   // Countdown timer
@@ -681,6 +707,14 @@ export const SiswaEvaluasi: React.FC<{
           <span>{Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, '0')}</span>
         </div>
       </div>
+
+      {/* Anti-cheat tab alert */}
+      {switchCount > 0 && (
+        <div className="bg-red-100 dark:bg-red-950/50 border-3 border-red-950 dark:border-red-800 rounded-2xl p-4 shadow-[4px_4px_0px_0px_#7f1d1d] dark:shadow-[4px_4px_0px_0px_#000000] flex items-center gap-3 text-red-950 dark:text-red-200 font-mono text-xs font-black animate-in fade-in">
+          <ShieldAlert size={22} className="text-red-600 dark:text-red-400 shrink-0" />
+          <span>Peringatan: Kamu telah berpindah tab sebanyak {switchCount}x. Seluruh durasi keluar dicatat dan dilaporkan ke Portal Guru.</span>
+        </div>
+      )}
 
       {/* Question Stepper Tabs */}
       <div className="flex flex-wrap gap-2">
