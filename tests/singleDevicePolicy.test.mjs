@@ -38,7 +38,7 @@ function mergeUsersList(primary, secondary) {
           sessionToken: useSecondarySession ? exist.sessionToken : (u.sessionToken !== undefined ? u.sessionToken : exist.sessionToken),
           deviceId: useSecondarySession ? exist.deviceId : (u.deviceId !== undefined ? u.deviceId : exist.deviceId),
           sessionUpdatedAt: useSecondarySession ? exist.sessionUpdatedAt : (u.sessionUpdatedAt !== undefined ? u.sessionUpdatedAt : exist.sessionUpdatedAt),
-          isApproved: u.isApproved !== undefined ? u.isApproved : (exist.isApproved !== undefined ? exist.isApproved : true),
+          isApproved: u.isApproved !== undefined ? u.isApproved : (exist.isApproved !== undefined ? exist.isApproved : (u.role === 'siswa' ? false : true)),
           progress: {
             materi: Math.max(exist.progress?.materi || 0, u.progress?.materi || 0),
             video: Math.max(exist.progress?.video || 0, u.progress?.video || 0),
@@ -244,7 +244,7 @@ test('Admin Approval Policy: Newly registered student requires admin approval be
 
   // Login verification function simulating SiswaAuth handleSignIn
   function attemptLogin(user) {
-    if (user.role === 'siswa' && user.isApproved === false) {
+    if (user.role === 'siswa' && user.isApproved !== true) {
       return { success: false, reason: 'PENDING_APPROVAL' };
     }
     return { success: true, token: 'sess_' + user.id + '_' + Date.now() };
@@ -272,28 +272,34 @@ test('Admin Approval Policy: Newly registered student requires admin approval be
   assert.ok(postApprovalResult.token.startsWith('sess_siswa_pending_1_'));
 });
 
-test('Admin Approval Policy: Existing accounts without isApproved field default to true (backward compatibility)', () => {
-  const legacyStudent = {
-    id: 'legacy_student_1',
-    username: 'legacy_user',
-    name: 'Legacy User',
-    role: 'siswa'
-    // isApproved is undefined in legacy records
+test('Admin Approval Policy: Default system users and approved students have isApproved: true and login immediately', () => {
+  const defaultStudent = {
+    id: 'std_1',
+    username: 'siswa1',
+    name: 'Aisyah Putri',
+    role: 'siswa',
+    isApproved: true
   };
 
   function attemptLogin(user) {
-    if (user.role === 'siswa' && user.isApproved === false) {
+    if (user.role === 'siswa' && user.isApproved !== true) {
       return { success: false, reason: 'PENDING_APPROVAL' };
     }
     return { success: true };
   }
 
-  // Legacy user must be able to log in without getting locked out
-  const loginResult = attemptLogin(legacyStudent);
+  // Pre-approved default students can log in immediately
+  const loginResult = attemptLogin(defaultStudent);
   assert.equal(loginResult.success, true);
 
-  // Merge preserves backward compatibility
-  const merged = mergeUsersList([legacyStudent], []);
-  assert.equal(merged[0].isApproved, undefined);
-  assert.notEqual(merged[0].isApproved, false);
+  // Unapproved or undefined student is blocked
+  const unapprovedStudent = {
+    id: 'siswa_new_2',
+    username: 'siswa_baru',
+    name: 'Siswa Baru',
+    role: 'siswa'
+  };
+  const blockedResult = attemptLogin(unapprovedStudent);
+  assert.equal(blockedResult.success, false);
+  assert.equal(blockedResult.reason, 'PENDING_APPROVAL');
 });

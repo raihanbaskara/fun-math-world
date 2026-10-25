@@ -12,7 +12,7 @@ export const AdminDashboard: React.FC<{
   showToast: (msg: string, type?: 'info' | 'success' | 'error') => void;
 }> = ({ currentUser, onNavigate, showToast }) => {
   const [db, setDb] = useState(storageService.getState());
-  const pendingStudents = (db.users || []).filter(u => u.role === 'siswa' && u.isApproved === false);
+  const pendingStudents = (db.users || []).filter(u => u.role === 'siswa' && u.isApproved !== true);
   const pendingCount = pendingStudents.length;
 
   useEffect(() => {

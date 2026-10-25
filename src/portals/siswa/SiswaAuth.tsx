@@ -66,7 +66,7 @@ export default function SiswaAuthSwitch({
       }
 
       // Check if student account is approved by admin (unapproved accounts are blocked)
-      if (user.role === "siswa" && user.isApproved === false) {
+      if (user.role === "siswa" && user.isApproved !== true) {
         soundService.alert();
         setPendingApprovalUser({ name: user.name, username: user.username });
         setShowApprovalModal(true);

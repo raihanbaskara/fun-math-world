@@ -54,7 +54,7 @@ export const AdminUsers: React.FC<{
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
   const users = dbState.users || [];
-  const pendingCount = users.filter(u => u.role === 'siswa' && u.isApproved === false).length;
+  const pendingCount = users.filter(u => u.role === 'siswa' && u.isApproved !== true).length;
 
   const togglePasswordVisibility = (userId: string) => {
     soundService.click();
@@ -188,7 +188,7 @@ export const AdminUsers: React.FC<{
       filterRole === 'all'
         ? true
         : filterRole === 'pending'
-        ? u.role === 'siswa' && u.isApproved === false
+        ? u.role === 'siswa' && u.isApproved !== true
         : u.role === filterRole;
     const matchesSearch = u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                           u.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -361,7 +361,7 @@ export const AdminUsers: React.FC<{
                   </td>
                   <td className="p-3.5">
                     {u.role === 'siswa' ? (
-                      u.isApproved === false ? (
+                      u.isApproved !== true ? (
                         <span className="inline-flex whitespace-nowrap items-center gap-1.5 px-2.5 py-1 rounded-xl text-[11px] font-black font-mono bg-rose-100 text-rose-950 border-2 border-rose-500 shadow-[1.5px_1.5px_0px_0px_#f43f5e] animate-pulse">
                           <Clock size={12} className="text-rose-600 shrink-0" />
                           <span>Menunggu ACC</span>
@@ -420,7 +420,7 @@ export const AdminUsers: React.FC<{
                   </td>
                   <td className="p-3.5 text-center">
                     <div className="flex items-center justify-center gap-2 flex-wrap sm:flex-nowrap">
-                      {u.role === 'siswa' && u.isApproved === false && (
+                      {u.role === 'siswa' && u.isApproved !== true && (
                         <button
                           type="button"
                           onClick={() => handleApproveUser(u.id, u.name)}
@@ -431,7 +431,7 @@ export const AdminUsers: React.FC<{
                           <span>Setujui (ACC)</span>
                         </button>
                       )}
-                      {u.role === 'siswa' && u.isApproved !== false && (
+                      {u.role === 'siswa' && u.isApproved === true && (
                         <button
                           type="button"
                           onClick={() => handleRevokeUser(u.id, u.name)}
