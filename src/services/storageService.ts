@@ -26,6 +26,7 @@ export const defaultDatabaseState: DatabaseState = {
       avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=Aisyah",
       sessionToken: null,
       deviceId: null,
+      isApproved: true,
       progress: { materi: 85, video: 70, lkpd: 100, latsol: 90, evaluasi: 90 },
       readAnnouncements: []
     },
@@ -39,6 +40,7 @@ export const defaultDatabaseState: DatabaseState = {
       avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=Budi",
       sessionToken: null,
       deviceId: null,
+      isApproved: true,
       progress: { materi: 60, video: 50, lkpd: 0, latsol: 0, evaluasi: 0 },
       readAnnouncements: []
     },
@@ -52,6 +54,7 @@ export const defaultDatabaseState: DatabaseState = {
       avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=Citra",
       sessionToken: null,
       deviceId: null,
+      isApproved: true,
       progress: { materi: 0, video: 0, lkpd: 0, latsol: 0, evaluasi: 0 },
       readAnnouncements: []
     },
@@ -65,7 +68,8 @@ export const defaultDatabaseState: DatabaseState = {
       nip: "198503152010012003",
       avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=Rahmawati",
       sessionToken: null,
-      deviceId: null
+      deviceId: null,
+      isApproved: true
     },
     {
       id: "adm_1",
@@ -76,7 +80,8 @@ export const defaultDatabaseState: DatabaseState = {
       class: "Administrator Lab & Sistem",
       avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=AdminToni",
       sessionToken: null,
-      deviceId: null
+      deviceId: null,
+      isApproved: true
     }
   ],
   materials: [
@@ -583,6 +588,7 @@ export function mergeUsersList(primary: User[], secondary: User[]): User[] {
         map.set(u.id, {
           ...exist,
           ...u,
+          isApproved: u.isApproved !== undefined ? u.isApproved : (exist.isApproved !== undefined ? exist.isApproved : true),
           sessionToken: useSecondarySession ? exist.sessionToken : (u.sessionToken !== undefined ? u.sessionToken : exist.sessionToken),
           deviceId: useSecondarySession ? exist.deviceId : (u.deviceId !== undefined ? u.deviceId : exist.deviceId),
           sessionUpdatedAt: useSecondarySession ? exist.sessionUpdatedAt : (u.sessionUpdatedAt !== undefined ? u.sessionUpdatedAt : exist.sessionUpdatedAt),

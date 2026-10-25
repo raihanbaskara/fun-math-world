@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { ArrowLeft, User as UserIcon, Lock, GraduationCap, ShieldCheck, Eye, EyeOff, Sparkles, BookOpen } from "lucide-react";
+import { ArrowLeft, User as UserIcon, Lock, GraduationCap, ShieldCheck, Eye, EyeOff, Sparkles, BookOpen, Clock, UserCheck, ShieldAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { storageService } from "@/services/storageService";
 import { soundService } from "@/services/soundService";
@@ -17,6 +17,8 @@ export default function SiswaAuthSwitch({
   showToast,
 }: SiswaAuthProps) {
   const [isSignUp, setIsSignUp] = useState(false);
+  const [showApprovalModal, setShowApprovalModal] = useState(false);
+  const [pendingApprovalUser, setPendingApprovalUser] = useState<{ name: string; username: string } | null>(null);
 
   // Sign In State
   const [signInUsername, setSignInUsername] = useState("");
@@ -60,6 +62,14 @@ export default function SiswaAuthSwitch({
       if (!user) {
         soundService.alert();
         showToast("NIS / Username atau Kata Sandi siswa tidak sesuai!", "error");
+        return;
+      }
+
+      // Check if student account is approved by admin (unapproved accounts are blocked)
+      if (user.role === "siswa" && user.isApproved === false) {
+        soundService.alert();
+        setPendingApprovalUser({ name: user.name, username: user.username });
+        setShowApprovalModal(true);
         return;
       }
 
@@ -129,8 +139,6 @@ export default function SiswaAuthSwitch({
 
       const now = Date.now();
       const newId = "siswa_" + now;
-      const newSessionToken = "sess_" + Math.random().toString(36).substring(2) + "_" + now;
-      const deviceId = "dev_" + (navigator.userAgent.replace(/\D/g, "").slice(0, 8) || "web");
 
       const newUser: User = {
         id: newId,
@@ -140,9 +148,10 @@ export default function SiswaAuthSwitch({
         role: "siswa",
         class: regClass,
         avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=" + encodeURIComponent(regName.trim()),
-        sessionToken: newSessionToken,
-        deviceId: deviceId,
-        sessionUpdatedAt: now,
+        sessionToken: null,
+        deviceId: null,
+        sessionUpdatedAt: 0,
+        isApproved: false, // Menunggu persetujuan (ACC) dari Admin
         progress: { materi: 0, video: 0, lkpd: 0, latsol: 0, evaluasi: 0 },
       };
 
@@ -156,18 +165,14 @@ export default function SiswaAuthSwitch({
 
       storageService.broadcastUserCreated(newUser);
 
-      try {
-        storageService.setCurrentSessionUser(newUser, newSessionToken);
-      } catch (sessErr) {
-        console.warn("Session storage warning on register:", sessErr);
-      }
-
-      storageService.broadcastLogin(newUser.id, newSessionToken, deviceId, now);
-      storageService.pushUserSessionDirect(newUser.id, newSessionToken, deviceId, now);
-
       soundService.success();
-      showToast(`Pendaftaran berhasil! Selamat datang, ${newUser.name}!`, "success");
-      onLoginSuccess(newUser);
+      // Pre-fill login username and switch back to sign in view
+      setSignInUsername(regUsername.trim());
+      setSignInPassword("");
+      setIsSignUp(false);
+      setPendingApprovalUser({ name: newUser.name, username: newUser.username });
+      setShowApprovalModal(true);
+      showToast(`Pendaftaran berhasil! Akun ${newUser.name} sedang menunggu ACC Admin.`, "info");
     } catch (globalErr) {
       console.error("Critical register error:", globalErr);
       showToast("Terjadi kendala saat mendaftar. Silakan coba lagi.", "error");
@@ -373,6 +378,67 @@ export default function SiswaAuthSwitch({
         )}
 
       </div>
+
+      {/* Approval Pending Modal - High End Neo-Brutalist Architecture */}
+      {showApprovalModal && (
+        <div className="fixed inset-0 z-[100000] bg-black/80 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-[#111827] border-4 border-slate-950 dark:border-slate-800 rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-[8px_8px_0px_0px_#0f172a] dark:shadow-[8px_8px_0px_0px_#000000] space-y-5 text-center">
+            
+            {/* Double-Bezel Header Icon */}
+            <div className="w-16 h-16 mx-auto bg-amber-100 dark:bg-amber-950/60 border-3 border-slate-950 dark:border-slate-700 rounded-2xl flex items-center justify-center text-amber-600 dark:text-amber-400 shadow-[4px_4px_0px_0px_#0f172a]">
+              <Clock size={32} className="animate-pulse" />
+            </div>
+
+            <div className="space-y-2">
+              <span className="text-[11px] font-mono font-black uppercase tracking-wider px-3 py-1 bg-[#ffe600] text-slate-950 border-2 border-slate-950 rounded-xl shadow-[2px_2px_0px_0px_#0f172a] inline-block">
+                STATUS PENDAFTARAN SISWA
+              </span>
+              <h3 className="text-xl font-black font-mono text-slate-950 dark:text-slate-100 mt-2">
+                Menunggu Persetujuan Admin
+              </h3>
+              <p className="text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-300 leading-relaxed text-left">
+                Akun siswa {pendingApprovalUser?.name ? <b>{pendingApprovalUser.name}</b> : 'Anda'} telah berhasil dicatat ke dalam sistem. Demi integritas pembelajaran dan keamanan data kelas, akun baru harus disetujui (di-ACC) oleh Guru / Admin Lab sebelum dapat masuk.
+              </p>
+            </div>
+
+            {/* Stepper info */}
+            <div className="bg-slate-50 dark:bg-slate-900 border-2 border-slate-950 dark:border-slate-800 rounded-2xl p-4 font-mono text-xs text-left space-y-2 text-slate-800 dark:text-slate-200 shadow-[2px_2px_0px_0px_#0f172a]">
+              <div className="flex items-start gap-2">
+                <span className="w-5 h-5 rounded-lg bg-emerald-300 text-emerald-950 font-black flex items-center justify-center shrink-0 border border-slate-950 text-[10px]">
+                  1
+                </span>
+                <span className="font-bold">Data pendaftaran telah terkirim ke Portal Admin.</span>
+              </div>
+              <div className="flex items-start gap-2">
+                <span className="w-5 h-5 rounded-lg bg-[#ffe600] text-slate-950 font-black flex items-center justify-center shrink-0 border border-slate-950 text-[10px]">
+                  2
+                </span>
+                <span className="font-bold">Sampaikan kepada Guru Matematika / Admin sekolah untuk menyetujui akunmu.</span>
+              </div>
+              <div className="flex items-start gap-2">
+                <span className="w-5 h-5 rounded-lg bg-cyan-300 text-cyan-950 font-black flex items-center justify-center shrink-0 border border-slate-950 text-[10px]">
+                  3
+                </span>
+                <span className="font-bold">Setelah di-ACC, silakan masuk dengan Username &amp; Password yang didaftarkan.</span>
+              </div>
+            </div>
+
+            <div className="pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  soundService.click();
+                  setShowApprovalModal(false);
+                }}
+                className="w-full py-3.5 bg-[#ffe600] hover:bg-yellow-400 text-slate-950 font-mono text-xs font-black rounded-2xl border-3 border-slate-950 shadow-[4px_4px_0px_0px_#0f172a] dark:shadow-[4px_4px_0px_0px_#000000] cursor-pointer active:translate-x-0.5 active:translate-y-0.5 transition-all"
+              >
+                Saya Mengerti &amp; Kembali ke Halaman Masuk
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
     </div>
   );
 }

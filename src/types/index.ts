@@ -22,6 +22,7 @@ export interface User {
   sessionUpdatedAt?: number;
   progress?: UserProgress;
   readAnnouncements?: string[];
+  isApproved?: boolean; // false = menunggu persetujuan (ACC) admin, true/undefined = aktif
 }
 
 export interface Material {

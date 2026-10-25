@@ -17,7 +17,11 @@ import {
   EyeOff,
   Copy,
   Check,
-  Search
+  Search,
+  Clock,
+  UserCheck,
+  CheckCircle2,
+  ShieldAlert
 } from 'lucide-react';
 
 export const AdminUsers: React.FC<{
@@ -27,7 +31,7 @@ export const AdminUsers: React.FC<{
   const [dbState, setDbState] = useState(storageService.getState());
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [filterRole, setFilterRole] = useState<'all' | UserRole>('all');
+  const [filterRole, setFilterRole] = useState<'all' | 'pending' | UserRole>('all');
 
   // Real-time synchronization subscription
   useEffect(() => {
@@ -50,6 +54,7 @@ export const AdminUsers: React.FC<{
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
   const users = dbState.users || [];
+  const pendingCount = users.filter(u => u.role === 'siswa' && u.isApproved === false).length;
 
   const togglePasswordVisibility = (userId: string) => {
     soundService.click();
@@ -104,6 +109,7 @@ export const AdminUsers: React.FC<{
       avatar: `https://api.dicebear.com/7.x/bottts/svg?seed=${username.trim()}`,
       sessionToken: null,
       deviceId: null,
+      isApproved: true,
       progress: { materi: 0, video: 0, lkpd: 0, latsol: 0, evaluasi: 0 },
       readAnnouncements: [],
     };
@@ -121,6 +127,36 @@ export const AdminUsers: React.FC<{
     setPassword('');
     soundService.success();
     showToast('Akun pengguna baru berhasil didaftarkan!', 'success');
+  };
+
+  const handleApproveUser = (userId: string, userName: string) => {
+    soundService.click();
+    storageService.update(draft => {
+      const target = draft.users.find(u => u.id === userId);
+      if (target) {
+        target.isApproved = true;
+      }
+    });
+    setDbState(storageService.getState());
+    soundService.success();
+    showToast(`Akun siswa ${userName} berhasil disetujui (ACC)! Siswa kini dapat login.`, 'success');
+  };
+
+  const handleRevokeUser = (userId: string, userName: string) => {
+    soundService.click();
+    if (confirm(`Tangguhkan / batalkan persetujuan akun siswa "${userName}"? Akun ini tidak akan dapat login sampai disetujui kembali oleh Admin.`)) {
+      storageService.update(draft => {
+        const target = draft.users.find(u => u.id === userId);
+        if (target) {
+          target.isApproved = false;
+          target.sessionToken = null;
+          target.deviceId = null;
+        }
+      });
+      setDbState(storageService.getState());
+      soundService.click();
+      showToast(`Persetujuan akun siswa ${userName} telah ditangguhkan.`, 'info');
+    }
   };
 
   const handleResetDevice = (userId: string) => {
@@ -148,7 +184,12 @@ export const AdminUsers: React.FC<{
   };
 
   const filteredUsers = users.filter(u => {
-    const matchesRole = filterRole === 'all' || u.role === filterRole;
+    const matchesRole =
+      filterRole === 'all'
+        ? true
+        : filterRole === 'pending'
+        ? u.role === 'siswa' && u.isApproved === false
+        : u.role === filterRole;
     const matchesSearch = u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                           u.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
                           (u.class && u.class.toLowerCase().includes(searchQuery.toLowerCase()));
@@ -172,6 +213,12 @@ export const AdminUsers: React.FC<{
             <span className="px-3 py-1 bg-white/80 text-slate-900 border-2 border-slate-950 rounded-xl text-xs font-bold font-mono">
               Total {users.length} Akun Terdaftar
             </span>
+            {pendingCount > 0 && (
+              <span className="px-3 py-1 bg-rose-400 text-slate-950 border-2 border-slate-950 rounded-xl text-xs font-mono font-black shadow-[2px_2px_0px_0px_#0f172a] animate-pulse flex items-center gap-1.5">
+                <Clock size={13} />
+                <span>{pendingCount} Siswa Menunggu ACC</span>
+              </span>
+            )}
           </div>
 
           <h1 className="text-2xl sm:text-4xl font-black tracking-tight text-slate-950 font-mono leading-tight">
@@ -201,23 +248,36 @@ export const AdminUsers: React.FC<{
 
           {/* Role Filter Tabs */}
           <div className="flex items-center gap-1.5 p-1 bg-white dark:bg-[#111827] rounded-2xl border-3 border-slate-950 dark:border-slate-700 shadow-[3px_3px_0px_0px_#0f172a] dark:shadow-[3px_3px_0px_0px_#000000]">
-            {(['all', 'siswa', 'guru', 'admin'] as const).map(r => (
-              <button
-                key={r}
-                type="button"
-                onClick={() => {
-                  soundService.click();
-                  setFilterRole(r);
-                }}
-                className={`px-3 py-1.5 rounded-xl text-xs font-mono font-black uppercase transition-all cursor-pointer ${
-                  filterRole === r
-                    ? 'bg-[#ffe600] text-slate-950 border-2 border-slate-950 shadow-[1.5px_1.5px_0px_0px_#0f172a]'
-                    : 'text-slate-600 dark:text-slate-300 hover:text-slate-950 dark:hover:text-white'
-                }`}
-              >
-                {r === 'all' ? 'Semua' : r}
-              </button>
-            ))}
+            {(['all', 'pending', 'siswa', 'guru', 'admin'] as const).map(r => {
+              const isPendingTab = r === 'pending';
+              const label = r === 'all' ? 'Semua' : r === 'pending' ? 'Menunggu ACC' : r;
+              return (
+                <button
+                  key={r}
+                  type="button"
+                  onClick={() => {
+                    soundService.click();
+                    setFilterRole(r);
+                  }}
+                  className={`relative px-3 py-1.5 rounded-xl text-xs font-mono font-black uppercase transition-all cursor-pointer flex items-center gap-1.5 ${
+                    filterRole === r
+                      ? isPendingTab
+                        ? 'bg-rose-500 text-white border-2 border-slate-950 shadow-[1.5px_1.5px_0px_0px_#0f172a]'
+                        : 'bg-[#ffe600] text-slate-950 border-2 border-slate-950 shadow-[1.5px_1.5px_0px_0px_#0f172a]'
+                      : 'text-slate-600 dark:text-slate-300 hover:text-slate-950 dark:hover:text-white'
+                  }`}
+                >
+                  <span>{label}</span>
+                  {isPendingTab && pendingCount > 0 && (
+                    <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono font-black ${
+                      filterRole === 'pending' ? 'bg-white text-rose-600' : 'bg-rose-500 text-white animate-pulse'
+                    }`}>
+                      {pendingCount}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
           </div>
         </div>
 
@@ -252,6 +312,7 @@ export const AdminUsers: React.FC<{
               <tr>
                 <th className="p-3.5">Pengguna</th>
                 <th className="p-3.5">Peran (Role)</th>
+                <th className="p-3.5">Status ACC</th>
                 <th className="p-3.5 font-mono">Username / NIS</th>
                 <th className="p-3.5 font-mono">
                   <div className="flex items-center gap-2">
@@ -298,6 +359,25 @@ export const AdminUsers: React.FC<{
                       {u.role === 'siswa' ? 'Siswa' : u.role === 'guru' ? 'Guru' : 'Admin'}
                     </span>
                   </td>
+                  <td className="p-3.5">
+                    {u.role === 'siswa' ? (
+                      u.isApproved === false ? (
+                        <span className="inline-flex whitespace-nowrap items-center gap-1.5 px-2.5 py-1 rounded-xl text-[11px] font-black font-mono bg-rose-100 text-rose-950 border-2 border-rose-500 shadow-[1.5px_1.5px_0px_0px_#f43f5e] animate-pulse">
+                          <Clock size={12} className="text-rose-600 shrink-0" />
+                          <span>Menunggu ACC</span>
+                        </span>
+                      ) : (
+                        <span className="inline-flex whitespace-nowrap items-center gap-1.5 px-2.5 py-1 rounded-xl text-[11px] font-black font-mono bg-emerald-100 text-emerald-950 border-2 border-emerald-500 shadow-[1.5px_1.5px_0px_0px_#10b981]">
+                          <CheckCircle2 size={12} className="text-emerald-600 shrink-0" />
+                          <span>Aktif (ACC)</span>
+                        </span>
+                      )
+                    ) : (
+                      <span className="inline-flex whitespace-nowrap items-center gap-1 px-2.5 py-1 rounded-xl text-[11px] font-bold font-mono text-slate-500 bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700">
+                        Otomatis
+                      </span>
+                    )}
+                  </td>
                   <td className="p-3.5 font-mono">
                     <span className="inline-block whitespace-nowrap font-black text-slate-950 dark:text-slate-100 bg-slate-100 dark:bg-slate-800 border-2 border-slate-950 dark:border-slate-700 px-2.5 py-1 rounded-xl text-xs shadow-[1.5px_1.5px_0px_0px_#0f172a]">
                       {u.username}
@@ -339,7 +419,29 @@ export const AdminUsers: React.FC<{
                     )}
                   </td>
                   <td className="p-3.5 text-center">
-                    <div className="flex items-center justify-center gap-2">
+                    <div className="flex items-center justify-center gap-2 flex-wrap sm:flex-nowrap">
+                      {u.role === 'siswa' && u.isApproved === false && (
+                        <button
+                          type="button"
+                          onClick={() => handleApproveUser(u.id, u.name)}
+                          className="text-xs font-mono font-black text-slate-950 bg-emerald-300 hover:bg-emerald-400 border-2 border-slate-950 px-3 py-1.5 rounded-xl transition-all shadow-[2px_2px_0px_0px_#0f172a] active:translate-x-0.5 active:translate-y-0.5 cursor-pointer flex items-center gap-1.5"
+                          title="Setujui Akun Siswa Ini (ACC)"
+                        >
+                          <UserCheck size={14} className="text-emerald-950" />
+                          <span>Setujui (ACC)</span>
+                        </button>
+                      )}
+                      {u.role === 'siswa' && u.isApproved !== false && (
+                        <button
+                          type="button"
+                          onClick={() => handleRevokeUser(u.id, u.name)}
+                          className="text-xs font-mono font-black text-slate-700 hover:text-rose-950 bg-slate-100 hover:bg-rose-100 border-2 border-slate-950 px-2 py-1.5 rounded-xl transition-all shadow-[1.5px_1.5px_0px_0px_#0f172a] active:translate-x-0.5 active:translate-y-0.5 cursor-pointer flex items-center gap-1"
+                          title="Tangguhkan Persetujuan Akun Siswa"
+                        >
+                          <Clock size={12} />
+                          <span>Kunci ACC</span>
+                        </button>
+                      )}
                       <button
                         type="button"
                         onClick={() => handleResetDevice(u.id)}
@@ -367,7 +469,7 @@ export const AdminUsers: React.FC<{
 
               {filteredUsers.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="p-8 text-center text-slate-500 dark:text-slate-400 font-bold">
+                  <td colSpan={8} className="p-8 text-center text-slate-500 dark:text-slate-400 font-bold">
                     Tidak ada akun pengguna yang cocok dengan pencarian / filter.
                   </td>
                 </tr>

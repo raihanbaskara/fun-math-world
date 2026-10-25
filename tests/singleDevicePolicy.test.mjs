@@ -38,6 +38,7 @@ function mergeUsersList(primary, secondary) {
           sessionToken: useSecondarySession ? exist.sessionToken : (u.sessionToken !== undefined ? u.sessionToken : exist.sessionToken),
           deviceId: useSecondarySession ? exist.deviceId : (u.deviceId !== undefined ? u.deviceId : exist.deviceId),
           sessionUpdatedAt: useSecondarySession ? exist.sessionUpdatedAt : (u.sessionUpdatedAt !== undefined ? u.sessionUpdatedAt : exist.sessionUpdatedAt),
+          isApproved: u.isApproved !== undefined ? u.isApproved : (exist.isApproved !== undefined ? exist.isApproved : true),
           progress: {
             materi: Math.max(exist.progress?.materi || 0, u.progress?.materi || 0),
             video: Math.max(exist.progress?.video || 0, u.progress?.video || 0),
@@ -228,3 +229,71 @@ test('Evaluation Submissions Sync: Multiple photos from different questions are 
   assert.ok(merged[0].photoProofs['eq_2']);
 });
 
+
+test('Admin Approval Policy: Newly registered student requires admin approval before being able to log in', () => {
+  // New student registered by SiswaAuth
+  const newStudent = {
+    id: 'siswa_pending_1',
+    username: 'rudi_santoso',
+    name: 'Rudi Santoso',
+    role: 'siswa',
+    isApproved: false,
+    sessionToken: null,
+    deviceId: null
+  };
+
+  // Login verification function simulating SiswaAuth handleSignIn
+  function attemptLogin(user) {
+    if (user.role === 'siswa' && user.isApproved === false) {
+      return { success: false, reason: 'PENDING_APPROVAL' };
+    }
+    return { success: true, token: 'sess_' + user.id + '_' + Date.now() };
+  }
+
+  // Attempt login before approval -> BLOCKED
+  const preApprovalResult = attemptLogin(newStudent);
+  assert.equal(preApprovalResult.success, false);
+  assert.equal(preApprovalResult.reason, 'PENDING_APPROVAL');
+
+  // Admin approves account
+  const approvedStudent = {
+    ...newStudent,
+    isApproved: true
+  };
+
+  // Merge sync in cloud/database
+  const merged = mergeUsersList([approvedStudent], [newStudent]);
+  const userInDb = merged.find(u => u.id === 'siswa_pending_1');
+  assert.equal(userInDb.isApproved, true);
+
+  // Attempt login after approval -> SUCCESS
+  const postApprovalResult = attemptLogin(userInDb);
+  assert.equal(postApprovalResult.success, true);
+  assert.ok(postApprovalResult.token.startsWith('sess_siswa_pending_1_'));
+});
+
+test('Admin Approval Policy: Existing accounts without isApproved field default to true (backward compatibility)', () => {
+  const legacyStudent = {
+    id: 'legacy_student_1',
+    username: 'legacy_user',
+    name: 'Legacy User',
+    role: 'siswa'
+    // isApproved is undefined in legacy records
+  };
+
+  function attemptLogin(user) {
+    if (user.role === 'siswa' && user.isApproved === false) {
+      return { success: false, reason: 'PENDING_APPROVAL' };
+    }
+    return { success: true };
+  }
+
+  // Legacy user must be able to log in without getting locked out
+  const loginResult = attemptLogin(legacyStudent);
+  assert.equal(loginResult.success, true);
+
+  // Merge preserves backward compatibility
+  const merged = mergeUsersList([legacyStudent], []);
+  assert.equal(merged[0].isApproved, undefined);
+  assert.notEqual(merged[0].isApproved, false);
+});
