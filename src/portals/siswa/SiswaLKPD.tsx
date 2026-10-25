@@ -122,13 +122,13 @@ export const SiswaLKPD: React.FC<{
     setAiEvaluationResult(null);
   };
 
-  // Anti-Cheat Monitor Active while actively solving
-  const { switchCount, getReport, resetReport, pauseAntiCheat } = useAntiCheat({
-    active: !existingSubmission && isSolvingMode,
-    onViolation: (msg) => {
-      showToast(msg, 'error');
-    }
+  // LKPD is a collaborative learning worksheet; anti-cheat is disabled so taking photos & reading references is never penalized
+  const { switchCount, getReport, resetReport, pauseAntiCheat, markFilePickerOpen, markFilePickerClosed } = useAntiCheat({
+    active: false,
+    onViolation: () => {}
   });
+
+  const [showConfirmSubmitModal, setShowConfirmSubmitModal] = useState<boolean>(false);
 
   // Load existing answers or restore local draft (prevents photo/text loss on background sync or mobile camera reload)
   useEffect(() => {
@@ -1166,14 +1166,6 @@ export const SiswaLKPD: React.FC<{
         </div>
       </div>
 
-      {/* Anti-cheat tab alert */}
-      {switchCount > 0 && (
-        <div className="bg-red-100 dark:bg-red-950/50 border-3 border-red-950 dark:border-red-800 rounded-2xl p-4 shadow-[4px_4px_0px_0px_#7f1d1d] dark:shadow-[4px_4px_0px_0px_#000000] flex items-center gap-3 text-red-950 dark:text-red-200 font-mono text-xs font-black">
-          <ShieldAlert size={22} className="text-red-600 dark:text-red-400 shrink-0" />
-          <span>Peringatan: Kamu telah berpindah tab sebanyak {switchCount}x. Seluruh perpindahan tab dilaporkan ke Portal Guru.</span>
-        </div>
-      )}
-
       {/* Question Stepper Tabs */}
       <div className="flex flex-wrap gap-2">
         {questions.map((q, idx) => {
@@ -1270,7 +1262,10 @@ export const SiswaLKPD: React.FC<{
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {/* 1. Tombol Kamera Langsung */}
                 <label
-                  onClick={() => pauseAntiCheat(90000)}
+                  onPointerDown={() => markFilePickerOpen(600000)}
+                  onTouchStart={() => markFilePickerOpen(600000)}
+                  onMouseDown={() => markFilePickerOpen(600000)}
+                  onClick={() => markFilePickerOpen(600000)}
                   className="flex items-center justify-center gap-2 p-3.5 bg-[#ffe600]/25 hover:bg-[#ffe600]/40 dark:bg-yellow-950/30 dark:hover:bg-yellow-900/40 border-2 border-slate-950 dark:border-slate-700 rounded-2xl cursor-pointer transition text-xs font-mono font-black text-slate-950 dark:text-slate-100 shadow-[2px_2px_0px_0px_#0f172a] active:translate-y-0.5"
                 >
                   <Camera size={16} />
@@ -1279,14 +1274,20 @@ export const SiswaLKPD: React.FC<{
                     type="file"
                     accept="image/*"
                     capture="environment"
-                    onChange={(e) => handlePhotoUpload(currentQ.id, e)}
+                    onChange={(e) => {
+                      markFilePickerClosed(4000);
+                      handlePhotoUpload(currentQ.id, e);
+                    }}
                     className="hidden"
                   />
                 </label>
 
                 {/* 2. Tombol Galeri / File */}
                 <label
-                  onClick={() => pauseAntiCheat(90000)}
+                  onPointerDown={() => markFilePickerOpen(600000)}
+                  onTouchStart={() => markFilePickerOpen(600000)}
+                  onMouseDown={() => markFilePickerOpen(600000)}
+                  onClick={() => markFilePickerOpen(600000)}
                   className="flex items-center justify-center gap-2 p-3.5 bg-slate-50 dark:bg-slate-900 border-2 border-dashed border-slate-950 dark:border-slate-700 rounded-2xl cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition text-xs font-mono font-bold text-slate-700 dark:text-slate-300 active:translate-y-0.5"
                 >
                   <Upload size={16} />
@@ -1294,7 +1295,10 @@ export const SiswaLKPD: React.FC<{
                   <input
                     type="file"
                     accept="image/*"
-                    onChange={(e) => handlePhotoUpload(currentQ.id, e)}
+                    onChange={(e) => {
+                      markFilePickerClosed(4000);
+                      handlePhotoUpload(currentQ.id, e);
+                    }}
                     className="hidden"
                   />
                 </label>
@@ -1355,7 +1359,10 @@ export const SiswaLKPD: React.FC<{
         {/* Submit Action Button */}
         <div className="flex items-center gap-3">
           <button
-            onClick={handleSubmitLKPD}
+            onClick={() => {
+              soundService.click();
+              setShowConfirmSubmitModal(true);
+            }}
             disabled={!isAllAnswered || isAiLoading}
             className="px-6 py-3 bg-[#ffe600] hover:bg-yellow-400 disabled:opacity-50 text-slate-950 border-3 border-slate-950 rounded-2xl font-mono text-xs sm:text-sm font-black shadow-[4px_4px_0px_0px_#0f172a] dark:shadow-[4px_4px_0px_0px_#000000] transition-all cursor-pointer flex items-center gap-2 active:translate-x-0.5 active:translate-y-0.5"
           >
@@ -1364,6 +1371,66 @@ export const SiswaLKPD: React.FC<{
           </button>
         </div>
       </div>
+
+      {/* Confirmation Modal Before Final LKPD Submission */}
+      {showConfirmSubmitModal && (
+        <div className="fixed inset-0 z-[99999] bg-black/75 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in">
+          <div className="bg-white dark:bg-[#111827] border-4 border-slate-950 dark:border-slate-800 rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-[8px_8px_0px_0px_#0f172a] dark:shadow-[8px_8px_0px_0px_#000000] space-y-5">
+            <div className="flex items-center gap-3">
+              <div className="p-3 bg-[#ffe600] border-3 border-slate-950 rounded-2xl shadow-[3px_3px_0px_0px_#0f172a] text-slate-950">
+                <Send size={24} />
+              </div>
+              <div>
+                <span className="text-[10px] font-mono font-black uppercase tracking-wider px-2.5 py-0.5 bg-emerald-300 text-emerald-950 border border-slate-950 rounded-lg">
+                  KONFIRMASI PENGUMPULAN
+                </span>
+                <h3 className="text-lg font-black font-mono text-slate-950 dark:text-slate-100 mt-1">
+                  Kumpulkan LKPD Sekarang?
+                </h3>
+              </div>
+            </div>
+
+            <p className="text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-300 leading-relaxed">
+              Apakah kamu yakin seluruh jawaban dan foto lembar kerja sudah terisi dengan benar? Jawaban yang telah dikirim akan diserahkan ke Guru dan Asisten AI untuk dinilai.
+            </p>
+
+            <div className="bg-slate-100 dark:bg-slate-900 border-2 border-slate-950 dark:border-slate-800 rounded-2xl p-4 font-mono text-xs font-bold space-y-1.5 text-slate-800 dark:text-slate-200">
+              <div className="flex justify-between">
+                <span>Kegiatan Terisi:</span>
+                <span className="font-black text-emerald-600 dark:text-emerald-400">
+                  {questions.filter(q => (answers[q.id]?.textAnswer || '').trim().length > 0).length} / {questions.length} Kegiatan
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span>Foto Terlampir:</span>
+                <span className="font-black text-blue-600 dark:text-blue-400">
+                  {questions.filter(q => Boolean(answers[q.id]?.photoUrl)).length} Foto
+                </span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setShowConfirmSubmitModal(false)}
+                className="w-full py-3 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-950 dark:text-slate-100 font-mono text-xs font-black rounded-2xl border-3 border-slate-950 dark:border-slate-800 shadow-[3px_3px_0px_0px_#0f172a] dark:shadow-[3px_3px_0px_0px_#000000] cursor-pointer"
+              >
+                Periksa Lagi
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowConfirmSubmitModal(false);
+                  handleSubmitLKPD();
+                }}
+                className="w-full py-3 bg-[#ffe600] hover:bg-yellow-400 text-slate-950 font-mono text-xs font-black rounded-2xl border-3 border-slate-950 shadow-[3px_3px_0px_0px_#0f172a] dark:shadow-[3px_3px_0px_0px_#000000] cursor-pointer"
+              >
+                Ya, Kumpulkan
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {renderPdfModal()}
     </div>

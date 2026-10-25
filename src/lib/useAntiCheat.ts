@@ -17,6 +17,7 @@ export function useAntiCheat({ active, onViolation }: UseAntiCheatOptions) {
   const leaveStartTimeRef = useRef<number | null>(null);
   const lastViolationTimeRef = useRef<number>(0);
   const pausedUntilRef = useRef<number>(0);
+  const isFilePickerActiveRef = useRef<boolean>(false);
 
   // Keep latest onViolation in a ref to avoid recreating listeners
   const onViolationRef = useRef(onViolation);
@@ -31,20 +32,35 @@ export function useAntiCheat({ active, onViolation }: UseAntiCheatOptions) {
 
   const resumeAntiCheat = useCallback(() => {
     pausedUntilRef.current = 0;
+    isFilePickerActiveRef.current = false;
+  }, []);
+
+  // Explicit safe-mode for file selection / camera capture
+  const markFilePickerOpen = useCallback((durationMs: number = 600000) => {
+    isFilePickerActiveRef.current = true;
+    pausedUntilRef.current = Date.now() + durationMs;
+  }, []);
+
+  const markFilePickerClosed = useCallback((gracePeriodMs: number = 4000) => {
+    pausedUntilRef.current = Date.now() + gracePeriodMs;
+    setTimeout(() => {
+      isFilePickerActiveRef.current = false;
+    }, gracePeriodMs);
   }, []);
 
   useEffect(() => {
     if (!active) {
       isAwayRef.current = false;
       leaveStartTimeRef.current = null;
+      isFilePickerActiveRef.current = false;
       return;
     }
 
     const handleLeave = () => {
       const now = Date.now();
 
-      // Check if paused (e.g. user is taking camera photo or selecting file)
-      if (now < pausedUntilRef.current) {
+      // Check if paused or file picker/camera is active
+      if (isFilePickerActiveRef.current || now < pausedUntilRef.current) {
         return;
       }
 
@@ -73,6 +89,13 @@ export function useAntiCheat({ active, onViolation }: UseAntiCheatOptions) {
 
     const handleReturn = () => {
       const now = Date.now();
+
+      // If returning while file picker was active, cleanly reset without counting
+      if (isFilePickerActiveRef.current || now < pausedUntilRef.current) {
+        leaveStartTimeRef.current = null;
+        isAwayRef.current = false;
+        return;
+      }
 
       if (!isAwayRef.current && !leaveStartTimeRef.current) {
         return;
@@ -147,6 +170,8 @@ export function useAntiCheat({ active, onViolation }: UseAntiCheatOptions) {
     getReport,
     resetReport,
     pauseAntiCheat,
-    resumeAntiCheat
+    resumeAntiCheat,
+    markFilePickerOpen,
+    markFilePickerClosed
   };
 }

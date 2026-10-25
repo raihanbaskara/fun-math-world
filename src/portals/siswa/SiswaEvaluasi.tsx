@@ -206,11 +206,23 @@ export const SiswaEvaluasi: React.FC<{
     }
   }, [textAnswers, photos, activeQuestionIdx, isPrerequisiteMet, previousSubmission]);
 
+  const [showConfirmSubmitModal, setShowConfirmSubmitModal] = useState<boolean>(false);
+  const [violationAlert, setViolationAlert] = useState<{ show: boolean; count: number; message: string }>({
+    show: false,
+    count: 0,
+    message: ''
+  });
+
   // Anti-Cheat Tab Monitor Active while taking exam
-  const { switchCount, getReport, pauseAntiCheat } = useAntiCheat({
+  const { switchCount, getReport, pauseAntiCheat, markFilePickerOpen, markFilePickerClosed } = useAntiCheat({
     active: isPrerequisiteMet && !previousSubmission,
-    onViolation: (msg) => {
+    onViolation: (msg, count) => {
       showToast(msg, 'error');
+      setViolationAlert({
+        show: true,
+        count: count || switchCount + 1,
+        message: msg
+      });
     }
   });
 
@@ -791,7 +803,10 @@ export const SiswaEvaluasi: React.FC<{
                 {/* 1. Tombol Kamera Langsung */}
                 <label
                   htmlFor={`camera_input_${currentQ.id}`}
-                  onClick={() => pauseAntiCheat(90000)}
+                  onPointerDown={() => markFilePickerOpen(600000)}
+                  onTouchStart={() => markFilePickerOpen(600000)}
+                  onMouseDown={() => markFilePickerOpen(600000)}
+                  onClick={() => markFilePickerOpen(600000)}
                   className="flex items-center justify-center gap-2 p-3.5 bg-[#ffe600]/25 hover:bg-[#ffe600]/40 dark:bg-yellow-950/30 dark:hover:bg-yellow-900/40 border-2 border-slate-950 dark:border-slate-700 rounded-2xl cursor-pointer transition text-xs font-mono font-black text-slate-950 dark:text-slate-100 shadow-[2px_2px_0px_0px_#0f172a] active:translate-y-0.5"
                 >
                   <Camera size={16} />
@@ -802,7 +817,10 @@ export const SiswaEvaluasi: React.FC<{
                     type="file"
                     accept="image/*"
                     capture="environment"
-                    onChange={(e) => handlePhotoSelect(currentQ.id, e)}
+                    onChange={(e) => {
+                      markFilePickerClosed(4000);
+                      handlePhotoSelect(currentQ.id, e);
+                    }}
                     className="hidden"
                   />
                 </label>
@@ -810,7 +828,10 @@ export const SiswaEvaluasi: React.FC<{
                 {/* 2. Tombol Galeri / File */}
                 <label
                   htmlFor={`gallery_input_${currentQ.id}`}
-                  onClick={() => pauseAntiCheat(90000)}
+                  onPointerDown={() => markFilePickerOpen(600000)}
+                  onTouchStart={() => markFilePickerOpen(600000)}
+                  onMouseDown={() => markFilePickerOpen(600000)}
+                  onClick={() => markFilePickerOpen(600000)}
                   className="flex items-center justify-center gap-2 p-3.5 bg-slate-50 dark:bg-slate-900 border-2 border-dashed border-slate-950 dark:border-slate-700 rounded-2xl cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition text-xs font-mono font-bold text-slate-700 dark:text-slate-300 active:translate-y-0.5"
                 >
                   <Upload size={16} />
@@ -820,7 +841,10 @@ export const SiswaEvaluasi: React.FC<{
                     id={`gallery_input_${currentQ.id}`}
                     type="file"
                     accept="image/*"
-                    onChange={(e) => handlePhotoSelect(currentQ.id, e)}
+                    onChange={(e) => {
+                      markFilePickerClosed(4000);
+                      handlePhotoSelect(currentQ.id, e);
+                    }}
                     className="hidden"
                   />
                 </label>
@@ -856,7 +880,19 @@ export const SiswaEvaluasi: React.FC<{
           </button>
         ) : (
           <button
-            onClick={handleSubmitExam}
+            onClick={() => {
+              soundService.click();
+              const cleanPhotos = Object.values(photos).filter(p => Boolean(p && p.trim().length > 50));
+              const hasAnyPhoto = cleanPhotos.length > 0;
+              const hasAnyText = Object.values(textAnswers).some(t => t.trim().length > 0);
+
+              if (!hasAnyText && !hasAnyPhoto) {
+                soundService.alert();
+                showToast("Ketik jawaban uraian atau unggah foto pengerjaan terlebih dahulu!", "error");
+                return;
+              }
+              setShowConfirmSubmitModal(true);
+            }}
             disabled={isSubmitting}
             className="px-8 py-3.5 bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-mono text-xs font-black rounded-2xl border-3 border-slate-950 dark:border-slate-800 shadow-[4px_4px_0px_0px_#0f172a] dark:shadow-[4px_4px_0px_0px_#000000] transition-all cursor-pointer flex items-center gap-2"
           >
@@ -865,6 +901,114 @@ export const SiswaEvaluasi: React.FC<{
           </button>
         )}
       </div>
+
+      {/* Front & Center Anti-Cheat Violation Alert Modal */}
+      {violationAlert.show && (
+        <div className="fixed inset-0 z-[100000] bg-black/80 backdrop-blur-xs flex items-center justify-center p-4 animate-in zoom-in-95">
+          <div className="bg-white dark:bg-[#111827] border-4 border-red-600 dark:border-red-500 rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-[8px_8px_0px_0px_#7f1d1d] dark:shadow-[8px_8px_0px_0px_#000000] space-y-5 text-center">
+            <div className="w-16 h-16 mx-auto bg-red-100 dark:bg-red-950/60 border-3 border-red-600 rounded-2xl flex items-center justify-center text-red-600 dark:text-red-400 shadow-[4px_4px_0px_0px_#7f1d1d] animate-bounce">
+              <ShieldAlert size={36} />
+            </div>
+
+            <div className="space-y-2">
+              <span className="text-[11px] font-mono font-black uppercase tracking-wider px-3 py-1 bg-red-500 text-white border-2 border-slate-950 rounded-xl shadow-[2px_2px_0px_0px_#0f172a]">
+                PERINGATAN INTEGRITAS UJIAN
+              </span>
+              <h3 className="text-xl font-black font-mono text-slate-950 dark:text-slate-100 mt-2">
+                Terdeteksi Berpindah Tab ({violationAlert.count}x)
+              </h3>
+              <p className="text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-300 leading-relaxed">
+                Kamu meninggalkan halaman ujian. Seluruh insiden perpindahan tab dan durasi waktu di luar aplikasi dicatat otomatis dan dilaporkan kepada Guru!
+              </p>
+            </div>
+
+            <div className="pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  soundService.click();
+                  setViolationAlert({ show: false, count: 0, message: '' });
+                }}
+                className="w-full py-3.5 bg-red-500 hover:bg-red-600 text-white font-mono text-xs font-black rounded-2xl border-3 border-slate-950 shadow-[4px_4px_0px_0px_#0f172a] dark:shadow-[4px_4px_0px_0px_#000000] cursor-pointer"
+              >
+                Saya Mengerti &amp; Kembali Mengerjakan
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Confirmation Modal Before Final Evaluation Submission */}
+      {showConfirmSubmitModal && (
+        <div className="fixed inset-0 z-[99999] bg-black/75 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in">
+          <div className="bg-white dark:bg-[#111827] border-4 border-slate-950 dark:border-slate-800 rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-[8px_8px_0px_0px_#0f172a] dark:shadow-[8px_8px_0px_0px_#000000] space-y-5">
+            <div className="flex items-center gap-3">
+              <div className="p-3 bg-emerald-300 border-3 border-slate-950 rounded-2xl shadow-[3px_3px_0px_0px_#0f172a] text-slate-950">
+                <Send size={24} />
+              </div>
+              <div>
+                <span className="text-[10px] font-mono font-black uppercase tracking-wider px-2.5 py-0.5 bg-yellow-300 text-yellow-950 border border-slate-950 rounded-lg">
+                  KONFIRMASI PENGUMPULAN
+                </span>
+                <h3 className="text-lg font-black font-mono text-slate-950 dark:text-slate-100 mt-1">
+                  Kumpulkan Evaluasi Final?
+                </h3>
+              </div>
+            </div>
+
+            <p className="text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-300 leading-relaxed">
+              Apakah kamu yakin ingin mengumpulkan seluruh lembar jawaban sekarang? Evaluasi sumatif ini akan diserahkan ke Guru dan Asisten AI untuk penilaian.
+            </p>
+
+            <div className="bg-slate-100 dark:bg-slate-900 border-2 border-slate-950 dark:border-slate-800 rounded-2xl p-4 font-mono text-xs font-bold space-y-1.5 text-slate-800 dark:text-slate-200">
+              <div className="flex justify-between">
+                <span>Soal Terjawab:</span>
+                <span className="font-black text-emerald-600 dark:text-emerald-400">
+                  {questions.filter(q => (textAnswers[q.id] || '').trim().length > 0).length} / {questions.length} Soal
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span>Foto Coretan Terlampir:</span>
+                <span className="font-black text-blue-600 dark:text-blue-400">
+                  {questions.filter(q => Boolean(photos[q.id] && photos[q.id].length > 50)).length} Lembar Foto
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span>Sisa Waktu:</span>
+                <span className="font-black text-purple-600 dark:text-purple-400">
+                  {Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, '0')}
+                </span>
+              </div>
+              {switchCount > 0 && (
+                <div className="flex justify-between text-red-600 dark:text-red-400">
+                  <span>Catatan Integritas:</span>
+                  <span className="font-black">{switchCount}x Tab Switch</span>
+                </div>
+              )}
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setShowConfirmSubmitModal(false)}
+                className="w-full py-3 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-950 dark:text-slate-100 font-mono text-xs font-black rounded-2xl border-3 border-slate-950 dark:border-slate-800 shadow-[3px_3px_0px_0px_#0f172a] dark:shadow-[3px_3px_0px_0px_#000000] cursor-pointer"
+              >
+                Periksa Kembali
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowConfirmSubmitModal(false);
+                  handleSubmitExam();
+                }}
+                className="w-full py-3 bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-mono text-xs font-black rounded-2xl border-3 border-slate-950 shadow-[3px_3px_0px_0px_#0f172a] dark:shadow-[3px_3px_0px_0px_#000000] cursor-pointer"
+              >
+                Ya, Kumpulkan
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Modal Zoom Foto */}
       {zoomPhoto && (

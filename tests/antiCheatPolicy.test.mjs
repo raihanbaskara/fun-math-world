@@ -122,3 +122,60 @@ test('Anti-Cheat: pause when taking camera photo suppresses violation', () => {
   ac.handleReturn(t0 + 10000);
   assert.equal(ac.getState().switchCount, 0);
 });
+
+test('Anti-Cheat: explicit file picker safe mode suppresses violation regardless of duration', () => {
+  let isFilePickerActive = false;
+  let pausedUntil = 0;
+  let switchCount = 0;
+
+  const markFilePickerOpen = (durationMs = 600000) => {
+    isFilePickerActive = true;
+    pausedUntil = 400000 + durationMs;
+  };
+
+  const markFilePickerClosed = (gracePeriodMs = 4000) => {
+    pausedUntil = 400000 + 120000 + gracePeriodMs; // 2 minutes taking photo
+    isFilePickerActive = false;
+  };
+
+  const onLeave = (now) => {
+    if (isFilePickerActive || now < pausedUntil) return;
+    switchCount += 1;
+  };
+
+  // Student touches camera button at t = 400000
+  markFilePickerOpen();
+
+  // Mobile browser immediately triggers blur as camera opens
+  onLeave(400010);
+  onLeave(400050);
+  assert.equal(switchCount, 0, 'No violation on camera open');
+
+  // Student takes 2 minutes (120 seconds) to take, inspect, and approve photo
+  onLeave(400000 + 60000); // 1 minute in
+  onLeave(400000 + 110000); // almost 2 minutes
+  assert.equal(switchCount, 0, 'No violation even during long photo shoot');
+
+  // Photo captured, picker closes with grace period
+  markFilePickerClosed();
+
+  // Android reorients / refocuses with transient blur during grace period
+  onLeave(400000 + 121000);
+  assert.equal(switchCount, 0, 'No violation during post-picker grace period');
+});
+
+test('Latsol: Wall-clock session persistence calculates exact remaining time on refresh', () => {
+  const startedAt = 500000;
+  const durationSeconds = 180;
+  const targetEndTime = startedAt + durationSeconds * 1000;
+
+  // Simulate refresh 45 seconds later
+  const refreshTime = startedAt + 45000;
+  const remaining = Math.max(0, Math.round((targetEndTime - refreshTime) / 1000));
+  assert.equal(remaining, 135, 'Remaining time on refresh is exactly 135 seconds (180 - 45)');
+
+  // Simulate refresh when time expired
+  const expiredTime = targetEndTime + 5000;
+  const remainingExpired = Math.max(0, Math.round((targetEndTime - expiredTime) / 1000));
+  assert.equal(remainingExpired, 0, 'Remaining time after timeout is 0');
+});

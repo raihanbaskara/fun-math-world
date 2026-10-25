@@ -46,6 +46,51 @@ export const SiswaLatsol: React.FC<{
   const [timeLeft, setTimeLeft] = useState<number>(180);
   const [isQuizCompleted, setIsQuizCompleted] = useState<boolean>(false);
   const [latestSubmission, setLatestSubmission] = useState<LatsolSubmission | null>(null);
+  const [showConfirmSubmitModal, setShowConfirmSubmitModal] = useState<boolean>(false);
+
+  const LATSOL_SESSION_KEY = `FMW_LATSOL_SESSION_${currentUser.id}`;
+
+  // Restore in-progress Latsol session upon page refresh
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(LATSOL_SESSION_KEY);
+      if (!saved) return;
+      const session = JSON.parse(saved);
+      if (!session || !session.roomId) return;
+
+      const room = latsolRooms.find(r => r.id === session.roomId);
+      if (!room) return;
+
+      // Don't restore if already officially submitted
+      const alreadySubmitted = db.latsolSubmissions?.some(
+        s => s.studentId === currentUser.id && s.roomId === room.id
+      );
+      if (alreadySubmitted) {
+        localStorage.removeItem(LATSOL_SESSION_KEY);
+        return;
+      }
+
+      const now = Date.now();
+      const remaining = Math.max(0, Math.round((session.targetEndTime - now) / 1000));
+
+      if (remaining <= 0) {
+        // Time expired while page was refreshed/closed -> auto submit
+        localStorage.removeItem(LATSOL_SESSION_KEY);
+        executeFinishQuiz(room, session.userAnswers || {}, 0);
+        showToast("Waktu pengerjaan telah habis saat halaman ditutup. Kuis dikumpulkan otomatis.", "info");
+      } else {
+        // Resume active session
+        setActiveRoom(room);
+        setCurrentQuestionIndex(session.currentQuestionIndex || 0);
+        setUserAnswers(session.userAnswers || {});
+        setTimeLeft(remaining);
+        setIsQuizCompleted(false);
+        showToast(`Sesi Latihan Soal dipulihkan! Sisa waktu: ${Math.floor(remaining / 60)}m ${remaining % 60}d.`, "info");
+      }
+    } catch (err) {
+      console.warn("Failed to restore Latsol session:", err);
+    }
+  }, [currentUser.id, latsolRooms.length]);
 
   // Anti cheat active when in a room and not completed
   const { switchCount, getReport, resetReport } = useAntiCheat({
@@ -87,6 +132,18 @@ export const SiswaLatsol: React.FC<{
       return;
     }
 
+    const targetEndTime = Date.now() + (room.durationSeconds || 180) * 1000;
+    try {
+      localStorage.setItem(LATSOL_SESSION_KEY, JSON.stringify({
+        roomId: room.id,
+        startedAt: Date.now(),
+        targetEndTime,
+        durationSeconds: room.durationSeconds || 180,
+        currentQuestionIndex: 0,
+        userAnswers: {}
+      }));
+    } catch {}
+
     setActiveRoom(room);
     setCurrentQuestionIndex(0);
     setUserAnswers({});
@@ -97,27 +154,59 @@ export const SiswaLatsol: React.FC<{
     showToast(`Memulai ${room.title}! Waktu: ${room.durationSeconds} detik.`, "success");
   };
 
-  const handleSelectOption = (questionId: string, optionIndex: number) => {
+  const handleViewReview = (room: LatsolRoom, sub: LatsolSubmission) => {
     soundService.click();
-    setUserAnswers(prev => ({
-      ...prev,
-      [questionId]: optionIndex
-    }));
+    setActiveRoom(room);
+    setLatestSubmission(sub);
+    setIsQuizCompleted(true);
   };
 
-  const handleFinishQuiz = () => {
-    if (!activeRoom) return;
+  const handleSelectOption = (questionId: string, optionIndex: number) => {
+    soundService.click();
+    const updated = {
+      ...userAnswers,
+      [questionId]: optionIndex
+    };
+    setUserAnswers(updated);
 
-    const questions = activeRoom.questions;
+    try {
+      const saved = localStorage.getItem(LATSOL_SESSION_KEY);
+      if (saved) {
+        const session = JSON.parse(saved);
+        session.userAnswers = updated;
+        localStorage.setItem(LATSOL_SESSION_KEY, JSON.stringify(session));
+      }
+    } catch {}
+  };
+
+  const handleNavigateQuestion = (newIndex: number) => {
+    soundService.click();
+    setCurrentQuestionIndex(newIndex);
+    try {
+      const saved = localStorage.getItem(LATSOL_SESSION_KEY);
+      if (saved) {
+        const session = JSON.parse(saved);
+        session.currentQuestionIndex = newIndex;
+        localStorage.setItem(LATSOL_SESSION_KEY, JSON.stringify(session));
+      }
+    } catch {}
+  };
+
+  const executeFinishQuiz = (room: LatsolRoom, answers: Record<string, number>, finalTimeLeft: number) => {
+    try {
+      localStorage.removeItem(LATSOL_SESSION_KEY);
+    } catch {}
+
+    const questions = room.questions;
     let correctCount = 0;
     questions.forEach(q => {
-      if (userAnswers[q.id] === q.correctIndex) {
+      if (answers[q.id] === q.correctIndex) {
         correctCount += 1;
       }
     });
 
     const score = Math.round((correctCount / questions.length) * 100);
-    const timeSpent = (activeRoom.durationSeconds || 180) - timeLeft;
+    const timeSpent = Math.max(0, (room.durationSeconds || 180) - finalTimeLeft);
     const antiCheatReport = getReport();
 
     const submission: LatsolSubmission = {
@@ -125,12 +214,12 @@ export const SiswaLatsol: React.FC<{
       studentId: currentUser.id,
       studentName: currentUser.name,
       studentClass: currentUser.class || "Kelas 7",
-      roomId: activeRoom.id,
-      roomTitle: activeRoom.title,
+      roomId: room.id,
+      roomTitle: room.title,
       score,
       correctCount,
       totalQuestions: questions.length,
-      answers: userAnswers,
+      answers,
       timeSpentSeconds: timeSpent,
       date: new Date().toLocaleString('id-ID'),
       antiCheat: antiCheatReport
@@ -139,7 +228,7 @@ export const SiswaLatsol: React.FC<{
     storageService.update(draft => {
       if (!draft.latsolSubmissions) draft.latsolSubmissions = [];
       draft.latsolSubmissions = draft.latsolSubmissions.filter(
-        s => !(s.studentId === currentUser.id && s.roomId === activeRoom.id)
+        s => !(s.studentId === currentUser.id && s.roomId === room.id)
       );
       draft.latsolSubmissions.push(submission);
 
@@ -151,10 +240,16 @@ export const SiswaLatsol: React.FC<{
       }
     });
 
+    setActiveRoom(room);
     setLatestSubmission(submission);
     setIsQuizCompleted(true);
     soundService.success();
     confetti({ particleCount: 100, spread: 80 });
+  };
+
+  const handleFinishQuiz = () => {
+    if (!activeRoom) return;
+    executeFinishQuiz(activeRoom, userAnswers, timeLeft);
   };
 
   // PREREQUISITE WARNING BANNER
@@ -397,10 +492,7 @@ export const SiswaLatsol: React.FC<{
         {/* Navigation Footer */}
         <div className="flex items-center justify-between">
           <button
-            onClick={() => {
-              soundService.click();
-              setCurrentQuestionIndex(prev => Math.max(0, prev - 1));
-            }}
+            onClick={() => handleNavigateQuestion(Math.max(0, currentQuestionIndex - 1))}
             disabled={currentQuestionIndex === 0}
             className="px-5 py-3 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-40 text-slate-950 dark:text-slate-100 font-mono text-xs font-black rounded-2xl border-3 border-slate-950 dark:border-slate-700 shadow-[3px_3px_0px_0px_#0f172a] dark:shadow-[3px_3px_0px_0px_#000000] transition-all cursor-pointer"
           >
@@ -409,10 +501,7 @@ export const SiswaLatsol: React.FC<{
 
           {currentQuestionIndex < totalQ - 1 ? (
             <button
-              onClick={() => {
-                soundService.click();
-                setCurrentQuestionIndex(prev => prev + 1);
-              }}
+              onClick={() => handleNavigateQuestion(currentQuestionIndex + 1)}
               className="px-6 py-3 bg-[#ffe600] hover:bg-yellow-400 text-slate-950 font-mono text-xs font-black rounded-2xl border-3 border-slate-950 shadow-[4px_4px_0px_0px_#0f172a] dark:shadow-[4px_4px_0px_0px_#000000] transition-all cursor-pointer flex items-center gap-2"
             >
               <span>Soal Berikutnya</span>
@@ -420,7 +509,10 @@ export const SiswaLatsol: React.FC<{
             </button>
           ) : (
             <button
-              onClick={handleFinishQuiz}
+              onClick={() => {
+                soundService.click();
+                setShowConfirmSubmitModal(true);
+              }}
               className="px-8 py-3.5 bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-mono text-xs font-black rounded-2xl border-3 border-slate-950 shadow-[4px_4px_0px_0px_#0f172a] dark:shadow-[4px_4px_0px_0px_#000000] transition-all cursor-pointer flex items-center gap-2"
             >
               <span>Selesai &amp; Kumpulkan Kuis</span>
@@ -428,6 +520,72 @@ export const SiswaLatsol: React.FC<{
             </button>
           )}
         </div>
+
+        {/* Confirmation Modal Before Submitting Latsol */}
+        {showConfirmSubmitModal && (
+          <div className="fixed inset-0 z-[99999] bg-black/75 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in">
+            <div className="bg-white dark:bg-[#111827] border-4 border-slate-950 dark:border-slate-800 rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-[8px_8px_0px_0px_#0f172a] dark:shadow-[8px_8px_0px_0px_#000000] space-y-5">
+              <div className="flex items-center gap-3">
+                <div className="p-3 bg-emerald-300 border-3 border-slate-950 rounded-2xl shadow-[3px_3px_0px_0px_#0f172a] text-slate-950">
+                  <CheckCircle2 size={24} />
+                </div>
+                <div>
+                  <span className="text-[10px] font-mono font-black uppercase tracking-wider px-2.5 py-0.5 bg-yellow-300 text-yellow-950 border border-slate-950 rounded-lg">
+                    KONFIRMASI SELESAI
+                  </span>
+                  <h3 className="text-lg font-black font-mono text-slate-950 dark:text-slate-100 mt-1">
+                    Kumpulkan Latihan Soal?
+                  </h3>
+                </div>
+              </div>
+
+              <p className="text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-300 leading-relaxed">
+                Apakah kamu sudah yakin dengan semua pilihan jawabanmu? Setelah kuis dikumpulkan, kuis ini tidak dapat diulang kembali.
+              </p>
+
+              <div className="bg-slate-100 dark:bg-slate-900 border-2 border-slate-950 dark:border-slate-800 rounded-2xl p-4 font-mono text-xs font-bold space-y-1.5 text-slate-800 dark:text-slate-200">
+                <div className="flex justify-between">
+                  <span>Soal Terjawab:</span>
+                  <span className="font-black text-emerald-600 dark:text-emerald-400">
+                    {Object.keys(userAnswers).length} / {totalQ} Butir
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Belum Terjawab:</span>
+                  <span className="font-black text-amber-600 dark:text-amber-400">
+                    {totalQ - Object.keys(userAnswers).length} Butir
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Sisa Waktu:</span>
+                  <span className="font-black text-blue-600 dark:text-blue-400">
+                    {Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, '0')}
+                  </span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmSubmitModal(false)}
+                  className="w-full py-3 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-950 dark:text-slate-100 font-mono text-xs font-black rounded-2xl border-3 border-slate-950 dark:border-slate-800 shadow-[3px_3px_0px_0px_#0f172a] dark:shadow-[3px_3px_0px_0px_#000000] cursor-pointer"
+                >
+                  Lanjut Kuis
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowConfirmSubmitModal(false);
+                    handleFinishQuiz();
+                  }}
+                  className="w-full py-3 bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-mono text-xs font-black rounded-2xl border-3 border-slate-950 shadow-[3px_3px_0px_0px_#0f172a] dark:shadow-[3px_3px_0px_0px_#000000] cursor-pointer"
+                >
+                  Ya, Kumpulkan
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
       </div>
     );
@@ -524,32 +682,31 @@ export const SiswaLatsol: React.FC<{
               </div>
 
               <div className="pt-6">
-                <button
-                  onClick={() => handleStartRoom(room)}
-                  disabled={isLocked}
-                  className={`w-full py-3.5 rounded-2xl font-mono font-black text-xs uppercase tracking-wider border-3 border-slate-950 transition-all flex items-center justify-center gap-2 ${
-                    isLocked
-                      ? 'bg-slate-300 dark:bg-slate-700 text-slate-600 dark:text-slate-400 cursor-not-allowed'
-                      : 'bg-[#ffe600] hover:bg-yellow-400 text-slate-950 shadow-[4px_4px_0px_0px_#0f172a] dark:shadow-[4px_4px_0px_0px_#000000] hover:translate-x-[-1px] hover:translate-y-[-1px] cursor-pointer'
-                  }`}
-                >
-                  {isLocked ? (
-                    <>
-                      <Lock size={15} />
-                      <span>Terkunci (Izin Guru Diperlukan)</span>
-                    </>
-                  ) : mySub ? (
-                    <>
-                      <RotateCcw size={15} />
-                      <span>Kerjakan Ulang Room Ini</span>
-                    </>
-                  ) : (
-                    <>
-                      <Zap size={15} />
-                      <span>Mulai Latihan Soal Ini</span>
-                    </>
-                  )}
-                </button>
+                {isLocked ? (
+                  <button
+                    disabled
+                    className="w-full py-3.5 rounded-2xl font-mono font-black text-xs uppercase tracking-wider border-3 border-slate-950 transition-all flex items-center justify-center gap-2 bg-slate-300 dark:bg-slate-700 text-slate-600 dark:text-slate-400 cursor-not-allowed"
+                  >
+                    <Lock size={15} />
+                    <span>Terkunci (Izin Guru Diperlukan)</span>
+                  </button>
+                ) : mySub ? (
+                  <button
+                    onClick={() => handleViewReview(room, mySub)}
+                    className="w-full py-3.5 rounded-2xl font-mono font-black text-xs uppercase tracking-wider border-3 border-slate-950 transition-all flex items-center justify-center gap-2 bg-emerald-300 hover:bg-emerald-400 text-slate-950 shadow-[4px_4px_0px_0px_#0f172a] dark:shadow-[4px_4px_0px_0px_#000000] hover:translate-x-[-1px] hover:translate-y-[-1px] cursor-pointer"
+                  >
+                    <CheckCircle2 size={16} />
+                    <span>Sudah Selesai (Skor: {mySub.score}/100) — Lihat Pembahasan</span>
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => handleStartRoom(room)}
+                    className="w-full py-3.5 rounded-2xl font-mono font-black text-xs uppercase tracking-wider border-3 border-slate-950 transition-all flex items-center justify-center gap-2 bg-[#ffe600] hover:bg-yellow-400 text-slate-950 shadow-[4px_4px_0px_0px_#0f172a] dark:shadow-[4px_4px_0px_0px_#000000] hover:translate-x-[-1px] hover:translate-y-[-1px] cursor-pointer"
+                  >
+                    <Zap size={15} />
+                    <span>Mulai Latihan Soal Ini</span>
+                  </button>
+                )}
               </div>
 
             </div>

@@ -390,17 +390,17 @@ export function App() {
   return (
     <div className="min-h-screen flex flex-col bg-[#fffdf5] dark:bg-[#090d16] text-slate-900 dark:text-slate-100 transition-colors duration-300 font-sans">
       
-      {/* Toast Notification Stack - Safe z-index & offset below sticky header */}
-      <div className="fixed top-20 right-4 left-4 sm:left-auto sm:right-6 sm:w-96 max-w-full z-[99999] flex flex-col gap-3 pointer-events-none">
+      {/* Toast Notification Stack - Front & Center with supreme z-index (z-[100000]) */}
+      <div className="fixed top-4 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-lg z-[100000] flex flex-col gap-2.5 pointer-events-none">
         {toasts.map(t => (
           <div
             key={t.id}
-            className={`p-3.5 sm:p-4 rounded-2xl border-3 border-slate-950 dark:border-slate-800 shadow-[4px_4px_0px_0px_#0f172a] dark:shadow-[4px_4px_0px_0px_#000000] text-xs sm:text-sm font-mono font-black flex items-center justify-between gap-3 pointer-events-auto transform transition-all animate-in fade-in slide-in-from-top-3 duration-200 ${
+            className={`p-3.5 sm:p-4 rounded-2xl border-3 border-slate-950 dark:border-slate-800 shadow-[6px_6px_0px_0px_#0f172a] dark:shadow-[6px_6px_0px_0px_#000000] text-xs sm:text-sm font-mono font-black flex items-center justify-between gap-3 pointer-events-auto transform transition-all animate-in fade-in slide-in-from-top-4 duration-200 ${
               t.type === 'error'
-                ? 'bg-red-500 text-white'
+                ? 'bg-red-500 text-white ring-4 ring-red-200 dark:ring-red-900/50'
                 : t.type === 'success'
-                ? 'bg-[#ffe600] text-slate-950'
-                : 'bg-white dark:bg-slate-900 text-slate-950 dark:text-slate-100'
+                ? 'bg-[#ffe600] text-slate-950 ring-4 ring-yellow-200 dark:ring-yellow-900/50'
+                : 'bg-white dark:bg-slate-900 text-slate-950 dark:text-slate-100 ring-4 ring-slate-200 dark:ring-slate-800'
             }`}
           >
             <div className="flex items-center gap-2.5 min-w-0">
