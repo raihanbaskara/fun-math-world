@@ -127,12 +127,39 @@ export const SiswaLKPD: React.FC<{
   const lkpdDurationSeconds = lkpdDurationMinutes * 60;
   const [timeLeft, setTimeLeft] = useState<number>(lkpdDurationSeconds);
 
+  const [violationAlert, setViolationAlert] = useState<{ show: boolean; count: number; message: string }>({
+    show: false,
+    count: 0,
+    message: ''
+  });
+
   // Anti-Cheat Monitor Active while actively solving LKPD activities
-  const { switchCount, getReport, resetReport, pauseAntiCheat, markFilePickerOpen, markFilePickerClosed } = useAntiCheat({
+  const { switchCount, getReport, resetReport, restoreReport, pauseAntiCheat, markFilePickerOpen, markFilePickerClosed } = useAntiCheat({
     active: isSolvingMode && !existingSubmission,
-    onViolation: (msg) => {
+    onViolation: (msg, count) => {
       soundService.alert();
       showToast(msg, 'error');
+      const nextCount = count || switchCount + 1;
+
+      setViolationAlert({
+        show: true,
+        count: nextCount,
+        message: msg
+      });
+
+      // Instantly persist violation to localStorage draft so it survives refresh!
+      try {
+        const rawDraft = localStorage.getItem(draftKey);
+        const currentDraft = rawDraft ? JSON.parse(rawDraft) : {};
+        currentDraft.switchCount = nextCount;
+        currentDraft.antiCheat = {
+          switchCount: nextCount,
+          totalLeaveSeconds: currentDraft.antiCheat?.totalLeaveSeconds || 0,
+          log: currentDraft.antiCheat?.log || []
+        };
+        currentDraft.isSolvingMode = true;
+        localStorage.setItem(draftKey, JSON.stringify(currentDraft));
+      } catch {}
     }
   });
 
@@ -164,6 +191,7 @@ export const SiswaLKPD: React.FC<{
     try {
       const rawDraft = localStorage.getItem(draftKey);
       let deadline = Date.now() + lkpdDurationSeconds * 1000;
+      let savedAntiCheat = null;
       if (rawDraft) {
         const p = JSON.parse(rawDraft);
         if (p.deadline) {
@@ -173,13 +201,23 @@ export const SiswaLKPD: React.FC<{
         } else {
           setTimeLeft(lkpdDurationSeconds);
         }
+        if (p.antiCheat) {
+          savedAntiCheat = p.antiCheat;
+          restoreReport(p.antiCheat);
+        } else if (typeof p.switchCount === 'number') {
+          savedAntiCheat = { switchCount: p.switchCount, totalLeaveSeconds: 0, log: [] };
+          restoreReport(savedAntiCheat);
+        }
       } else {
         setTimeLeft(lkpdDurationSeconds);
       }
       localStorage.setItem(draftKey, JSON.stringify({
         answers,
         activeIdx: 0,
-        deadline
+        deadline,
+        isSolvingMode: true,
+        switchCount: savedAntiCheat?.switchCount || switchCount,
+        antiCheat: savedAntiCheat || getReport()
       }));
     } catch (e) {
       console.warn("Error initializing LKPD solving deadline:", e);
@@ -199,20 +237,34 @@ export const SiswaLKPD: React.FC<{
       const rawDraft = localStorage.getItem(draftKey);
       if (rawDraft) {
         const parsed = JSON.parse(rawDraft);
+
+        // Restore anti-cheat switch count so it NEVER resets to 0 on refresh!
+        if (parsed.antiCheat) {
+          restoreReport(parsed.antiCheat);
+        } else if (typeof parsed.switchCount === 'number') {
+          restoreReport({ switchCount: parsed.switchCount, totalLeaveSeconds: 0, log: [] });
+        }
+
         if (parsed.answers && Object.keys(parsed.answers).length > 0) {
           setAnswers(parsed.answers);
-          if (typeof parsed.activeIdx === 'number') {
-            setActiveQuestionIdx(parsed.activeIdx);
-          }
-          if (parsed.deadline) {
-            const remaining = Math.max(10, Math.round((parsed.deadline - Date.now()) / 1000));
-            setTimeLeft(remaining);
-          } else if (typeof parsed.timeLeft === 'number') {
-            setTimeLeft(parsed.timeLeft);
-          }
-          draftRestored = true;
-          showToast("Draft pengerjaan LKPD dipulihkan otomatis!", "info");
         }
+        if (typeof parsed.activeIdx === 'number') {
+          setActiveQuestionIdx(parsed.activeIdx);
+        }
+        if (parsed.deadline) {
+          const remaining = Math.max(10, Math.round((parsed.deadline - Date.now()) / 1000));
+          setTimeLeft(remaining);
+        } else if (typeof parsed.timeLeft === 'number') {
+          setTimeLeft(parsed.timeLeft);
+        }
+
+        // If student was actively solving before refresh, restore solving mode directly!
+        if (parsed.isSolvingMode === true || (parsed.deadline && parsed.deadline > Date.now())) {
+          setIsSolvingMode(true);
+        }
+
+        draftRestored = true;
+        showToast("Sesi pengerjaan LKPD dipulihkan otomatis!", "info");
       }
     } catch (e) {
       console.warn("Draft restore error:", e);
@@ -264,7 +316,9 @@ export const SiswaLKPD: React.FC<{
         answers,
         activeIdx: activeQuestionIdx,
         deadline,
-        switchCount
+        switchCount,
+        isSolvingMode: true,
+        antiCheat: getReport()
       }));
     } catch (e) {
       console.warn("LKPD draft auto-save warning:", e);
@@ -515,6 +569,8 @@ export const SiswaLKPD: React.FC<{
     try {
       localStorage.removeItem(draftKey);
       draftLoadedRef.current = null;
+      resetReport();
+      setViolationAlert({ show: false, count: 0, message: '' });
     } catch {}
 
     const photoList = Object.values(finalAnswers)
@@ -1524,6 +1580,42 @@ export const SiswaLKPD: React.FC<{
                 className="w-full py-3 bg-[#ffe600] hover:bg-yellow-400 text-slate-950 font-mono text-xs font-black rounded-2xl border-3 border-slate-950 shadow-[3px_3px_0px_0px_#0f172a] dark:shadow-[3px_3px_0px_0px_#000000] cursor-pointer"
               >
                 Ya, Kumpulkan
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Front & Center Anti-Cheat Violation Alert Modal in LKPD */}
+      {violationAlert.show && (
+        <div className="fixed inset-0 z-[100000] bg-black/80 backdrop-blur-xs flex items-center justify-center p-4 animate-in zoom-in-95">
+          <div className="bg-white dark:bg-[#111827] border-4 border-red-600 dark:border-red-500 rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-[8px_8px_0px_0px_#7f1d1d] dark:shadow-[8px_8px_0px_0px_#000000] space-y-5 text-center">
+            <div className="w-16 h-16 mx-auto bg-red-100 dark:bg-red-950/60 border-3 border-red-600 rounded-2xl flex items-center justify-center text-red-600 dark:text-red-400 shadow-[4px_4px_0px_0px_#7f1d1d] animate-bounce">
+              <ShieldAlert size={36} />
+            </div>
+
+            <div className="space-y-2">
+              <span className="text-[11px] font-mono font-black uppercase tracking-wider px-3 py-1 bg-red-500 text-white border-2 border-slate-950 rounded-xl shadow-[2px_2px_0px_0px_#0f172a]">
+                PERINGATAN INTEGRITAS LKPD
+              </span>
+              <h3 className="text-xl font-black font-mono text-slate-950 dark:text-slate-100 mt-2">
+                Terdeteksi Berpindah Tab ({violationAlert.count}x)
+              </h3>
+              <p className="text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-300 leading-relaxed">
+                Kamu meninggalkan halaman pengerjaan LKPD. Seluruh insiden perpindahan tab dicatat otomatis dan dilaporkan kepada Guru!
+              </p>
+            </div>
+
+            <div className="pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  soundService.click();
+                  setViolationAlert({ show: false, count: 0, message: '' });
+                }}
+                className="w-full py-3.5 bg-red-500 hover:bg-red-600 text-white font-mono text-xs font-black rounded-2xl border-3 border-slate-950 shadow-[4px_4px_0px_0px_#0f172a] dark:shadow-[4px_4px_0px_0px_#000000] cursor-pointer active:translate-x-0.5 active:translate-y-0.5 transition-all"
+              >
+                Saya Mengerti &amp; Kembali Mengerjakan
               </button>
             </div>
           </div>

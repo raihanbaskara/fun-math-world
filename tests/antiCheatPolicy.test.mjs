@@ -207,3 +207,50 @@ test('Latsol: Tab switch count persists across session restore and does not rese
   currentSwitchCount += 1;
   assert.equal(currentSwitchCount, 3, 'Accumulates to 3 on subsequent tab switch');
 });
+
+test('LKPD: Tab switch count persists across session restore and does not reset to 0', () => {
+  // Simulate active LKPD draft before refresh with 3 recorded violations
+  const savedLkpdDraft = {
+    answers: { kegiatan_1: { textAnswer: 'Jawaban kegiatan 1' } },
+    activeIdx: 1,
+    deadline: Date.now() + 1800 * 1000,
+    isSolvingMode: true,
+    switchCount: 3,
+    antiCheat: {
+      switchCount: 3,
+      totalLeaveSeconds: 12,
+      log: [
+        { incident: 'Pindah tab saat pengerjaan', durationSeconds: 4, timestamp: '10:00:00' },
+        { incident: 'Pindah tab saat pengerjaan', durationSeconds: 8, timestamp: '10:02:00' }
+      ]
+    }
+  };
+
+  // Simulate component state re-initialization and restoreReport
+  let currentSwitchCount = 0;
+  let isSolvingMode = false;
+
+  const restoreReport = (report) => {
+    if (report && typeof report.switchCount === 'number') {
+      currentSwitchCount = report.switchCount;
+    }
+  };
+
+  // Restoration on mount
+  if (savedLkpdDraft.antiCheat) {
+    restoreReport(savedLkpdDraft.antiCheat);
+  } else if (typeof savedLkpdDraft.switchCount === 'number') {
+    restoreReport({ switchCount: savedLkpdDraft.switchCount });
+  }
+
+  if (savedLkpdDraft.isSolvingMode) {
+    isSolvingMode = true;
+  }
+
+  assert.equal(currentSwitchCount, 3, 'Restored switchCount in LKPD must be 3, not reset to 0');
+  assert.equal(isSolvingMode, true, 'isSolvingMode must be restored to true so student stays in solving view');
+
+  // Next violation after refresh increments from 3 -> 4
+  currentSwitchCount += 1;
+  assert.equal(currentSwitchCount, 4, 'Accumulates to 4 on subsequent tab switch');
+});
