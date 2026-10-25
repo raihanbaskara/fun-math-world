@@ -340,12 +340,19 @@ export const SiswaEvaluasi: React.FC<{
     } catch (error) {
       console.error('Photo evaluation failed:', error);
     }
-    const gradingStatus = hasAnyPhoto && (!photoEvaluation || photoEvaluation.reviewStatus === 'needs_review') ? 'needs_review' : 'graded';
-    
-    // Calculate final score: if photo graded by AI use AI score; if needs review, compute provisional score from text
+    // Calculate final score: if photo graded by AI use AI score; if needs review, compute score from text
     const textProvisionalScore = calculateEvaluasiScore(questions, textAnswers, cleanPhotos);
-    const finalScore = hasAnyPhoto
-      ? (gradingStatus === 'graded' ? (photoEvaluation?.totalScore ?? textProvisionalScore) : textProvisionalScore)
+    const hasTextContent = Object.values(textAnswers).some(t => t.trim().length > 0);
+
+    // If AI Vision succeeded with graded status, use AI score.
+    // If AI Vision failed/offline BUT student provided text answers, do NOT withhold score!
+    const isAiPhotoGraded = Boolean(photoEvaluation && photoEvaluation.reviewStatus === 'graded');
+    const gradingStatus = isAiPhotoGraded
+      ? 'graded'
+      : (hasAnyPhoto && !hasTextContent ? 'needs_review' : 'graded');
+
+    const finalScore = isAiPhotoGraded
+      ? (photoEvaluation?.totalScore ?? textProvisionalScore)
       : textProvisionalScore;
 
     const newSubmission: EvaluationSubmission = {
@@ -357,17 +364,25 @@ export const SiswaEvaluasi: React.FC<{
       score: finalScore,
       gradingStatus,
       aiEvaluation: photoEvaluation ? {
-        totalScore: photoEvaluation.totalScore,
-        overallFeedback: photoEvaluation.overallFeedback,
-        perQuestion: Object.fromEntries(Object.entries(photoEvaluation.perQuestion).map(([id, result]) => [id, {
-          score: result.score,
-          maxScore: result.maxScore,
-          reviewStatus: result.reviewStatus || 'graded',
-          imageStatus: result.imageStatus || 'not_provided',
-          imageSummary: result.imageSummary || '',
-          diagnosa: result.diagnosa || '',
-          conceptFeedback: result.conceptFeedback || '',
-        }])),
+        totalScore: finalScore,
+        overallFeedback: isAiPhotoGraded
+          ? photoEvaluation.overallFeedback
+          : (hasTextContent ? 'Evaluasi selesai dinilai otomatis dari uraian jawaban teks. Foto coretan fisik tersimpan untuk arsip guru.' : photoEvaluation.overallFeedback),
+        perQuestion: Object.fromEntries(Object.entries(photoEvaluation.perQuestion).map(([id, result]) => {
+          const hasThisText = Boolean((textAnswers[id] || '').trim());
+          const isNeedsReview = result.reviewStatus === 'needs_review';
+          return [id, {
+            score: isAiPhotoGraded ? result.score : Math.round((questions.find(q => q.id === id)?.weight || 20) * (finalScore / 100)),
+            maxScore: result.maxScore,
+            reviewStatus: hasThisText ? 'graded' : (result.reviewStatus || 'graded'),
+            imageStatus: result.imageStatus || 'not_provided',
+            imageSummary: result.imageSummary || '',
+            diagnosa: (isNeedsReview && hasThisText)
+              ? 'Foto coretan terlampir dan tersimpan aman. Nilai otomatis dihitung dari uraian jawaban teksmu (Guru tetap dapat menyesuaikan nilai di Portal Guru).'
+              : (result.diagnosa || ''),
+            conceptFeedback: result.conceptFeedback || '',
+          }];
+        })),
       } : undefined,
       textAnswers: textAnswers,
       photoProof: cleanPhotos[questions[0]?.id] || photoList[0] || "",
@@ -600,6 +615,8 @@ export const SiswaEvaluasi: React.FC<{
                               <span className={`ml-auto px-2 py-0.5 rounded text-[10px] ${
                                 aiQuestionResult.imageStatus === 'matched'
                                   ? 'bg-emerald-200 text-emerald-950'
+                                  : studentText && studentText.trim().length > 0 && aiQuestionResult.reviewStatus === 'graded'
+                                  ? 'bg-emerald-200 text-emerald-950'
                                   : 'bg-amber-200 text-amber-950'
                               }`}>
                                 {aiQuestionResult.imageStatus === 'matched'
@@ -608,7 +625,9 @@ export const SiswaEvaluasi: React.FC<{
                                   ? 'Foto Tidak Cocok'
                                   : aiQuestionResult.imageStatus === 'unreadable'
                                   ? 'Foto Tidak Terbaca'
-                                  : 'Perlu Diperiksa Guru'}
+                                  : (studentText && studentText.trim().length > 0 && aiQuestionResult.reviewStatus === 'graded'
+                                    ? 'Foto Terlampir (Dinilai dari Teks)'
+                                    : 'Perlu Diperiksa Guru')}
                               </span>
                             </div>
                             {aiQuestionResult.imageSummary && (

@@ -40,7 +40,7 @@ function parseModelJson(text: string) {
   return JSON.parse(cleaned.slice(first, last + 1));
 }
 
-const CANDIDATE_MODELS = ['gemini-3.6-flash', 'gemini-3.7-flash', 'gemini-3.8-flash'];
+const CANDIDATE_MODELS = ['gemini-3.6-flash', 'gemini-flash-lite-latest', 'gemini-flash-latest'];
 
 async function callGemini(parts: Array<Record<string, unknown>>, apiKey: string, preferredModel: string, systemText: string) {
   const modelsToTry = [preferredModel, ...CANDIDATE_MODELS.filter(m => m !== preferredModel)];
@@ -56,7 +56,7 @@ async function callGemini(parts: Array<Record<string, unknown>>, apiKey: string,
           contents: [{ parts }],
           generationConfig: { responseMimeType: 'application/json', temperature: 0.1 },
         }),
-        signal: AbortSignal.timeout(30000),
+        signal: AbortSignal.timeout(15000),
       });
       if (!response.ok) {
         const errJson = await response.json().catch(() => ({}));

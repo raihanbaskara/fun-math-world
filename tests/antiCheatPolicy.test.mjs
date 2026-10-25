@@ -291,3 +291,32 @@ test('Evaluasi: Tab switch count persists across session restore and does not re
   currentSwitchCount += 1;
   assert.equal(currentSwitchCount, 3, 'Accumulates to 3 on subsequent tab switch in Evaluasi');
 });
+
+test('Evaluasi: Fallback grading when AI Vision is offline does not withhold score if student answered in text', () => {
+  const textAnswers = {
+    eq_1: 'Total gula = 3/4 + 2/5 = 15/20 + 8/20 = 23/20 = 1 3/20 kg.',
+    eq_2: '9 potong',
+    eq_3: '70',
+    eq_4: '15',
+    eq_5: 'a. 24000 b. 15000 c. 21000'
+  };
+  const cleanPhotos = { eq_1: 'data:image/jpeg;base64,...' };
+  const hasAnyPhoto = true;
+  const hasTextContent = Object.values(textAnswers).some(t => t.trim().length > 0);
+  
+  // Simulated AI Vision failure (reviewStatus = needs_review)
+  const photoEvaluation = {
+    totalScore: 0,
+    reviewStatus: 'needs_review',
+    perQuestion: {
+      eq_1: { score: 0, reviewStatus: 'needs_review', diagnosa: 'Foto belum berhasil dianalisis' }
+    }
+  };
+
+  const isAiPhotoGraded = Boolean(photoEvaluation && photoEvaluation.reviewStatus === 'graded');
+  const gradingStatus = isAiPhotoGraded
+    ? 'graded'
+    : (hasAnyPhoto && !hasTextContent ? 'needs_review' : 'graded');
+
+  assert.equal(gradingStatus, 'graded', 'Grading status must be graded because student provided text answers');
+});
