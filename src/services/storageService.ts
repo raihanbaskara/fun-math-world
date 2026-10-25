@@ -84,6 +84,7 @@ export const defaultDatabaseState: DatabaseState = {
       isApproved: true
     }
   ],
+  deletedUserIds: [],
   materials: [
     {
       id: "m1",
@@ -565,19 +566,25 @@ export function getSessionTime(u: User): number {
   return getSessionTimestamp(u.sessionToken);
 }
 
-export function mergeUsersList(primary: User[], secondary: User[]): User[] {
+export function mergeUsersList(primary: User[], secondary: User[], deletedIds?: string[]): User[] {
   const map = new Map<string, User>();
-  // 1. Put default users
-  defaultDatabaseState.users.forEach(u => map.set(u.id, u));
-  // 2. Put secondary users
+  const banned = new Set(deletedIds || []);
+
+  // 1. Put default users (if not deleted)
+  defaultDatabaseState.users.forEach(u => {
+    if (!banned.has(u.id)) map.set(u.id, u);
+  });
+
+  // 2. Put secondary users (if not deleted)
   (secondary || []).forEach(u => {
-    if (u && u.id) {
+    if (u && u.id && !banned.has(u.id)) {
       map.set(u.id, u);
     }
   });
+
   // 3. Put/overwrite with primary users while respecting session timestamps
   (primary || []).forEach(u => {
-    if (u && u.id) {
+    if (u && u.id && !banned.has(u.id)) {
       const exist = map.get(u.id);
       if (!exist) {
         map.set(u.id, u);
@@ -586,10 +593,14 @@ export function mergeUsersList(primary: User[], secondary: User[]): User[] {
         const primaryTs = getSessionTime(u);
         const useSecondarySession = existTs > primaryTs;
 
+        // CRITICAL FIX: Once approved in either client or cloud, an account stays approved!
+        // A stale client with isApproved: false can NEVER downgrade an approved account.
+        const isApprovedResolved = u.isApproved === true || exist.isApproved === true;
+
         map.set(u.id, {
           ...exist,
           ...u,
-          isApproved: u.isApproved !== undefined ? u.isApproved : (exist.isApproved !== undefined ? exist.isApproved : (u.role === 'siswa' ? false : true)),
+          isApproved: isApprovedResolved,
           sessionToken: useSecondarySession ? exist.sessionToken : (u.sessionToken !== undefined ? u.sessionToken : exist.sessionToken),
           deviceId: useSecondarySession ? exist.deviceId : (u.deviceId !== undefined ? u.deviceId : exist.deviceId),
           sessionUpdatedAt: useSecondarySession ? exist.sessionUpdatedAt : (u.sessionUpdatedAt !== undefined ? u.sessionUpdatedAt : exist.sessionUpdatedAt),
@@ -952,6 +963,24 @@ class StorageService {
             return;
           }
 
+          if (data.type === 'user_approved' && data.userId) {
+            const target = this.state.users.find(u => u.id === data.userId);
+            if (target) {
+              target.isApproved = true;
+              this.safeSaveToLocalStorage(this.state);
+              this.notify();
+            }
+            return;
+          }
+
+          if (data.type === 'user_deleted' && data.userId) {
+            this.state.deletedUserIds = Array.from(new Set([...(this.state.deletedUserIds || []), data.userId]));
+            this.state.users = this.state.users.filter(u => u.id !== data.userId);
+            this.safeSaveToLocalStorage(this.state);
+            this.notify();
+            return;
+          }
+
           if (!data.userId || !data.sessionToken) return;
           const target = this.state.users.find(u => u.id === data.userId);
           if (target) {
@@ -1002,6 +1031,34 @@ class StorageService {
                 this.safeSaveToLocalStorage(this.state);
                 this.notify();
               }
+            }
+          }
+        )
+        .on(
+          'broadcast',
+          { event: 'user_approved' },
+          (eventPayload: any) => {
+            const userId = eventPayload?.payload?.userId;
+            if (userId) {
+              const target = this.state.users.find(u => u.id === userId);
+              if (target) {
+                target.isApproved = true;
+                this.safeSaveToLocalStorage(this.state);
+                this.notify();
+              }
+            }
+          }
+        )
+        .on(
+          'broadcast',
+          { event: 'user_deleted' },
+          (eventPayload: any) => {
+            const userId = eventPayload?.payload?.userId;
+            if (userId) {
+              this.state.deletedUserIds = Array.from(new Set([...(this.state.deletedUserIds || []), userId]));
+              this.state.users = this.state.users.filter(u => u.id !== userId);
+              this.safeSaveToLocalStorage(this.state);
+              this.notify();
             }
           }
         )
@@ -1082,7 +1139,8 @@ class StorageService {
       (remoteState.latsolRooms?.[0]?.questions?.length === 10);
     const remoteHasValidLKPD = Boolean(remoteState.lkpdList?.[0]?.questions?.some((q: { id: string }) => q.id === 'lkpd_c3'));
 
-    const mergedUsers = mergeUsersList(this.state.users || [], remoteState.users || []);
+    const currentDeleted = Array.from(new Set([...(this.state.deletedUserIds || []), ...(remoteState.deletedUserIds || [])]));
+    const mergedUsers = mergeUsersList(this.state.users || [], remoteState.users || [], currentDeleted);
     const mergedLkpdSub = mergeSubmissionsList(remoteState.lkpdSubmissions || [], this.state.lkpdSubmissions || []);
     const mergedLatsolSub = mergeArrayById(remoteState.latsolSubmissions || [], this.state.latsolSubmissions || []);
     const mergedEvalSub = mergeEvaluationSubmissionsList(remoteState.evaluationSubmissions || [], this.state.evaluationSubmissions || []);
@@ -1092,6 +1150,7 @@ class StorageService {
       ...remoteState,
       evaluationDurationMinutes: remoteState.evaluationDurationMinutes || this.state.evaluationDurationMinutes || defaultDatabaseState.evaluationDurationMinutes || 30,
       users: mergedUsers,
+      deletedUserIds: currentDeleted,
       lkpdSubmissions: mergedLkpdSub,
       latsolSubmissions: mergedLatsolSub,
       evaluationSubmissions: mergedEvalSub,
@@ -1140,7 +1199,8 @@ class StorageService {
 
       if (!error && data && Array.isArray((data as any).users)) {
         const remoteUsers = (data as any).users as User[];
-        const mergedUsers = mergeUsersList(this.state.users || [], remoteUsers);
+        const currentDeleted = this.state.deletedUserIds || [];
+        const mergedUsers = mergeUsersList(this.state.users || [], remoteUsers, currentDeleted);
         this.state.users = mergedUsers;
         this.safeSaveToLocalStorage(this.state);
         this.notify();
@@ -1336,7 +1396,8 @@ class StorageService {
         ...defaultDatabaseState,
         ...parsed,
         evaluationDurationMinutes: parsed.evaluationDurationMinutes || defaultDatabaseState.evaluationDurationMinutes || 30,
-        users: mergeUsersList(parsed.users || [], defaultDatabaseState.users),
+        deletedUserIds: parsed.deletedUserIds || [],
+        users: mergeUsersList(parsed.users || [], defaultDatabaseState.users, parsed.deletedUserIds || []),
         latsolRooms: hasValidNewQuestions ? parsed.latsolRooms : defaultDatabaseState.latsolRooms,
         evaluationQuestions: hasValidNewQuestions ? parsed.evaluationQuestions : defaultDatabaseState.evaluationQuestions,
         lkpdList: hasValidLKPD ? parsed.lkpdList : defaultDatabaseState.lkpdList,
@@ -1379,7 +1440,8 @@ class StorageService {
 
           let stateToSave = this.state;
           if (cloudData && cloudData.data) {
-            const mergedUsers = mergeUsersList(this.state.users || [], cloudData.data.users || []);
+            const currentDeleted = Array.from(new Set([...(this.state.deletedUserIds || []), ...(cloudData.data.deletedUserIds || [])]));
+            const mergedUsers = mergeUsersList(this.state.users || [], cloudData.data.users || [], currentDeleted);
             const mergedLkpd = mergeSubmissionsList(this.state.lkpdSubmissions || [], cloudData.data.lkpdSubmissions || []);
             const mergedLatsol = mergeArrayById(this.state.latsolSubmissions || [], cloudData.data.latsolSubmissions || []);
             const mergedEval = mergeEvaluationSubmissionsList(this.state.evaluationSubmissions || [], cloudData.data.evaluationSubmissions || []);
@@ -1388,6 +1450,7 @@ class StorageService {
               ...this.state,
               evaluationDurationMinutes: this.state.evaluationDurationMinutes || cloudData.data.evaluationDurationMinutes || 30,
               users: mergedUsers,
+              deletedUserIds: currentDeleted,
               lkpdSubmissions: mergedLkpd,
               latsolSubmissions: mergedLatsol,
               evaluationSubmissions: mergedEval
@@ -1413,11 +1476,39 @@ class StorageService {
     }
   }
 
-  public async removeUser(userId: string): Promise<void> {
-    this.state.users = this.state.users.filter(u => u.id !== userId);
+  public async approveUser(userId: string): Promise<void> {
+    const target = this.state.users.find(u => u.id === userId);
+    if (target) {
+      target.isApproved = true;
+    }
     this.safeSaveToLocalStorage(this.state);
     this.notify();
 
+    // 1. Broadcast locally
+    try {
+      if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+        if (!this.localBroadcastChannel) {
+          this.localBroadcastChannel = new BroadcastChannel('fmw_session_sync');
+        }
+        this.localBroadcastChannel.postMessage({
+          type: 'user_approved',
+          userId
+        });
+      }
+    } catch {}
+
+    // 2. Broadcast via Supabase Realtime
+    if (this.realtimeChannel) {
+      try {
+        this.realtimeChannel.send({
+          type: 'broadcast',
+          event: 'user_approved',
+          payload: { userId }
+        });
+      } catch {}
+    }
+
+    // 3. Immediately persist approval to Supabase
     const client = getSupabase();
     if (checkIsSupabaseConfigured() && client) {
       try {
@@ -1427,14 +1518,85 @@ class StorageService {
           .eq('id', 'main')
           .maybeSingle();
 
-        if (cloudData?.data?.users) {
-          cloudData.data.users = cloudData.data.users.filter((u: User) => u.id !== userId);
-          this.state.users = cloudData.data.users;
-        }
+        if (cloudData?.data) {
+          const currentDeleted = Array.from(new Set([...(this.state.deletedUserIds || []), ...(cloudData.data.deletedUserIds || [])]));
+          const mergedUsers = mergeUsersList(this.state.users || [], cloudData.data.users || [], currentDeleted);
+          const t = mergedUsers.find(u => u.id === userId);
+          if (t) t.isApproved = true;
 
-        await client
+          const stateToSave = pruneHeavyBlobs(sanitizeBannedSubtitles({
+            ...cloudData.data,
+            ...this.state,
+            users: mergedUsers,
+            deletedUserIds: currentDeleted
+          }));
+
+          await client
+            .from('app_state')
+            .upsert({ id: 'main', data: stateToSave, updated_at: new Date().toISOString() });
+        }
+      } catch (err) {
+        console.warn('[StorageService] approveUser cloud sync warning:', err);
+      }
+    }
+  }
+
+  public async removeUser(userId: string): Promise<void> {
+    const updatedDeleted = Array.from(new Set([...(this.state.deletedUserIds || []), userId]));
+    this.state.deletedUserIds = updatedDeleted;
+    this.state.users = this.state.users.filter(u => u.id !== userId);
+    this.safeSaveToLocalStorage(this.state);
+    this.notify();
+
+    // 1. Broadcast locally
+    try {
+      if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+        if (!this.localBroadcastChannel) {
+          this.localBroadcastChannel = new BroadcastChannel('fmw_session_sync');
+        }
+        this.localBroadcastChannel.postMessage({
+          type: 'user_deleted',
+          userId
+        });
+      }
+    } catch {}
+
+    // 2. Broadcast via Supabase Realtime
+    if (this.realtimeChannel) {
+      try {
+        this.realtimeChannel.send({
+          type: 'broadcast',
+          event: 'user_deleted',
+          payload: { userId }
+        });
+      } catch {}
+    }
+
+    // 3. Immediately persist deletion & tombstone to Supabase
+    const client = getSupabase();
+    if (checkIsSupabaseConfigured() && client) {
+      try {
+        const { data: cloudData } = await client
           .from('app_state')
-          .upsert({ id: 'main', data: this.state, updated_at: new Date().toISOString() });
+          .select('data')
+          .eq('id', 'main')
+          .maybeSingle();
+
+        if (cloudData?.data) {
+          const cloudDeleted = Array.from(new Set([...updatedDeleted, ...(cloudData.data.deletedUserIds || [])]));
+          const filteredUsers = (cloudData.data.users || []).filter((u: User) => u.id !== userId && !cloudDeleted.includes(u.id));
+
+          const stateToSave = pruneHeavyBlobs(sanitizeBannedSubtitles({
+            ...cloudData.data,
+            ...this.state,
+            users: filteredUsers,
+            deletedUserIds: cloudDeleted
+          }));
+
+          await client
+            .from('app_state')
+            .upsert({ id: 'main', data: stateToSave, updated_at: new Date().toISOString() });
+        }
       } catch (err) {
         console.error('Failed to delete user in Supabase:', err);
       }

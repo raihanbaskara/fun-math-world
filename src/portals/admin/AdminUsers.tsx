@@ -129,14 +129,9 @@ export const AdminUsers: React.FC<{
     showToast('Akun pengguna baru berhasil didaftarkan!', 'success');
   };
 
-  const handleApproveUser = (userId: string, userName: string) => {
+  const handleApproveUser = async (userId: string, userName: string) => {
     soundService.click();
-    storageService.update(draft => {
-      const target = draft.users.find(u => u.id === userId);
-      if (target) {
-        target.isApproved = true;
-      }
-    });
+    await storageService.approveUser(userId);
     setDbState(storageService.getState());
     soundService.success();
     showToast(`Akun siswa ${userName} berhasil disetujui (ACC)! Siswa kini dapat login.`, 'success');

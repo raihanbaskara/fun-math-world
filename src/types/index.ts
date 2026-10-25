@@ -221,6 +221,7 @@ export interface DatabaseState {
     darkMode: boolean;
   };
   users: User[];
+  deletedUserIds?: string[];
   materials: Material[];
   videos: VideoLesson[];
   lkpdList: LKPDItem[];

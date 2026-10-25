@@ -15,15 +15,17 @@ function getSessionTime(u) {
   return getSessionTimestamp(u.sessionToken);
 }
 
-function mergeUsersList(primary, secondary) {
+function mergeUsersList(primary, secondary, deletedIds) {
   const map = new Map();
+  const banned = new Set(deletedIds || []);
+
   (secondary || []).forEach(u => {
-    if (u && u.id) {
+    if (u && u.id && !banned.has(u.id)) {
       map.set(u.id, u);
     }
   });
   (primary || []).forEach(u => {
-    if (u && u.id) {
+    if (u && u.id && !banned.has(u.id)) {
       const exist = map.get(u.id);
       if (!exist) {
         map.set(u.id, u);
@@ -32,13 +34,16 @@ function mergeUsersList(primary, secondary) {
         const primaryTs = getSessionTime(u);
         const useSecondarySession = existTs > primaryTs;
 
+        // Monotonic approval rule: once approved, always approved
+        const isApprovedResolved = u.isApproved === true || exist.isApproved === true;
+
         map.set(u.id, {
           ...exist,
           ...u,
           sessionToken: useSecondarySession ? exist.sessionToken : (u.sessionToken !== undefined ? u.sessionToken : exist.sessionToken),
           deviceId: useSecondarySession ? exist.deviceId : (u.deviceId !== undefined ? u.deviceId : exist.deviceId),
           sessionUpdatedAt: useSecondarySession ? exist.sessionUpdatedAt : (u.sessionUpdatedAt !== undefined ? u.sessionUpdatedAt : exist.sessionUpdatedAt),
-          isApproved: u.isApproved !== undefined ? u.isApproved : (exist.isApproved !== undefined ? exist.isApproved : (u.role === 'siswa' ? false : true)),
+          isApproved: isApprovedResolved,
           progress: {
             materi: Math.max(exist.progress?.materi || 0, u.progress?.materi || 0),
             video: Math.max(exist.progress?.video || 0, u.progress?.video || 0),
@@ -302,4 +307,50 @@ test('Admin Approval Policy: Default system users and approved students have isA
   const blockedResult = attemptLogin(unapprovedStudent);
   assert.equal(blockedResult.success, false);
   assert.equal(blockedResult.reason, 'PENDING_APPROVAL');
+});
+
+test('Admin Approval Monotonicity: Stale client with isApproved: false cannot downgrade an approved user', () => {
+  const cloudApprovedUser = {
+    id: 'siswa_acc_1',
+    username: 'budi123',
+    name: 'Budi Santoso',
+    role: 'siswa',
+    isApproved: true
+  };
+
+  const staleClientUnapprovedUser = {
+    id: 'siswa_acc_1',
+    username: 'budi123',
+    name: 'Budi Santoso',
+    role: 'siswa',
+    isApproved: false // Stale client still had false
+  };
+
+  // Primary is stale client, secondary is cloud (or vice-versa)
+  const merged1 = mergeUsersList([staleClientUnapprovedUser], [cloudApprovedUser]);
+  const user1 = merged1.find(u => u.id === 'siswa_acc_1');
+  assert.equal(user1.isApproved, true, 'isApproved must remain true when merged');
+
+  const merged2 = mergeUsersList([cloudApprovedUser], [staleClientUnapprovedUser]);
+  const user2 = merged2.find(u => u.id === 'siswa_acc_1');
+  assert.equal(user2.isApproved, true, 'isApproved must remain true in any merge direction');
+});
+
+test('Account Deletion Tombstone: Deleted user IDs in deletedUserIds are purged and cannot be resurrected by stale clients', () => {
+  const staleClientUsers = [
+    { id: 'siswa_stuck_1', username: 'dongker', role: 'siswa', isApproved: false },
+    { id: 'siswa_legit_2', username: 'siswa2', role: 'siswa', isApproved: true }
+  ];
+
+  const adminActiveUsers = [
+    { id: 'siswa_legit_2', username: 'siswa2', role: 'siswa', isApproved: true }
+  ];
+
+  const deletedUserIds = ['siswa_stuck_1'];
+
+  // Even though stale client has siswa_stuck_1 in secondary, deletedUserIds drops it
+  const merged = mergeUsersList(adminActiveUsers, staleClientUsers, deletedUserIds);
+  assert.equal(merged.length, 1);
+  assert.equal(merged[0].id, 'siswa_legit_2');
+  assert.equal(merged.some(u => u.id === 'siswa_stuck_1'), false);
 });
