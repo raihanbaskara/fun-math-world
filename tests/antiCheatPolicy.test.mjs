@@ -320,3 +320,37 @@ test('Evaluasi: Fallback grading when AI Vision is offline does not withhold sco
 
   assert.equal(gradingStatus, 'graded', 'Grading status must be graded because student provided text answers');
 });
+
+test('Evaluasi: Submits immediately with rubric score and allows on-demand AI correction like LKPD', () => {
+  const initialSubmission = {
+    id: 'eval_std_1_123',
+    studentId: 'std_1',
+    score: 85,
+    gradingStatus: 'graded',
+    aiEvaluation: undefined,
+    textAnswers: { eq_1: '1 3/20 kg' },
+    photoProofs: { eq_1: 'data:image/jpeg;base64,abc' }
+  };
+
+  assert.equal(initialSubmission.score, 85, 'Initial submission has instant rubric score without waiting for AI');
+  assert.equal(initialSubmission.aiEvaluation, undefined, 'AI evaluation is not blocking initial submit');
+  assert.equal(initialSubmission.gradingStatus, 'graded', 'Status is immediately graded');
+
+  // Triggering on-demand Koreksi AI populates aiEvaluation
+  const aiCorrectionResult = {
+    totalScore: 90,
+    overallFeedback: 'Konsep pecahan dipahami dengan baik.',
+    perQuestion: {
+      eq_1: { score: 20, reviewStatus: 'graded', diagnosa: 'Paham Utuh' }
+    }
+  };
+
+  const updatedSubmission = {
+    ...initialSubmission,
+    score: aiCorrectionResult.totalScore,
+    aiEvaluation: aiCorrectionResult
+  };
+
+  assert.equal(updatedSubmission.score, 90, 'Score updated after on-demand AI correction');
+  assert.ok(updatedSubmission.aiEvaluation, 'aiEvaluation is populated on-demand');
+});

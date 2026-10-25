@@ -7,7 +7,7 @@ import { soundService } from '@/services/soundService';
 import { User, AntiCheatReport, EvaluationSubmission } from '@/types';
 import { compressImage, compressImageFile } from '@/lib/utils';
 import { useAntiCheat } from '@/lib/useAntiCheat';
-import { evaluateLKPDWithAI, type LKPDOverallEvaluation } from '@/services/aiCorrectionService';
+import { evaluateLKPDWithAI, evaluateLKPDWithRubric, type LKPDOverallEvaluation } from '@/services/aiCorrectionService';
 import {
   PenTool,
   ShieldAlert,
@@ -25,7 +25,10 @@ import {
   Trash2,
   Upload,
   X,
-  Maximize2
+  Maximize2,
+  Bot,
+  RefreshCw,
+  Loader2
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
@@ -220,6 +223,8 @@ export const SiswaEvaluasi: React.FC<{
   }, [textAnswers, photos, activeQuestionIdx, isPrerequisiteMet, previousSubmission]);
 
   const [showConfirmSubmitModal, setShowConfirmSubmitModal] = useState<boolean>(false);
+  const [isAiLoading, setIsAiLoading] = useState<boolean>(false);
+  const [showAiDiscussion, setShowAiDiscussion] = useState<boolean>(true);
 
   // Anti-Cheat Tab Monitor Active while taking exam
   const { switchCount, getReport, resetReport, restoreReport, pauseAntiCheat, markFilePickerOpen, markFilePickerClosed } = useAntiCheat({
@@ -326,34 +331,9 @@ export const SiswaEvaluasi: React.FC<{
 
     const cheatReport: AntiCheatReport = getReport();
     setIsSubmitting(true);
-    let photoEvaluation: LKPDOverallEvaluation | undefined;
 
-    try {
-      if (hasAnyPhoto) {
-        showToast('Memeriksa kecocokan foto dengan setiap soal...', 'info');
-        const photoAnswers = Object.fromEntries(questions.map(question => [question.id, {
-          textAnswer: textAnswers[question.id] || '',
-          photoUrl: cleanPhotos[question.id] || undefined,
-        }]));
-        photoEvaluation = await evaluateLKPDWithAI(questions, photoAnswers);
-      }
-    } catch (error) {
-      console.error('Photo evaluation failed:', error);
-    }
-    // Calculate final score: if photo graded by AI use AI score; if needs review, compute score from text
-    const textProvisionalScore = calculateEvaluasiScore(questions, textAnswers, cleanPhotos);
-    const hasTextContent = Object.values(textAnswers).some(t => t.trim().length > 0);
-
-    // If AI Vision succeeded with graded status, use AI score.
-    // If AI Vision failed/offline BUT student provided text answers, do NOT withhold score!
-    const isAiPhotoGraded = Boolean(photoEvaluation && photoEvaluation.reviewStatus === 'graded');
-    const gradingStatus = isAiPhotoGraded
-      ? 'graded'
-      : (hasAnyPhoto && !hasTextContent ? 'needs_review' : 'graded');
-
-    const finalScore = isAiPhotoGraded
-      ? (photoEvaluation?.totalScore ?? textProvisionalScore)
-      : textProvisionalScore;
+    // Hitung skor evaluasi instan dari rubrik matematika objektif (0ms, tahan offline, tanpa delay API)
+    const calculatedScore = calculateEvaluasiScore(questions, textAnswers, cleanPhotos);
 
     const newSubmission: EvaluationSubmission = {
       id: `eval_${currentUser.id}_${Date.now()}`,
@@ -361,29 +341,9 @@ export const SiswaEvaluasi: React.FC<{
       studentName: currentUser.name,
       studentClass: currentUser.class || "Kelas 7",
       date: new Date().toLocaleString('id-ID'),
-      score: finalScore,
-      gradingStatus,
-      aiEvaluation: photoEvaluation ? {
-        totalScore: finalScore,
-        overallFeedback: isAiPhotoGraded
-          ? photoEvaluation.overallFeedback
-          : (hasTextContent ? 'Evaluasi selesai dinilai otomatis dari uraian jawaban teks. Foto coretan fisik tersimpan untuk arsip guru.' : photoEvaluation.overallFeedback),
-        perQuestion: Object.fromEntries(Object.entries(photoEvaluation.perQuestion).map(([id, result]) => {
-          const hasThisText = Boolean((textAnswers[id] || '').trim());
-          const isNeedsReview = result.reviewStatus === 'needs_review';
-          return [id, {
-            score: isAiPhotoGraded ? result.score : Math.round((questions.find(q => q.id === id)?.weight || 20) * (finalScore / 100)),
-            maxScore: result.maxScore,
-            reviewStatus: hasThisText ? 'graded' : (result.reviewStatus || 'graded'),
-            imageStatus: result.imageStatus || 'not_provided',
-            imageSummary: result.imageSummary || '',
-            diagnosa: (isNeedsReview && hasThisText)
-              ? 'Foto coretan terlampir dan tersimpan aman. Nilai otomatis dihitung dari uraian jawaban teksmu (Guru tetap dapat menyesuaikan nilai di Portal Guru).'
-              : (result.diagnosa || ''),
-            conceptFeedback: result.conceptFeedback || '',
-          }];
-        })),
-      } : undefined,
+      score: calculatedScore,
+      gradingStatus: 'graded',
+      aiEvaluation: undefined, // Dijalankan on-demand saat siswa menekan tombol "Koreksi AI"
       textAnswers: textAnswers,
       photoProof: cleanPhotos[questions[0]?.id] || photoList[0] || "",
       photoProofs: cleanPhotos,
@@ -407,17 +367,89 @@ export const SiswaEvaluasi: React.FC<{
       const user = draft.users.find(u => u.id === currentUser.id);
       if (user) {
         if (!user.progress) user.progress = { materi: 100, video: 100, lkpd: 100, latsol: 100, evaluasi: 0 };
-        user.progress.evaluasi = finalScore;
+        user.progress.evaluasi = calculatedScore;
       }
     });
 
     setIsSubmitting(false);
     soundService.success();
-    if (gradingStatus === 'needs_review') {
-      showToast('Jawaban dan foto berhasil dikumpulkan. Nilai sementara ditampilkan sambil menunggu guru memeriksa foto.', 'info');
-    } else {
-      confetti({ particleCount: 120, spread: 80 });
-      showToast(`Evaluasi Uraian Berhasil Dikumpulkan! Skor Anda: ${finalScore}`, 'success');
+    confetti({ particleCount: 120, spread: 80 });
+    showToast(`Evaluasi Uraian Berhasil Dikumpulkan! Skor Anda: ${calculatedScore}. Klik 'Koreksi AI' jika ingin ditelaah asisten AI.`, 'success');
+  };
+
+  const handleRunAiCorrection = async () => {
+    if (!previousSubmission) return;
+    soundService.click();
+    setIsAiLoading(true);
+    showToast("Menghubungi asisten AI untuk menelaah jawaban uraian & bukti coretan...", "info");
+
+    try {
+      const cleanPhotos = previousSubmission.photoProofs || {};
+      const submissionAnswers = previousSubmission.textAnswers || {};
+      const photoAnswers = Object.fromEntries(questions.map(question => [question.id, {
+        textAnswer: submissionAnswers[question.id] || '',
+        photoUrl: cleanPhotos[question.id] || undefined,
+      }]));
+
+      let photoEvaluation: LKPDOverallEvaluation;
+      try {
+        photoEvaluation = await evaluateLKPDWithAI(questions, photoAnswers);
+      } catch (e) {
+        console.warn("AI service fallback to rubric:", e);
+        photoEvaluation = evaluateLKPDWithRubric(questions, photoAnswers);
+      }
+
+      const hasTextContent = Object.values(submissionAnswers).some(t => t.trim().length > 0);
+      const isAiPhotoGraded = Boolean(photoEvaluation && photoEvaluation.reviewStatus === 'graded');
+      const baseScore = previousSubmission.score;
+      const finalScore = isAiPhotoGraded
+        ? (photoEvaluation?.totalScore ?? baseScore)
+        : baseScore;
+
+      const updatedAiEvaluation = {
+        totalScore: finalScore,
+        overallFeedback: isAiPhotoGraded
+          ? photoEvaluation.overallFeedback
+          : (hasTextContent ? 'Evaluasi selesai ditelaah AI dari uraian jawaban teks. Foto coretan fisik tersimpan untuk arsip guru.' : photoEvaluation.overallFeedback),
+        perQuestion: Object.fromEntries(Object.entries(photoEvaluation.perQuestion).map(([id, result]) => {
+          const hasThisText = Boolean((submissionAnswers[id] || '').trim());
+          const isNeedsReview = result.reviewStatus === 'needs_review';
+          return [id, {
+            score: isAiPhotoGraded ? result.score : Math.round((questions.find(q => q.id === id)?.weight || 20) * (finalScore / 100)),
+            maxScore: result.maxScore,
+            reviewStatus: hasThisText ? 'graded' : (result.reviewStatus || 'graded'),
+            imageStatus: result.imageStatus || 'not_provided',
+            imageSummary: result.imageSummary || '',
+            diagnosa: (isNeedsReview && hasThisText)
+              ? 'Foto coretan terlampir dan tersimpan aman. Nilai otomatis dihitung dari uraian jawaban teksmu (Guru dapat menyesuaikan nilai di Portal Guru).'
+              : (result.diagnosa || ''),
+            conceptFeedback: result.conceptFeedback || '',
+          }];
+        })),
+      };
+
+      storageService.update(draft => {
+        const target = draft.evaluationSubmissions.find(s => s.id === previousSubmission.id || s.studentId === currentUser.id);
+        if (target) {
+          target.aiEvaluation = updatedAiEvaluation;
+          if (isAiPhotoGraded) {
+            target.score = finalScore;
+          }
+        }
+        const user = draft.users.find(u => u.id === currentUser.id);
+        if (user && user.progress) {
+          user.progress.evaluasi = Math.max(user.progress.evaluasi || 0, finalScore);
+        }
+      });
+
+      setShowAiDiscussion(true);
+      soundService.success();
+      showToast("Koreksi AI selesai! Telaah konsep dan foto berhasil diperbarui.", "success");
+    } catch (err) {
+      console.error("AI correction error:", err);
+      showToast("Gagal menjalankan koreksi AI. Silakan coba lagi.", "error");
+    } finally {
+      setIsAiLoading(false);
     }
   };
 
@@ -529,6 +561,96 @@ export const SiswaEvaluasi: React.FC<{
           </div>
         </div>
 
+        {/* Review Per-Question Header with Koreksi AI Button (Like LKPD) */}
+        <div className="space-y-4">
+          {isAiLoading ? (
+            <div className="flex items-center gap-3 p-5 rounded-3xl bg-cyan-100/80 dark:bg-cyan-950/60 border-4 border-cyan-800 dark:border-cyan-600 shadow-[6px_6px_0px_0px_#083344] animate-pulse">
+              <Loader2 size={26} className="animate-spin text-cyan-800 dark:text-cyan-300 shrink-0" />
+              <div>
+                <span className="font-mono text-xs font-black block text-cyan-950 dark:text-cyan-100">
+                  ASISTEN AI SEDANG MENELAAH LANGKAH EVALUASI &amp; FOTO CORETANMU...
+                </span>
+                <span className="text-[11px] font-bold text-cyan-800 dark:text-cyan-300">
+                  Menganalisis langkah pecahan, bukti coret-coretan pengerjaan, dan menyiapkan diagnosa konsep.
+                </span>
+              </div>
+            </div>
+          ) : (
+            !previousSubmission.aiEvaluation ? (
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-[#fffdf0] dark:bg-[#18181b] border-4 border-slate-950 dark:border-amber-600 rounded-3xl p-5 sm:p-6 shadow-[6px_6px_0px_0px_#0f172a] dark:shadow-[6px_6px_0px_0px_#000000]">
+                <div className="flex items-center gap-3.5">
+                  <div className="p-3 bg-[#ffe600] border-3 border-slate-950 rounded-2xl text-slate-950 shadow-[2px_2px_0px_0px_#0f172a] shrink-0">
+                    <Sparkles size={24} />
+                  </div>
+                  <div>
+                    <h2 className="text-base sm:text-lg font-black font-mono text-slate-950 dark:text-slate-100 flex items-center gap-2">
+                      <span>Bimbingan &amp; Solusi Koreksi AI</span>
+                      <span className="text-[11px] font-mono font-black bg-amber-200 dark:bg-amber-900 text-amber-950 dark:text-amber-200 px-2 py-0.5 rounded-lg border border-amber-950/20">
+                        Opsional
+                      </span>
+                    </h2>
+                    <p className="text-xs sm:text-sm font-bold text-slate-600 dark:text-slate-400 mt-0.5">
+                      Ingin menelaah kesesuaian foto coretan fisik serta melihat evaluasi konsep versi AI? Klik tombol untuk menjalankan koreksi.
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleRunAiCorrection}
+                  className="px-6 py-3.5 rounded-2xl font-mono text-xs sm:text-sm font-black border-3 border-slate-950 bg-[#ffe600] hover:bg-yellow-400 text-slate-950 shadow-[4px_4px_0px_0px_#0f172a] dark:shadow-[4px_4px_0px_0px_#000000] transition-all cursor-pointer flex items-center justify-center gap-2 active:translate-x-0.5 active:translate-y-0.5 shrink-0"
+                >
+                  <Sparkles size={18} />
+                  <span>Koreksi AI</span>
+                </button>
+              </div>
+            ) : (
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white dark:bg-[#111827] border-4 border-slate-950 dark:border-slate-800 rounded-3xl p-5 shadow-[6px_6px_0px_0px_#0f172a] dark:shadow-[6px_6px_0px_0px_#000000]">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 bg-[#a5f3fc] border-2 border-slate-950 rounded-xl text-slate-950 shadow-[1.5px_1.5px_0px_0px_#0f172a]">
+                    <Bot size={22} />
+                  </div>
+                  <div>
+                    <h2 className="text-base sm:text-lg font-black font-mono text-slate-950 dark:text-slate-100">
+                      Tinjauan Evaluasi AI &amp; Pembahasan Soal
+                    </h2>
+                    <p className="text-xs font-bold text-slate-600 dark:text-slate-400">
+                      {showAiDiscussion
+                        ? 'Analisis AI dan pembahasan langkah konsep per butir soal sedang ditampilkan.'
+                        : 'Hasil telaah AI sedang disembunyikan. Klik tombol di samping untuk membukanya.'}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    type="button"
+                    onClick={handleRunAiCorrection}
+                    className="px-3.5 py-2.5 rounded-xl font-mono text-xs font-black border-2 border-slate-950 bg-white dark:bg-slate-800 text-slate-950 dark:text-slate-100 shadow-[2px_2px_0px_0px_#0f172a] hover:bg-slate-50 cursor-pointer flex items-center gap-1.5"
+                    title="Koreksi ulang dengan AI"
+                  >
+                    <RefreshCw size={14} />
+                    <span>Koreksi Ulang</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setShowAiDiscussion(!showAiDiscussion)}
+                    className={`px-5 py-3 rounded-2xl font-mono text-xs font-black border-3 border-slate-950 shadow-[4px_4px_0px_0px_#0f172a] dark:shadow-[4px_4px_0px_0px_#000000] transition-all cursor-pointer flex items-center justify-center gap-2 ${
+                      showAiDiscussion
+                        ? 'bg-slate-200 dark:bg-slate-800 text-slate-900 dark:text-slate-100'
+                        : 'bg-[#a5f3fc] hover:bg-cyan-300 text-slate-950'
+                    }`}
+                  >
+                    <Sparkles size={16} />
+                    <span>{showAiDiscussion ? 'Sembunyikan Koreksi AI' : 'Koreksi AI'}</span>
+                  </button>
+                </div>
+              </div>
+            )
+          )}
+        </div>
+
         {/* Step-by-Step Questions & Discussion */}
         <div className="space-y-6">
           <h3 className="text-lg font-black font-mono text-slate-950 dark:text-slate-100">
@@ -606,7 +728,7 @@ export const SiswaEvaluasi: React.FC<{
                       )}
 
                       {/* AI Evaluation Box */}
-                      {aiQuestionResult && (
+                      {aiQuestionResult && showAiDiscussion && (
                         studentPhoto ? (
                           <div role="status" className="rounded-xl border-2 border-purple-300 bg-purple-50 dark:bg-purple-950/40 p-3 text-xs font-bold text-purple-950 dark:text-purple-200 space-y-1.5 mt-2">
                             <div className="flex items-center gap-1.5 font-black text-[11px]">
