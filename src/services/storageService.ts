@@ -410,6 +410,7 @@ export const defaultDatabaseState: DatabaseState = {
     }
   ],
   evaluationDurationMinutes: 30,
+  lkpdDurationMinutes: 45,
   evaluationQuestions: [
     {
       id: "eq_1",
@@ -1149,6 +1150,7 @@ class StorageService {
       ...defaultDatabaseState,
       ...remoteState,
       evaluationDurationMinutes: remoteState.evaluationDurationMinutes || this.state.evaluationDurationMinutes || defaultDatabaseState.evaluationDurationMinutes || 30,
+              lkpdDurationMinutes: remoteState.lkpdDurationMinutes || this.state.lkpdDurationMinutes || defaultDatabaseState.lkpdDurationMinutes || 45,
       users: mergedUsers,
       deletedUserIds: currentDeleted,
       lkpdSubmissions: mergedLkpdSub,
@@ -1396,6 +1398,7 @@ class StorageService {
         ...defaultDatabaseState,
         ...parsed,
         evaluationDurationMinutes: parsed.evaluationDurationMinutes || defaultDatabaseState.evaluationDurationMinutes || 30,
+          lkpdDurationMinutes: parsed.lkpdDurationMinutes || defaultDatabaseState.lkpdDurationMinutes || 45,
         deletedUserIds: parsed.deletedUserIds || [],
         users: mergeUsersList(parsed.users || [], defaultDatabaseState.users, parsed.deletedUserIds || []),
         latsolRooms: hasValidNewQuestions ? parsed.latsolRooms : defaultDatabaseState.latsolRooms,
@@ -1449,6 +1452,7 @@ class StorageService {
             stateToSave = {
               ...this.state,
               evaluationDurationMinutes: this.state.evaluationDurationMinutes || cloudData.data.evaluationDurationMinutes || 30,
+              lkpdDurationMinutes: this.state.lkpdDurationMinutes || cloudData.data.lkpdDurationMinutes || 45,
               users: mergedUsers,
               deletedUserIds: currentDeleted,
               lkpdSubmissions: mergedLkpd,
@@ -1607,6 +1611,13 @@ class StorageService {
     const cleanMin = Math.max(1, Math.min(180, Math.round(minutes)));
     this.update(draft => {
       draft.evaluationDurationMinutes = cleanMin;
+    });
+  }
+
+  public updateLkpdDuration(minutes: number): void {
+    const cleanMin = Math.max(1, Math.min(180, Math.round(minutes)));
+    this.update(draft => {
+      draft.lkpdDurationMinutes = cleanMin;
     });
   }
 

@@ -14,6 +14,7 @@ import {
   Send,
   Trash2,
   ShieldAlert,
+  Clock,
   ArrowRight,
   ArrowLeft,
   Camera,
@@ -122,13 +123,68 @@ export const SiswaLKPD: React.FC<{
     setAiEvaluationResult(null);
   };
 
-  // LKPD is a collaborative learning worksheet; anti-cheat is disabled so taking photos & reading references is never penalized
+  const lkpdDurationMinutes = db.lkpdDurationMinutes || 45;
+  const lkpdDurationSeconds = lkpdDurationMinutes * 60;
+  const [timeLeft, setTimeLeft] = useState<number>(lkpdDurationSeconds);
+
+  // Anti-Cheat Monitor Active while actively solving LKPD activities
   const { switchCount, getReport, resetReport, pauseAntiCheat, markFilePickerOpen, markFilePickerClosed } = useAntiCheat({
-    active: false,
-    onViolation: () => {}
+    active: isSolvingMode && !existingSubmission,
+    onViolation: (msg) => {
+      soundService.alert();
+      showToast(msg, 'error');
+    }
   });
 
   const [showConfirmSubmitModal, setShowConfirmSubmitModal] = useState<boolean>(false);
+
+  // Countdown Timer for LKPD
+  useEffect(() => {
+    if (!isSolvingMode || existingSubmission) return;
+
+    if (timeLeft <= 0) {
+      soundService.alert();
+      showToast("Waktu pengerjaan LKPD telah habis! Mengumpulkan jawaban otomatis...", "info");
+      handleSubmitLKPD();
+      return;
+    }
+
+    const timer = setInterval(() => {
+      setTimeLeft(prev => prev - 1);
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [isSolvingMode, existingSubmission, timeLeft]);
+
+  const handleStartSolving = () => {
+    soundService.click();
+    setIsSolvingMode(true);
+    setActiveQuestionIdx(0);
+
+    try {
+      const rawDraft = localStorage.getItem(draftKey);
+      let deadline = Date.now() + lkpdDurationSeconds * 1000;
+      if (rawDraft) {
+        const p = JSON.parse(rawDraft);
+        if (p.deadline) {
+          deadline = p.deadline;
+          const remaining = Math.max(10, Math.round((deadline - Date.now()) / 1000));
+          setTimeLeft(remaining);
+        } else {
+          setTimeLeft(lkpdDurationSeconds);
+        }
+      } else {
+        setTimeLeft(lkpdDurationSeconds);
+      }
+      localStorage.setItem(draftKey, JSON.stringify({
+        answers,
+        activeIdx: 0,
+        deadline
+      }));
+    } catch (e) {
+      console.warn("Error initializing LKPD solving deadline:", e);
+    }
+  };
 
   // Load existing answers or restore local draft (prevents photo/text loss on background sync or mobile camera reload)
   useEffect(() => {
@@ -147,6 +203,12 @@ export const SiswaLKPD: React.FC<{
           setAnswers(parsed.answers);
           if (typeof parsed.activeIdx === 'number') {
             setActiveQuestionIdx(parsed.activeIdx);
+          }
+          if (parsed.deadline) {
+            const remaining = Math.max(10, Math.round((parsed.deadline - Date.now()) / 1000));
+            setTimeLeft(remaining);
+          } else if (typeof parsed.timeLeft === 'number') {
+            setTimeLeft(parsed.timeLeft);
           }
           draftRestored = true;
           showToast("Draft pengerjaan LKPD dipulihkan otomatis!", "info");
@@ -185,20 +247,29 @@ export const SiswaLKPD: React.FC<{
     }
   }, [currentLkpdId]);
 
-  // Auto-save draft on any text or photo answer change
+  // Auto-save draft on any text or photo answer change, preserving deadline & switchCount
   useEffect(() => {
-    if (!isSolvingMode) return;
+    if (!isSolvingMode || existingSubmission) return;
     try {
-      const hasContent = Object.values(answers).some(
-        a => Boolean((a?.textAnswer && a.textAnswer.trim()) || (a?.photoUrl && a.photoUrl.trim()))
-      );
-      if (hasContent) {
-        localStorage.setItem(draftKey, JSON.stringify({ answers, activeIdx: activeQuestionIdx }));
+      const rawDraft = localStorage.getItem(draftKey);
+      let deadline = Date.now() + timeLeft * 1000;
+      if (rawDraft) {
+        try {
+          const p = JSON.parse(rawDraft);
+          if (p.deadline) deadline = p.deadline;
+        } catch {}
       }
+
+      localStorage.setItem(draftKey, JSON.stringify({
+        answers,
+        activeIdx: activeQuestionIdx,
+        deadline,
+        switchCount
+      }));
     } catch (e) {
       console.warn("LKPD draft auto-save warning:", e);
     }
-  }, [answers, activeQuestionIdx, isSolvingMode, draftKey]);
+  }, [answers, activeQuestionIdx, isSolvingMode, draftKey, timeLeft, switchCount, existingSubmission]);
 
   const handleTextChange = (questionId: string, text: string) => {
     setAnswers(prev => ({
@@ -1084,22 +1155,27 @@ export const SiswaLKPD: React.FC<{
 
         {/* Tombol CTA Masuk ke Lembar Pengerjaan Kegiatan (Button-in-Button Architecture) */}
         <div className="rounded-3xl bg-white dark:bg-[#111827] border-4 border-slate-950 dark:border-slate-800 p-6 sm:p-8 shadow-[8px_8px_0px_0px_#0f172a] dark:shadow-[8px_8px_0px_0px_#000000] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
+          <div className="space-y-1.5">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="px-2.5 py-0.5 rounded-lg bg-[#ffe600] text-slate-950 font-mono text-[10px] font-black border border-slate-950 shadow-[1px_1px_0px_0px_#0f172a] flex items-center gap-1">
+                <Clock size={12} />
+                <span>WAKTU: {lkpdDurationMinutes} MENIT</span>
+              </span>
+              <span className="px-2.5 py-0.5 rounded-lg bg-emerald-200 text-emerald-950 font-mono text-[10px] font-black border border-slate-950 shadow-[1px_1px_0px_0px_#0f172a]">
+                {questions.length} KEGIATAN
+              </span>
+            </div>
             <h3 className="font-mono font-black text-base sm:text-lg text-slate-950 dark:text-slate-100">
               Siap Memulai Pengerjaan?
             </h3>
             <p className="text-xs font-bold text-slate-600 dark:text-slate-400 mt-0.5">
-              Klik tombol di samping untuk masuk ke lembar kerja Kegiatan 1 sampai Kegiatan {questions.length}.
+              Klik tombol di samping untuk masuk ke lembar kerja Kegiatan 1 sampai Kegiatan {questions.length}. Batas waktu pengerjaan adalah {lkpdDurationMinutes} menit.
             </p>
           </div>
 
           <button
             type="button"
-            onClick={() => {
-              soundService.click();
-              setIsSolvingMode(true);
-              setActiveQuestionIdx(0);
-            }}
+            onClick={handleStartSolving}
             className="group px-6 py-4 rounded-2xl bg-[#ffe600] hover:bg-yellow-400 text-slate-950 font-mono font-black text-xs sm:text-sm uppercase tracking-wider border-3 border-slate-950 shadow-[4px_4px_0px_0px_#0f172a] cursor-pointer shrink-0 flex items-center justify-center gap-3 active:translate-x-0.5 active:translate-y-0.5 transition-all"
           >
             <span>Mulai Kerjakan Kegiatan LKPD</span>
@@ -1151,20 +1227,42 @@ export const SiswaLKPD: React.FC<{
           </button>
         </div>
 
-        {/* Visual Linear Progress Bar */}
-        <div className="flex items-center gap-3 self-start sm:self-auto">
-          <div className="w-28 sm:w-40 bg-slate-200 dark:bg-slate-800 h-3 rounded-full border-2 border-slate-950 overflow-hidden shadow-[1px_1px_0px_0px_#0f172a]">
+        {/* Right side: Timer Badge & Visual Linear Progress Bar */}
+        <div className="flex flex-wrap items-center gap-3 self-start sm:self-auto">
+          {/* Live Countdown Timer Badge */}
+          <div
+            className={`px-3.5 py-1.5 rounded-xl border-2 border-slate-950 font-mono text-xs font-black shadow-[2px_2px_0px_0px_#0f172a] flex items-center gap-1.5 transition-all ${
+              timeLeft < 180
+                ? 'bg-red-400 text-slate-950 animate-pulse'
+                : 'bg-[#ffe600] text-slate-950'
+            }`}
+          >
+            <Clock size={15} />
+            <span>
+              {Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, '0')}
+            </span>
+          </div>
+
+          <div className="w-24 sm:w-36 bg-slate-200 dark:bg-slate-800 h-3 rounded-full border-2 border-slate-950 overflow-hidden shadow-[1px_1px_0px_0px_#0f172a]">
             <div
               className="bg-[#ffe600] h-full transition-all duration-300 border-r-2 border-slate-950"
               style={{ width: `${progressPercent}%` }}
             />
           </div>
 
-          <span className="font-mono text-xs font-black bg-[#ffe600] px-3 py-1.5 rounded-xl border-2 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a] text-slate-950">
+          <span className="font-mono text-xs font-black bg-[#a5f3fc] px-3 py-1.5 rounded-xl border-2 border-slate-950 shadow-[2px_2px_0px_0px_#0f172a] text-slate-950">
             {answeredCount}/{totalQuestions} Selesai
           </span>
         </div>
       </div>
+
+      {/* Anti-cheat tab switch warning alert */}
+      {switchCount > 0 && (
+        <div className="bg-red-100 dark:bg-red-950/50 border-3 border-red-950 dark:border-red-800 rounded-2xl p-4 shadow-[4px_4px_0px_0px_#7f1d1d] dark:shadow-[4px_4px_0px_0px_#000000] flex items-center gap-3 text-red-950 dark:text-red-200 font-mono text-xs font-black animate-in fade-in">
+          <ShieldAlert size={22} className="text-red-600 dark:text-red-400 shrink-0" />
+          <span>Peringatan: Kamu telah berpindah tab sebanyak {switchCount}x. Seluruh aktivitas perpindahan tab dicatat dan dilaporkan ke Portal Guru.</span>
+        </div>
+      )}
 
       {/* Question Stepper Tabs */}
       <div className="flex flex-wrap gap-2">
