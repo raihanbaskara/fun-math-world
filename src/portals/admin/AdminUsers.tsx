@@ -142,23 +142,6 @@ export const AdminUsers: React.FC<{
     showToast(`Akun siswa ${userName} berhasil disetujui (ACC)! Siswa kini dapat login.`, 'success');
   };
 
-  const handleRevokeUser = (userId: string, userName: string) => {
-    soundService.click();
-    if (confirm(`Tangguhkan / batalkan persetujuan akun siswa "${userName}"? Akun ini tidak akan dapat login sampai disetujui kembali oleh Admin.`)) {
-      storageService.update(draft => {
-        const target = draft.users.find(u => u.id === userId);
-        if (target) {
-          target.isApproved = false;
-          target.sessionToken = null;
-          target.deviceId = null;
-        }
-      });
-      setDbState(storageService.getState());
-      soundService.click();
-      showToast(`Persetujuan akun siswa ${userName} telah ditangguhkan.`, 'info');
-    }
-  };
-
   const handleResetDevice = (userId: string) => {
     soundService.click();
     storageService.update(draft => {
@@ -429,17 +412,6 @@ export const AdminUsers: React.FC<{
                         >
                           <UserCheck size={14} className="text-emerald-950" />
                           <span>Setujui (ACC)</span>
-                        </button>
-                      )}
-                      {u.role === 'siswa' && u.isApproved === true && (
-                        <button
-                          type="button"
-                          onClick={() => handleRevokeUser(u.id, u.name)}
-                          className="text-xs font-mono font-black text-slate-700 hover:text-rose-950 bg-slate-100 hover:bg-rose-100 border-2 border-slate-950 px-2 py-1.5 rounded-xl transition-all shadow-[1.5px_1.5px_0px_0px_#0f172a] active:translate-x-0.5 active:translate-y-0.5 cursor-pointer flex items-center gap-1"
-                          title="Tangguhkan Persetujuan Akun Siswa"
-                        >
-                          <Clock size={12} />
-                          <span>Kunci ACC</span>
                         </button>
                       )}
                       <button
