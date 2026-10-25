@@ -47,11 +47,6 @@ export const SiswaLatsol: React.FC<{
   const [isQuizCompleted, setIsQuizCompleted] = useState<boolean>(false);
   const [latestSubmission, setLatestSubmission] = useState<LatsolSubmission | null>(null);
   const [showConfirmSubmitModal, setShowConfirmSubmitModal] = useState<boolean>(false);
-  const [violationAlert, setViolationAlert] = useState<{ show: boolean; count: number; message: string }>({
-    show: false,
-    count: 0,
-    message: ''
-  });
 
   const LATSOL_SESSION_KEY = `FMW_LATSOL_SESSION_${currentUser.id}`;
 
@@ -109,11 +104,6 @@ export const SiswaLatsol: React.FC<{
     onViolation: (msg, count) => {
       showToast(msg, 'error');
       const nextCount = count || switchCount + 1;
-      setViolationAlert({
-        show: true,
-        count: nextCount,
-        message: msg
-      });
 
       // Persist violation count to localStorage session immediately so it survives refresh!
       try {
@@ -182,7 +172,6 @@ export const SiswaLatsol: React.FC<{
     setTimeLeft(room.durationSeconds || 180);
     setIsQuizCompleted(false);
     resetReport();
-    setViolationAlert({ show: false, count: 0, message: '' });
     soundService.success();
     showToast(`Memulai ${room.title}! Waktu: ${room.durationSeconds} detik.`, "success");
   };
@@ -622,41 +611,7 @@ export const SiswaLatsol: React.FC<{
           </div>
         )}
 
-        {/* Front & Center Anti-Cheat Violation Alert Modal in Latsol */}
-        {violationAlert.show && (
-          <div className="fixed inset-0 z-[100000] bg-black/80 backdrop-blur-xs flex items-center justify-center p-4 animate-in zoom-in-95">
-            <div className="bg-white dark:bg-[#111827] border-4 border-red-600 dark:border-red-500 rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-[8px_8px_0px_0px_#7f1d1d] dark:shadow-[8px_8px_0px_0px_#000000] space-y-5 text-center">
-              <div className="w-16 h-16 mx-auto bg-red-100 dark:bg-red-950/60 border-3 border-red-600 rounded-2xl flex items-center justify-center text-red-600 dark:text-red-400 shadow-[4px_4px_0px_0px_#7f1d1d] animate-bounce">
-                <ShieldAlert size={36} />
-              </div>
 
-              <div className="space-y-2">
-                <span className="text-[11px] font-mono font-black uppercase tracking-wider px-3 py-1 bg-red-500 text-white border-2 border-slate-950 rounded-xl shadow-[2px_2px_0px_0px_#0f172a]">
-                  PERINGATAN INTEGRITAS LATIHAN SOAL
-                </span>
-                <h3 className="text-xl font-black font-mono text-slate-950 dark:text-slate-100 mt-2">
-                  Terdeteksi Berpindah Tab ({violationAlert.count}x)
-                </h3>
-                <p className="text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-300 leading-relaxed">
-                  Kamu meninggalkan halaman kuis latihan soal. Seluruh insiden perpindahan tab dicatat otomatis dan dilaporkan kepada Guru!
-                </p>
-              </div>
-
-              <div className="pt-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    soundService.click();
-                    setViolationAlert({ show: false, count: 0, message: '' });
-                  }}
-                  className="w-full py-3.5 bg-red-500 hover:bg-red-600 text-white font-mono text-xs font-black rounded-2xl border-3 border-slate-950 shadow-[4px_4px_0px_0px_#0f172a] dark:shadow-[4px_4px_0px_0px_#000000] cursor-pointer"
-                >
-                  Saya Mengerti &amp; Kembali Mengerjakan
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
 
       </div>
     );
