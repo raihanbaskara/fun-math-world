@@ -105,6 +105,16 @@ export const GuruSoal: React.FC<{
     });
   }, []);
 
+  const evalDurationMinutes = dbState.evaluationDurationMinutes || 30;
+
+  const handleUpdateEvaluationDuration = (mins: number) => {
+    soundService.click();
+    const cleanMin = Math.max(1, Math.min(180, Math.round(mins)));
+    storageService.updateEvaluationDuration(cleanMin);
+    soundService.success();
+    showToast(`Durasi pengerjaan evaluasi berhasil diatur ke ${cleanMin} menit!`, 'success');
+  };
+
   const questions = dbState.evaluationQuestions || [];
   const submissions = dbState.evaluationSubmissions || [];
   const students = dbState.users?.filter(u => u.role === 'siswa') || [];
@@ -303,6 +313,82 @@ export const GuruSoal: React.FC<{
             {questions.length}
           </span>
         </button>
+      </div>
+
+      {/* 2.5 DURATION CONFIGURATOR (DOUBLE-BEZEL TACTILE ARCHITECTURE) */}
+      <div className="p-2 rounded-3xl bg-amber-100 dark:bg-amber-950/40 border-3 border-slate-950 dark:border-slate-800 shadow-[5px_5px_0px_0px_#0f172a] dark:shadow-[5px_5px_0px_0px_#000000]">
+        <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-[#111827] border-2 border-slate-950 dark:border-slate-700 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="space-y-1 max-w-xl">
+            <div className="flex items-center gap-2">
+              <span className="px-2.5 py-0.5 rounded-lg bg-[#ffe600] text-slate-950 font-mono font-black text-[10px] uppercase tracking-wider border border-slate-950 shadow-[1px_1px_0px_0px_#0f172a]">
+                PENGATURAN WAKTU EVALUASI
+              </span>
+              <span className="font-mono text-xs font-bold text-slate-600 dark:text-slate-400">
+                Alokasi Pengerjaan Siswa
+              </span>
+            </div>
+            <h3 className="text-base sm:text-lg font-black font-mono text-slate-950 dark:text-slate-100">
+              Durasi Waktu Ujian Evaluasi Sumatif
+            </h3>
+            <p className="text-xs font-bold text-slate-700 dark:text-slate-300 leading-relaxed">
+              Atur batas countdown timer bagi siswa untuk mengerjakan 5 butir soal esai HOTS dan mengunggah foto coretan fisik.
+            </p>
+          </div>
+
+          <div className="p-3 bg-amber-50 dark:bg-slate-800/60 rounded-2xl border-2 border-slate-950 dark:border-slate-700 space-y-2.5 shrink-0">
+            <div className="flex items-center justify-between text-xs font-bold text-slate-900 dark:text-slate-100 gap-3">
+              <span className="flex items-center gap-1.5 font-mono font-black">
+                <Clock size={15} className="text-amber-600 dark:text-amber-400" />
+                <span>Durasi Aktif:</span>
+              </span>
+              <span className="font-mono font-black text-slate-950 bg-[#ffe600] px-3 py-1 rounded-xl border-2 border-slate-950 shadow-[1.5px_1.5px_0px_0px_#0f172a]">
+                {evalDurationMinutes} Menit
+              </span>
+            </div>
+
+            <div className="flex items-center gap-1.5 flex-wrap">
+              {[15, 20, 30, 45, 60, 90].map(mins => (
+                <button
+                  key={mins}
+                  type="button"
+                  onClick={() => handleUpdateEvaluationDuration(mins)}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-mono font-black transition-all cursor-pointer border-2 border-slate-950 dark:border-slate-700 active:translate-x-0.5 active:translate-y-0.5 ${
+                    evalDurationMinutes === mins
+                      ? 'bg-[#ffe600] text-slate-950 shadow-[2px_2px_0px_0px_#0f172a]'
+                      : 'bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 hover:bg-yellow-100 dark:hover:bg-slate-700'
+                  }`}
+                >
+                  {mins}m
+                </button>
+              ))}
+
+              {/* Custom Input */}
+              <div className="flex items-center gap-1.5 bg-white dark:bg-slate-800 px-2.5 py-1 rounded-xl border-2 border-slate-950 dark:border-slate-700 shadow-[1.5px_1.5px_0px_0px_#0f172a]">
+                <span className="text-[11px] font-mono font-black text-slate-700 dark:text-slate-300">Custom:</span>
+                <input
+                  type="number"
+                  min="1"
+                  max="180"
+                  placeholder="0"
+                  key={`eval_dur_${evalDurationMinutes}`}
+                  defaultValue={![15, 20, 30, 45, 60, 90].includes(evalDurationMinutes) ? evalDurationMinutes : ''}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      const val = parseInt((e.target as HTMLInputElement).value);
+                      if (val > 0) handleUpdateEvaluationDuration(val);
+                    }
+                  }}
+                  onBlur={(e) => {
+                    const val = parseInt(e.target.value);
+                    if (val > 0 && val !== evalDurationMinutes) handleUpdateEvaluationDuration(val);
+                  }}
+                  className="w-10 text-xs font-mono font-black text-slate-950 dark:text-slate-100 outline-none text-center bg-transparent border-b-2 border-slate-400 dark:border-slate-600 focus:border-slate-950 dark:focus:border-amber-400 leading-normal"
+                />
+                <span className="text-[11px] font-mono font-bold text-slate-600 dark:text-slate-400">m</span>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* ========================================================================= */}

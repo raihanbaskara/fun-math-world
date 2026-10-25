@@ -133,10 +133,13 @@ export const SiswaEvaluasi: React.FC<{
     })[0];
 
   const questions = db.evaluationQuestions || [];
+  const evalDurationMinutes = db.evaluationDurationMinutes || 30;
+  const evalDurationSeconds = evalDurationMinutes * 60;
+
   const [activeQuestionIdx, setActiveQuestionIdx] = useState<number>(0);
   const [textAnswers, setTextAnswers] = useState<Record<string, string>>({});
   const [photos, setPhotos] = useState<Record<string, string>>({});
-  const [timeLeft, setTimeLeft] = useState<number>(1200); // 20 minutes default
+  const [timeLeft, setTimeLeft] = useState<number>(evalDurationSeconds);
   const [zoomPhoto, setZoomPhoto] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -167,19 +170,20 @@ export const SiswaEvaluasi: React.FC<{
         }
         showToast("Draft pengerjaan evaluasi berhasil dipulihkan otomatis!", "info");
       } else {
-        // Simpan deadline awal: 20 menit dari sekarang
-        const initialDeadline = Date.now() + 1200 * 1000;
+        // Simpan deadline awal sesuai durasi dinamis dari Guru
+        const initialDeadline = Date.now() + evalDurationSeconds * 1000;
         localStorage.setItem(draftKey, JSON.stringify({
           textAnswers: {},
           photos: {},
           deadline: initialDeadline,
+          durationMinutes: evalDurationMinutes,
           activeIdx: 0
         }));
       }
     } catch (e) {
       console.warn("Draft restore warning:", e);
     }
-  }, [isPrerequisiteMet, previousSubmission, currentUser.id]);
+  }, [isPrerequisiteMet, previousSubmission, currentUser.id, evalDurationSeconds, evalDurationMinutes]);
 
   // Auto-save draft setiap ada perubahan jawaban teks, foto, atau posisi soal
   useEffect(() => {
@@ -655,6 +659,10 @@ export const SiswaEvaluasi: React.FC<{
             </span>
             <span className="px-3 py-0.5 bg-[#a5f3fc] text-slate-950 border-2 border-slate-950 rounded-xl text-xs font-mono font-black shadow-[2px_2px_0px_0px_#0f172a]">
               TAHAP 3 (FINAL)
+            </span>
+            <span className="px-3 py-0.5 bg-white text-slate-950 border-2 border-slate-950 rounded-xl text-xs font-mono font-black shadow-[2px_2px_0px_0px_#0f172a] flex items-center gap-1.5">
+              <Clock size={12} className="text-amber-600" />
+              <span>Waktu: {evalDurationMinutes} Menit</span>
             </span>
           </div>
           <h1 className="text-xl sm:text-2xl font-black font-mono">

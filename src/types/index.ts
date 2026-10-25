@@ -227,6 +227,7 @@ export interface DatabaseState {
   lkpdSubmissions: LKPDSubmission[];
   latsolRooms: LatsolRoom[];
   latsolSubmissions: LatsolSubmission[];
+  evaluationDurationMinutes?: number;
   evaluationQuestions: EssayQuestion[];
   evaluationSubmissions: EvaluationSubmission[];
   announcements: Announcement[];

@@ -408,6 +408,7 @@ export const defaultDatabaseState: DatabaseState = {
       date: "2026-09-02 10:30"
     }
   ],
+  evaluationDurationMinutes: 30,
   evaluationQuestions: [
     {
       id: "eq_1",
@@ -1089,6 +1090,7 @@ class StorageService {
     this.state = sanitizeBannedSubtitles(this.sanitizeStudentProgress({
       ...defaultDatabaseState,
       ...remoteState,
+      evaluationDurationMinutes: remoteState.evaluationDurationMinutes || this.state.evaluationDurationMinutes || defaultDatabaseState.evaluationDurationMinutes || 30,
       users: mergedUsers,
       lkpdSubmissions: mergedLkpdSub,
       latsolSubmissions: mergedLatsolSub,
@@ -1333,6 +1335,7 @@ class StorageService {
       const merged: DatabaseState = {
         ...defaultDatabaseState,
         ...parsed,
+        evaluationDurationMinutes: parsed.evaluationDurationMinutes || defaultDatabaseState.evaluationDurationMinutes || 30,
         users: mergeUsersList(parsed.users || [], defaultDatabaseState.users),
         latsolRooms: hasValidNewQuestions ? parsed.latsolRooms : defaultDatabaseState.latsolRooms,
         evaluationQuestions: hasValidNewQuestions ? parsed.evaluationQuestions : defaultDatabaseState.evaluationQuestions,
@@ -1383,6 +1386,7 @@ class StorageService {
 
             stateToSave = {
               ...this.state,
+              evaluationDurationMinutes: this.state.evaluationDurationMinutes || cloudData.data.evaluationDurationMinutes || 30,
               users: mergedUsers,
               lkpdSubmissions: mergedLkpd,
               latsolSubmissions: mergedLatsol,
@@ -1435,6 +1439,13 @@ class StorageService {
         console.error('Failed to delete user in Supabase:', err);
       }
     }
+  }
+
+  public updateEvaluationDuration(minutes: number): void {
+    const cleanMin = Math.max(1, Math.min(180, Math.round(minutes)));
+    this.update(draft => {
+      draft.evaluationDurationMinutes = cleanMin;
+    });
   }
 
   public update(updater: (draft: DatabaseState) => void): void {
