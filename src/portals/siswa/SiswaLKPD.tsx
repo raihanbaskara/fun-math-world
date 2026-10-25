@@ -127,12 +127,6 @@ export const SiswaLKPD: React.FC<{
   const lkpdDurationSeconds = lkpdDurationMinutes * 60;
   const [timeLeft, setTimeLeft] = useState<number>(lkpdDurationSeconds);
 
-  const [violationAlert, setViolationAlert] = useState<{ show: boolean; count: number; message: string }>({
-    show: false,
-    count: 0,
-    message: ''
-  });
-
   // Anti-Cheat Monitor Active while actively solving LKPD activities
   const { switchCount, getReport, resetReport, restoreReport, pauseAntiCheat, markFilePickerOpen, markFilePickerClosed } = useAntiCheat({
     active: isSolvingMode && !existingSubmission,
@@ -140,12 +134,6 @@ export const SiswaLKPD: React.FC<{
       soundService.alert();
       showToast(msg, 'error');
       const nextCount = count || switchCount + 1;
-
-      setViolationAlert({
-        show: true,
-        count: nextCount,
-        message: msg
-      });
 
       // Instantly persist violation to localStorage draft so it survives refresh!
       try {
@@ -570,7 +558,6 @@ export const SiswaLKPD: React.FC<{
       localStorage.removeItem(draftKey);
       draftLoadedRef.current = null;
       resetReport();
-      setViolationAlert({ show: false, count: 0, message: '' });
     } catch {}
 
     const photoList = Object.values(finalAnswers)
@@ -1586,41 +1573,7 @@ export const SiswaLKPD: React.FC<{
         </div>
       )}
 
-      {/* Front & Center Anti-Cheat Violation Alert Modal in LKPD */}
-      {violationAlert.show && (
-        <div className="fixed inset-0 z-[100000] bg-black/80 backdrop-blur-xs flex items-center justify-center p-4 animate-in zoom-in-95">
-          <div className="bg-white dark:bg-[#111827] border-4 border-red-600 dark:border-red-500 rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-[8px_8px_0px_0px_#7f1d1d] dark:shadow-[8px_8px_0px_0px_#000000] space-y-5 text-center">
-            <div className="w-16 h-16 mx-auto bg-red-100 dark:bg-red-950/60 border-3 border-red-600 rounded-2xl flex items-center justify-center text-red-600 dark:text-red-400 shadow-[4px_4px_0px_0px_#7f1d1d] animate-bounce">
-              <ShieldAlert size={36} />
-            </div>
 
-            <div className="space-y-2">
-              <span className="text-[11px] font-mono font-black uppercase tracking-wider px-3 py-1 bg-red-500 text-white border-2 border-slate-950 rounded-xl shadow-[2px_2px_0px_0px_#0f172a]">
-                PERINGATAN INTEGRITAS LKPD
-              </span>
-              <h3 className="text-xl font-black font-mono text-slate-950 dark:text-slate-100 mt-2">
-                Terdeteksi Berpindah Tab ({violationAlert.count}x)
-              </h3>
-              <p className="text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-300 leading-relaxed">
-                Kamu meninggalkan halaman pengerjaan LKPD. Seluruh insiden perpindahan tab dicatat otomatis dan dilaporkan kepada Guru!
-              </p>
-            </div>
-
-            <div className="pt-2">
-              <button
-                type="button"
-                onClick={() => {
-                  soundService.click();
-                  setViolationAlert({ show: false, count: 0, message: '' });
-                }}
-                className="w-full py-3.5 bg-red-500 hover:bg-red-600 text-white font-mono text-xs font-black rounded-2xl border-3 border-slate-950 shadow-[4px_4px_0px_0px_#0f172a] dark:shadow-[4px_4px_0px_0px_#000000] cursor-pointer active:translate-x-0.5 active:translate-y-0.5 transition-all"
-              >
-                Saya Mengerti &amp; Kembali Mengerjakan
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {renderPdfModal()}
     </div>
