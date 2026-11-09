@@ -1,4 +1,4 @@
-import { DatabaseState, User, Material, EvaluationSubmission, LKPDSubmission } from '@/types';
+import { DatabaseState, User, Material, EvaluationSubmission, LKPDSubmission, LKPDItem } from '@/types';
 import { getSupabase, checkIsSupabaseConfigured, testSupabaseConnection } from '@/lib/supabase';
 import { generateChapterPdfDataUri } from '@/utils/pdfUtils';
 
@@ -227,6 +227,7 @@ export const defaultDatabaseState: DatabaseState = {
       ]
     }
   ],
+  activeLkpdId: "lkpd_1",
   lkpdSubmissions: [
     {
       id: "sub_1",
@@ -918,9 +919,17 @@ class StorageService {
           return m;
         });
 
+        const slimLkpdList = (state.lkpdList || []).map(l => {
+          if (l.pdfUrl && l.pdfUrl.startsWith('data:application/pdf') && l.pdfUrl.length > 200000) {
+            return { ...l, pdfUrl: '' };
+          }
+          return l;
+        });
+
         const intermediateState: DatabaseState = {
           ...state,
-          materials: slimMaterials
+          materials: slimMaterials,
+          lkpdList: slimLkpdList
         };
         localStorage.setItem(STORAGE_KEY, JSON.stringify(intermediateState));
       } catch (pruneErr) {
@@ -1140,7 +1149,7 @@ class StorageService {
     const remoteHasValidNewQuestions =
       (remoteState.evaluationQuestions?.length === 5) &&
       (remoteState.latsolRooms?.[0]?.questions?.length === 10);
-    const remoteHasValidLKPD = Boolean(remoteState.lkpdList?.[0]?.questions?.some((q: { id: string }) => q.id === 'lkpd_c3'));
+    const remoteHasValidLKPD = Boolean(remoteState.lkpdList && Array.isArray(remoteState.lkpdList) && remoteState.lkpdList.length > 0);
 
     const currentDeleted = Array.from(new Set([...(this.state.deletedUserIds || []), ...(remoteState.deletedUserIds || [])]));
     const mergedUsers = mergeUsersList(this.state.users || [], remoteState.users || [], currentDeleted);
@@ -1151,8 +1160,9 @@ class StorageService {
     this.state = sanitizeBannedSubtitles(this.sanitizeStudentProgress({
       ...defaultDatabaseState,
       ...remoteState,
+      activeLkpdId: remoteState.activeLkpdId || this.state.activeLkpdId || defaultDatabaseState.activeLkpdId || 'lkpd_1',
       evaluationDurationMinutes: remoteState.evaluationDurationMinutes || this.state.evaluationDurationMinutes || defaultDatabaseState.evaluationDurationMinutes || 30,
-              lkpdDurationMinutes: remoteState.lkpdDurationMinutes || this.state.lkpdDurationMinutes || defaultDatabaseState.lkpdDurationMinutes || 45,
+      lkpdDurationMinutes: remoteState.lkpdDurationMinutes || this.state.lkpdDurationMinutes || defaultDatabaseState.lkpdDurationMinutes || 45,
       users: mergedUsers,
       deletedUserIds: currentDeleted,
       lkpdSubmissions: mergedLkpdSub,
@@ -1393,14 +1403,15 @@ class StorageService {
       const hasValidNewQuestions =
         (parsed.evaluationQuestions?.length === 5) &&
         (parsed.latsolRooms?.[0]?.questions?.length === 10);
-      const hasValidLKPD = Boolean(parsed.lkpdList?.[0]?.questions?.some(q => q.id === 'lkpd_c3'));
+      const hasValidLKPD = Boolean(parsed.lkpdList && Array.isArray(parsed.lkpdList) && parsed.lkpdList.length > 0);
 
       // Merge with defaultDatabaseState to ensure all new keys exist and questions are up-to-date
       const merged: DatabaseState = {
         ...defaultDatabaseState,
         ...parsed,
+        activeLkpdId: parsed.activeLkpdId || defaultDatabaseState.activeLkpdId || 'lkpd_1',
         evaluationDurationMinutes: parsed.evaluationDurationMinutes || defaultDatabaseState.evaluationDurationMinutes || 30,
-          lkpdDurationMinutes: parsed.lkpdDurationMinutes || defaultDatabaseState.lkpdDurationMinutes || 45,
+        lkpdDurationMinutes: parsed.lkpdDurationMinutes || defaultDatabaseState.lkpdDurationMinutes || 45,
         deletedUserIds: parsed.deletedUserIds || [],
         users: mergeUsersList(parsed.users || [], defaultDatabaseState.users, parsed.deletedUserIds || []),
         latsolRooms: hasValidNewQuestions ? parsed.latsolRooms : defaultDatabaseState.latsolRooms,
@@ -1453,6 +1464,8 @@ class StorageService {
 
             stateToSave = {
               ...this.state,
+              activeLkpdId: this.state.activeLkpdId || cloudData.data.activeLkpdId || 'lkpd_1',
+              lkpdList: (this.state.lkpdList && this.state.lkpdList.length > 0) ? this.state.lkpdList : (cloudData.data.lkpdList || defaultDatabaseState.lkpdList),
               evaluationDurationMinutes: this.state.evaluationDurationMinutes || cloudData.data.evaluationDurationMinutes || 30,
               lkpdDurationMinutes: this.state.lkpdDurationMinutes || cloudData.data.lkpdDurationMinutes || 45,
               users: mergedUsers,
@@ -1621,6 +1634,75 @@ class StorageService {
     this.update(draft => {
       draft.lkpdDurationMinutes = cleanMin;
     });
+  }
+
+  public setActiveLkpd(lkpdId: string): void {
+    this.state.activeLkpdId = lkpdId;
+    this.save();
+  }
+
+  public updateLkpdList(list: LKPDItem[]): void {
+    this.state.lkpdList = list;
+    this.save();
+  }
+
+  public async saveImmediately(): Promise<boolean> {
+    if (this.syncTimeout) {
+      window.clearTimeout(this.syncTimeout);
+      this.syncTimeout = null;
+    }
+    this.safeSaveToLocalStorage(this.state);
+    this.notify();
+
+    const client = getSupabase();
+    if (!checkIsSupabaseConfigured() || !client) return true;
+
+    try {
+      const { data: cloudData } = await client
+        .from('app_state')
+        .select('data')
+        .eq('id', 'main')
+        .maybeSingle();
+
+      let stateToSave = this.state;
+      if (cloudData && cloudData.data) {
+        const currentDeleted = Array.from(new Set([...(this.state.deletedUserIds || []), ...(cloudData.data.deletedUserIds || [])]));
+        const mergedUsers = mergeUsersList(this.state.users || [], cloudData.data.users || [], currentDeleted);
+        const mergedLkpd = mergeSubmissionsList(this.state.lkpdSubmissions || [], cloudData.data.lkpdSubmissions || []);
+        const mergedLatsol = mergeArrayById(this.state.latsolSubmissions || [], cloudData.data.latsolSubmissions || []);
+        const mergedEval = mergeEvaluationSubmissionsList(this.state.evaluationSubmissions || [], cloudData.data.evaluationSubmissions || []);
+
+        stateToSave = {
+          ...this.state,
+          activeLkpdId: this.state.activeLkpdId || cloudData.data.activeLkpdId || 'lkpd_1',
+          lkpdList: (this.state.lkpdList && this.state.lkpdList.length > 0) ? this.state.lkpdList : (cloudData.data.lkpdList || defaultDatabaseState.lkpdList),
+          evaluationDurationMinutes: this.state.evaluationDurationMinutes || cloudData.data.evaluationDurationMinutes || 30,
+          lkpdDurationMinutes: this.state.lkpdDurationMinutes || cloudData.data.lkpdDurationMinutes || 45,
+          users: mergedUsers,
+          deletedUserIds: currentDeleted,
+          lkpdSubmissions: mergedLkpd,
+          latsolSubmissions: mergedLatsol,
+          evaluationSubmissions: mergedEval
+        };
+        this.state = stateToSave;
+        this.safeSaveToLocalStorage(this.state);
+        this.notify();
+      }
+      stateToSave = pruneHeavyBlobs(sanitizeBannedSubtitles(stateToSave));
+
+      const { error: upsertErr } = await client
+        .from('app_state')
+        .upsert({ id: 'main', data: stateToSave, updated_at: new Date().toISOString() });
+
+      if (!upsertErr) {
+        this.cloudStatus = 'connected';
+        return true;
+      }
+      return false;
+    } catch (err) {
+      console.error('[StorageService] Immediate save failed:', err);
+      return false;
+    }
   }
 
   public update(updater: (draft: DatabaseState) => void): void {

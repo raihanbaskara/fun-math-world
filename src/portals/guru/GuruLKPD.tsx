@@ -308,7 +308,19 @@ export const GuruLKPD: React.FC<{
     reader.readAsDataURL(file);
   };
 
-  const handleAddLKPD = (e: React.FormEvent) => {
+  const handleSetActiveLKPD = async (id: string, title: string) => {
+    soundService.click();
+    storageService.setActiveLkpd(id);
+    const success = await storageService.saveImmediately();
+    if (success) {
+      soundService.success();
+      showToast(`LKPD "${title}" kini aktif sebagai tugas utama bagi seluruh siswa!`, 'success');
+    } else {
+      showToast('Gagal menyinkronkan LKPD aktif ke cloud. Coba lagi.', 'error');
+    }
+  };
+
+  const handleAddLKPD = async (e: React.FormEvent) => {
     e.preventDefault();
     soundService.click();
 

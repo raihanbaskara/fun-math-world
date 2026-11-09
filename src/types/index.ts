@@ -225,6 +225,7 @@ export interface DatabaseState {
   materials: Material[];
   videos: VideoLesson[];
   lkpdList: LKPDItem[];
+  activeLkpdId?: string;
   lkpdSubmissions: LKPDSubmission[];
   latsolRooms: LatsolRoom[];
   latsolSubmissions: LatsolSubmission[];

@@ -46,8 +46,11 @@ export const SiswaLKPD: React.FC<{
   }, []);
 
   const lkpdList = db.lkpdList || [];
-  const [selectedLkpdId, setSelectedLkpdId] = useState<string>(() => lkpdList[0]?.id || 'lkpd_1');
-  const selectedLkpd = lkpdList.find(l => l.id === selectedLkpdId) || lkpdList[0];
+  const defaultLkpdId = (db.activeLkpdId && lkpdList.some(l => l.id === db.activeLkpdId))
+    ? db.activeLkpdId
+    : (lkpdList[0]?.id || 'lkpd_1');
+  const [selectedLkpdId, setSelectedLkpdId] = useState<string>(() => defaultLkpdId);
+  const selectedLkpd = lkpdList.find(l => l.id === selectedLkpdId) || lkpdList.find(l => l.id === db.activeLkpdId) || lkpdList[0];
   const questions = selectedLkpd?.questions || [];
 
   const existingSubmission = db.lkpdSubmissions.find(
@@ -64,6 +67,12 @@ export const SiswaLKPD: React.FC<{
 
   // Solving mode state: false = Intro/PDF/Instructions View; true = Solving Questions View
   const [isSolvingMode, setIsSolvingMode] = useState<boolean>(false);
+
+useEffect(() => {
+    if (!isSolvingMode && db.activeLkpdId && lkpdList.some(l => l.id === db.activeLkpdId) && selectedLkpdId !== db.activeLkpdId) {
+      setSelectedLkpdId(db.activeLkpdId);
+    }
+  }, [db.activeLkpdId, isSolvingMode, lkpdList, selectedLkpdId]);
   const [previewDocItem, setPreviewDocItem] = useState<DocumentPreviewItem | null>(null);
 
   // Stepper state

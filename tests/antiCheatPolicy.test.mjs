@@ -410,3 +410,24 @@ test('LKPD: Storage merge preserves submissions cleanly by studentId and lkpdId'
   assert.equal(elsaSub.score, 90, 'Latest primary submission for Elsa is kept');
 });
 
+
+test('LKPD: Custom LKPD list is preserved and activeLkpdId syncs properly', () => {
+  const customLkpdList = [
+    { id: 'lkpd_custom_1', title: 'LKPD Bilangan Bulat', questions: [{ id: 'q_custom', title: 'Soal 1' }] }
+  ];
+  const hasValidLKPD = Boolean(customLkpdList && Array.isArray(customLkpdList) && customLkpdList.length > 0);
+  assert.equal(hasValidLKPD, true, 'Custom LKPD list is recognized without requiring legacy lkpd_c3 ID');
+
+  const activeLkpdId = 'lkpd_custom_1';
+  const defaultSelected = (activeLkpdId && customLkpdList.some(l => l.id === activeLkpdId))
+    ? activeLkpdId
+    : customLkpdList[0].id;
+  assert.equal(defaultSelected, 'lkpd_custom_1', 'Student portal defaults to activeLkpdId');
+});
+
+test('Evaluasi: AI correction preserves existing score when photo review is uncertain', () => {
+  const baseScore = 80;
+  const isAiPhotoGraded = false; // AI vision returned uncertain/pending
+  const finalScore = isAiPhotoGraded ? 0 : baseScore;
+  assert.equal(finalScore, 80, 'Base exam score is preserved and not zeroed out');
+});

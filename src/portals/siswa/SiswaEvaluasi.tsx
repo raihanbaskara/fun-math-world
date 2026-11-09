@@ -413,15 +413,18 @@ export const SiswaEvaluasi: React.FC<{
           : (hasTextContent ? 'Evaluasi selesai ditelaah AI dari uraian jawaban teks. Foto coretan fisik tersimpan untuk arsip guru.' : photoEvaluation.overallFeedback),
         perQuestion: Object.fromEntries(Object.entries(photoEvaluation.perQuestion).map(([id, result]) => {
           const hasThisText = Boolean((submissionAnswers[id] || '').trim());
+          const hasThisPhoto = Boolean(cleanPhotos[id]);
           const isNeedsReview = result.reviewStatus === 'needs_review';
           return [id, {
             score: isAiPhotoGraded ? result.score : Math.round((questions.find(q => q.id === id)?.weight || 20) * (finalScore / 100)),
             maxScore: result.maxScore,
-            reviewStatus: hasThisText ? 'graded' : (result.reviewStatus || 'graded'),
-            imageStatus: result.imageStatus || 'not_provided',
+            reviewStatus: (hasThisText || (hasThisPhoto && isAiPhotoGraded)) ? 'graded' : (result.reviewStatus || 'graded'),
+            imageStatus: result.imageStatus || (hasThisPhoto ? 'uncertain' : 'not_provided'),
             imageSummary: result.imageSummary || '',
             diagnosa: (isNeedsReview && hasThisText)
               ? 'Foto coretan terlampir dan tersimpan aman. Nilai otomatis dihitung dari uraian jawaban teksmu (Guru dapat menyesuaikan nilai di Portal Guru).'
+              : (isNeedsReview && hasThisPhoto)
+              ? 'Foto coretan terlampir dan tersimpan aman untuk verifikasi guru. Nilai evaluasi Anda tetap terjaga berdasarkan pengerjaan yang telah dikumpulkan.'
               : (result.diagnosa || ''),
             conceptFeedback: result.conceptFeedback || '',
           }];
@@ -739,6 +742,8 @@ export const SiswaEvaluasi: React.FC<{
                                   ? 'bg-emerald-200 text-emerald-950'
                                   : studentText && studentText.trim().length > 0 && aiQuestionResult.reviewStatus === 'graded'
                                   ? 'bg-emerald-200 text-emerald-950'
+                                  : studentPhoto
+                                  ? 'bg-emerald-100 text-emerald-900 border border-emerald-300'
                                   : 'bg-amber-200 text-amber-950'
                               }`}>
                                 {aiQuestionResult.imageStatus === 'matched'
@@ -747,9 +752,11 @@ export const SiswaEvaluasi: React.FC<{
                                   ? 'Foto Tidak Cocok'
                                   : aiQuestionResult.imageStatus === 'unreadable'
                                   ? 'Foto Tidak Terbaca'
-                                  : (studentText && studentText.trim().length > 0 && aiQuestionResult.reviewStatus === 'graded'
-                                    ? 'Foto Terlampir (Dinilai dari Teks)'
-                                    : 'Perlu Diperiksa Guru')}
+                                  : studentText && studentText.trim().length > 0 && aiQuestionResult.reviewStatus === 'graded'
+                                  ? 'Foto Terlampir (Dinilai dari Teks)'
+                                  : studentPhoto
+                                  ? 'Foto Terlampir (Arsip Guru)'
+                                  : 'Perlu Diperiksa Guru'}
                               </span>
                             </div>
                             {aiQuestionResult.imageSummary && (
