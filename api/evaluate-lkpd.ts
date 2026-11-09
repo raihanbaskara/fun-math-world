@@ -40,7 +40,7 @@ function parseModelJson(text: string) {
   return JSON.parse(cleaned.slice(first, last + 1));
 }
 
-const CANDIDATE_MODELS = ['gemini-3.6-flash', 'gemini-flash-lite-latest', 'gemini-flash-latest'];
+const CANDIDATE_MODELS = ['gemini-3.5-flash-lite', 'gemini-3.5-flash', 'gemini-3.8-flash', 'gemini-3.6-flash'];
 
 async function callGemini(parts: Array<Record<string, unknown>>, apiKey: string, preferredModel: string, systemText: string) {
   const modelsToTry = [preferredModel, ...CANDIDATE_MODELS.filter(m => m !== preferredModel)];
@@ -84,7 +84,7 @@ async function evaluate(body: RequestBody) {
     throw new Error('GEMINI_API_KEY server belum dikonfigurasi.');
   }
 
-  const model = process.env.GEMINI_MODEL || 'gemini-3.6-flash';
+  const model = process.env.GEMINI_MODEL || 'gemini-3.5-flash-lite';
   const images = new Map<string, { mimeType: string; data: string }>();
   for (const question of photoQuestions) {
     const image = parseImage(answers[question.id]!.photoUrl!);

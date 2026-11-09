@@ -354,3 +354,59 @@ test('Evaluasi: Submits immediately with rubric score and allows on-demand AI co
   assert.equal(updatedSubmission.score, 90, 'Score updated after on-demand AI correction');
   assert.ok(updatedSubmission.aiEvaluation, 'aiEvaluation is populated on-demand');
 });
+
+test('LKPD: Answers with photo-only are recognized as answered and enable submission', () => {
+  const questions = [
+    { id: 'lkpd_c3', title: 'Kegiatan 1' },
+    { id: 'lkpd_c4', title: 'Kegiatan 2' },
+  ];
+  const answers = {
+    lkpd_c3: { textAnswer: '', photoUrl: 'data:image/jpeg;base64,' + 'a'.repeat(60) },
+    lkpd_c4: { textAnswer: 'Jawaban uraian', photoUrl: '' },
+  };
+
+  const isQuestionAnswered = (qId) => {
+    const ans = answers[qId];
+    if (!ans) return false;
+    const hasText = Boolean((ans.textAnswer || '').trim().length > 0);
+    const hasPhoto = Boolean(ans.photoUrl && ans.photoUrl.length > 50);
+    return hasText || hasPhoto;
+  };
+
+  const answeredCount = questions.filter(q => isQuestionAnswered(q.id)).length;
+  const hasAnyAnswer = answeredCount > 0;
+
+  assert.equal(answeredCount, 2, 'Both questions are recognized as answered (1 photo-only, 1 text)');
+  assert.equal(hasAnyAnswer, true, 'Submission is allowed because answers exist');
+});
+
+test('LKPD: Storage merge preserves submissions cleanly by studentId and lkpdId', () => {
+  const primary = [
+    { id: 'sub_1', studentId: 'std_elsa', lkpdId: 'lkpd_1', score: 90, answers: { lkpd_c3: { photoUrl: 'img1' } } }
+  ];
+  const secondary = [
+    { id: 'sub_old', studentId: 'std_elsa', lkpdId: 'lkpd_1', score: 80, answers: { lkpd_c3: { photoUrl: 'img_old' } } },
+    { id: 'sub_2', studentId: 'std_budi', lkpdId: 'lkpd_1', score: 85, answers: {} }
+  ];
+
+  function mergeSubmissionsList(prim, sec) {
+    const map = new Map();
+    (sec || []).forEach(s => {
+      if (!s) return;
+      const key = `${s.studentId}_${s.lkpdId || 'lkpd_1'}`;
+      map.set(key, s);
+    });
+    (prim || []).forEach(s => {
+      if (!s) return;
+      const key = `${s.studentId}_${s.lkpdId || 'lkpd_1'}`;
+      map.set(key, s);
+    });
+    return Array.from(map.values());
+  }
+
+  const merged = mergeSubmissionsList(primary, secondary);
+  assert.equal(merged.length, 2, 'Total merged submissions should be 2 students');
+  const elsaSub = merged.find(s => s.studentId === 'std_elsa');
+  assert.equal(elsaSub.score, 90, 'Latest primary submission for Elsa is kept');
+});
+

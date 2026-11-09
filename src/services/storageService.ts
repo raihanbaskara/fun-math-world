@@ -681,11 +681,13 @@ function mergeSingleLkpdSub(primary: any, secondary: any): any {
 function mergeSubmissionsList<T extends { studentId: string; lkpdId?: string; id?: string }>(primary: T[], secondary: T[]): T[] {
   const map = new Map<string, T>();
   (secondary || []).forEach(s => {
-    const key = s.id || `${s.studentId}_${s.lkpdId || 'lkpd_1'}`;
+    if (!s) return;
+    const key = `${s.studentId}_${s.lkpdId || 'lkpd_1'}`;
     map.set(key, s);
   });
   (primary || []).forEach(s => {
-    const key = s.id || `${s.studentId}_${s.lkpdId || 'lkpd_1'}`;
+    if (!s) return;
+    const key = `${s.studentId}_${s.lkpdId || 'lkpd_1'}`;
     const existing = map.get(key);
     if (existing) {
       map.set(key, mergeSingleLkpdSub(s, existing));

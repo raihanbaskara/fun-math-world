@@ -229,7 +229,7 @@ function parseClientModelJson(text: string) {
   return JSON.parse(cleaned.slice(first, last + 1));
 }
 
-const CANDIDATE_MODELS = ['gemini-3.6-flash', 'gemini-flash-lite-latest', 'gemini-flash-latest'];
+const CANDIDATE_MODELS = ['gemini-3.5-flash-lite', 'gemini-3.5-flash', 'gemini-3.8-flash', 'gemini-3.6-flash'];
 
 async function callClientGemini(parts: Array<Record<string, unknown>>, apiKey: string, preferredModel: string, systemText: string) {
   const modelsToTry = [preferredModel, ...CANDIDATE_MODELS.filter(m => m !== preferredModel)];
@@ -268,7 +268,7 @@ async function evaluateLKPDWithDirectGemini(
   answers: Record<string, { textAnswer: string; photoUrl?: string }>
 ): Promise<LKPDOverallEvaluation> {
   const apiKey = (import.meta as any).env?.VITE_GEMINI_API_KEY || (import.meta as any).env?.GEMINI_API_KEY || DEFAULT_GEMINI_KEY;
-  const model = 'gemini-3.6-flash';
+  const model = 'gemini-3.5-flash-lite';
   const photoQuestions = questions.filter(q => Boolean(answers[q.id]?.photoUrl));
   const images = new Map<string, { mimeType: string; data: string }>();
 
@@ -368,6 +368,27 @@ export async function evaluateLKPDWithAI(
     } catch (fallbackError) {
       console.error('Koreksi langsung Gemini juga mengalami kendala:', fallbackError);
       if (hasPhoto) {
+        const hasText = Object.values(normalizedAnswers).some(a => (a.textAnswer || '').trim().length > 0);
+        if (hasText) {
+          const rubricResult = evaluateLKPDWithRubric(questions, normalizedAnswers);
+          const perQuestion = { ...rubricResult.perQuestion };
+          questions.forEach(q => {
+            if (normalizedAnswers[q.id]?.photoUrl) {
+              const current = perQuestion[q.id] || { questionId: q.id, score: 0, maxScore: q.weight || 25, conceptFeedback: '', discussion: '' };
+              perQuestion[q.id] = {
+                ...current,
+                reviewStatus: (normalizedAnswers[q.id]?.textAnswer || '').trim().length > 0 ? 'graded' : 'needs_review',
+                imageStatus: 'uncertain',
+                diagnosa: 'Foto tersimpan untuk verifikasi guru karena asisten AI sedang sibuk. Nilai dihitung dari uraian jawaban teksmu.'
+              };
+            }
+          });
+          return {
+            ...rubricResult,
+            overallFeedback: 'Uraian teks berhasil dinilai otomatis. Foto coretan terlampir dan tersimpan aman untuk verifikasi guru.',
+            perQuestion
+          };
+        }
         return createNeedsReviewEvaluation(questions, normalizedAnswers, 'Foto belum berhasil dianalisis karena kendala jaringan. Nilai otomatis ditahan; unggah ulang foto atau minta guru memeriksanya.');
       }
       // A local text rubric remains available offline for text-only work.

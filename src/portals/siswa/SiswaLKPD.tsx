@@ -180,6 +180,8 @@ export const SiswaLKPD: React.FC<{
       const rawDraft = localStorage.getItem(draftKey);
       let deadline = Date.now() + lkpdDurationSeconds * 1000;
       let savedAntiCheat = null;
+      let effectiveAnswers = answers;
+
       if (rawDraft) {
         const p = JSON.parse(rawDraft);
         if (p.deadline) {
@@ -188,6 +190,10 @@ export const SiswaLKPD: React.FC<{
           setTimeLeft(remaining);
         } else {
           setTimeLeft(lkpdDurationSeconds);
+        }
+        if (p.answers && Object.keys(p.answers).length > 0) {
+          effectiveAnswers = p.answers;
+          setAnswers(p.answers);
         }
         if (p.antiCheat) {
           savedAntiCheat = p.antiCheat;
@@ -200,7 +206,7 @@ export const SiswaLKPD: React.FC<{
         setTimeLeft(lkpdDurationSeconds);
       }
       localStorage.setItem(draftKey, JSON.stringify({
-        answers,
+        answers: effectiveAnswers,
         activeIdx: 0,
         deadline,
         isSolvingMode: true,
@@ -338,9 +344,19 @@ export const SiswaLKPD: React.FC<{
             photoUrl: compressed
           }
         };
-        // Immediately persist to local draft so it survives if mobile browser refreshes tab
+        // Immediately persist to local draft with complete metadata so it survives if mobile browser refreshes tab
         try {
-          localStorage.setItem(draftKey, JSON.stringify({ answers: next, activeIdx: activeQuestionIdx }));
+          const rawDraft = localStorage.getItem(draftKey);
+          const currentDraft = rawDraft ? JSON.parse(rawDraft) : {};
+          localStorage.setItem(draftKey, JSON.stringify({
+            ...currentDraft,
+            answers: next,
+            activeIdx: activeQuestionIdx,
+            isSolvingMode: true,
+            deadline: currentDraft.deadline || (Date.now() + timeLeft * 1000),
+            switchCount,
+            antiCheat: getReport()
+          }));
         } catch (saveErr) {
           console.warn("Draft immediate save error:", saveErr);
         }
@@ -367,7 +383,17 @@ export const SiswaLKPD: React.FC<{
         }
       };
       try {
-        localStorage.setItem(draftKey, JSON.stringify({ answers: next, activeIdx: activeQuestionIdx }));
+        const rawDraft = localStorage.getItem(draftKey);
+        const currentDraft = rawDraft ? JSON.parse(rawDraft) : {};
+        localStorage.setItem(draftKey, JSON.stringify({
+          ...currentDraft,
+          answers: next,
+          activeIdx: activeQuestionIdx,
+          isSolvingMode: true,
+          deadline: currentDraft.deadline || (Date.now() + timeLeft * 1000),
+          switchCount,
+          antiCheat: getReport()
+        }));
       } catch {}
       return next;
     });
@@ -1221,7 +1247,11 @@ export const SiswaLKPD: React.FC<{
             onClick={handleStartSolving}
             className="group px-6 py-4 rounded-2xl bg-[#ffe600] hover:bg-yellow-400 text-slate-950 font-mono font-black text-xs sm:text-sm uppercase tracking-wider border-3 border-slate-950 shadow-[4px_4px_0px_0px_#0f172a] cursor-pointer shrink-0 flex items-center justify-center gap-3 active:translate-x-0.5 active:translate-y-0.5 transition-all"
           >
-            <span>Mulai Kerjakan Kegiatan LKPD</span>
+            <span>
+              {Object.values(answers).some(a => Boolean((a.textAnswer || '').trim() || (a.photoUrl || '').trim().length > 50))
+                ? 'Lanjutkan Pengerjaan LKPD'
+                : 'Mulai Kerjakan Kegiatan LKPD'}
+            </span>
             <div className="w-8 h-8 rounded-full bg-slate-950 text-white flex items-center justify-center group-hover:translate-x-1 transition-transform">
               <ArrowRight size={16} />
             </div>
@@ -1236,9 +1266,19 @@ export const SiswaLKPD: React.FC<{
   // 3. ACTIVE QUIZ-STYLE STEPPER VIEW (When isSolvingMode === true)
   const currentQ = questions[activeQuestionIdx] || questions[0];
   const currentAns = answers[currentQ?.id] || { textAnswer: '', photoUrl: '' };
-  const answeredCount = questions.filter(q => (answers[q.id]?.textAnswer || '').trim().length > 0).length;
+
+  // A question is answered if student provided text answer OR uploaded scratch photo
+  const isQuestionAnswered = (qId: string) => {
+    const ans = answers[qId];
+    const hasText = Boolean(ans?.textAnswer && ans.textAnswer.trim().length > 0);
+    const hasPhoto = Boolean(ans?.photoUrl && ans.photoUrl.trim().length > 50);
+    return hasText || hasPhoto;
+  };
+
+  const answeredCount = questions.filter(q => isQuestionAnswered(q.id)).length;
   const totalQuestions = questions.length;
   const isAllAnswered = answeredCount === totalQuestions && totalQuestions > 0;
+  const hasAnyAnswer = answeredCount > 0;
   const progressPercent = totalQuestions > 0 ? (answeredCount / totalQuestions) * 100 : 0;
 
   return (
@@ -1500,11 +1540,17 @@ export const SiswaLKPD: React.FC<{
         {/* Submit Action Button */}
         <div className="flex items-center gap-3">
           <button
+            type="button"
             onClick={() => {
               soundService.click();
+              if (!hasAnyAnswer) {
+                soundService.alert();
+                showToast("Ketik jawaban uraian atau unggah foto pengerjaan terlebih dahulu!", "error");
+                return;
+              }
               setShowConfirmSubmitModal(true);
             }}
-            disabled={!isAllAnswered || isAiLoading}
+            disabled={isAiLoading}
             className="px-6 py-3 bg-[#ffe600] hover:bg-yellow-400 disabled:opacity-50 text-slate-950 border-3 border-slate-950 rounded-2xl font-mono text-xs sm:text-sm font-black shadow-[4px_4px_0px_0px_#0f172a] dark:shadow-[4px_4px_0px_0px_#000000] transition-all cursor-pointer flex items-center gap-2 active:translate-x-0.5 active:translate-y-0.5"
           >
             <Send size={16} />
@@ -1539,15 +1585,20 @@ export const SiswaLKPD: React.FC<{
               <div className="flex justify-between">
                 <span>Kegiatan Terisi:</span>
                 <span className="font-black text-emerald-600 dark:text-emerald-400">
-                  {questions.filter(q => (answers[q.id]?.textAnswer || '').trim().length > 0).length} / {questions.length} Kegiatan
+                  {answeredCount} / {totalQuestions} Kegiatan
                 </span>
               </div>
               <div className="flex justify-between">
                 <span>Foto Terlampir:</span>
                 <span className="font-black text-blue-600 dark:text-blue-400">
-                  {questions.filter(q => Boolean(answers[q.id]?.photoUrl)).length} Foto
+                  {questions.filter(q => Boolean(answers[q.id]?.photoUrl && answers[q.id]?.photoUrl.trim().length > 50)).length} Foto
                 </span>
               </div>
+              {!isAllAnswered && (
+                <div className="pt-2 text-[11px] text-amber-700 dark:text-amber-400 font-bold border-t border-slate-200 dark:border-slate-800">
+                  ⚠️ Masih ada {totalQuestions - answeredCount} kegiatan yang belum terisi. Kamu tetap dapat mengumpulkan sekarang jika sudah selesai.
+                </div>
+              )}
             </div>
 
             <div className="grid grid-cols-2 gap-3 pt-2">
