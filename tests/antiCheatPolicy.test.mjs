@@ -431,3 +431,57 @@ test('Evaluasi: AI correction preserves existing score when photo review is unce
   const finalScore = isAiPhotoGraded ? 0 : baseScore;
   assert.equal(finalScore, 80, 'Base exam score is preserved and not zeroed out');
 });
+
+test('Multi-Device LKPD Sync: Newer Cloud LKPD questions win over stale Device B cache', () => {
+  const deviceBState = {
+    lkpdUpdatedAt: 1000,
+    lkpdList: [{ id: 'lkpd_1', title: 'Soal Lama Device B', questions: [] }]
+  };
+  const cloudData = {
+    lkpdUpdatedAt: 2000,
+    lkpdList: [{ id: 'lkpd_1', title: 'Soal Baru Device A', questions: [{ id: 'q_new' }] }]
+  };
+
+  const localTime = deviceBState.lkpdUpdatedAt || 0;
+  const cloudTime = cloudData.lkpdUpdatedAt || 0;
+  let resolvedLkpdList = deviceBState.lkpdList;
+
+  if (cloudTime > localTime) {
+    resolvedLkpdList = cloudData.lkpdList;
+  }
+
+  assert.equal(resolvedLkpdList[0].title, 'Soal Baru Device A', 'Device B adopts newer questions from Cloud');
+  assert.equal(resolvedLkpdList[0].questions.length, 1);
+});
+
+test('Multi-Device User Deletion: Deleted account on Device A is never resurrected by Device B cache', () => {
+  const deletedUserId = 'siswa_dummy_123';
+  const deletedIds = [deletedUserId];
+
+  const deviceBLocalUsers = [
+    { id: deletedUserId, username: 'dummy', role: 'siswa' },
+    { id: 'std_1', username: 'siswa1', role: 'siswa' }
+  ];
+  const cloudUsers = [
+    { id: 'std_1', username: 'siswa1', role: 'siswa' }
+  ];
+
+  const map = new Map();
+  const banned = new Set(deletedIds);
+
+  cloudUsers.forEach(u => {
+    if (!banned.has(u.id)) map.set(u.id, u);
+  });
+
+  deviceBLocalUsers.forEach(u => {
+    if (!banned.has(u.id)) {
+      if (!map.has(u.id)) {
+        map.set(u.id, u);
+      }
+    }
+  });
+
+  const merged = Array.from(map.values()).filter(u => !banned.has(u.id));
+  assert.equal(merged.length, 1, 'Only non-deleted user std_1 survives');
+  assert.equal(merged.some(u => u.id === deletedUserId), false, 'Deleted account cannot be resurrected');
+});

@@ -228,6 +228,7 @@ export const defaultDatabaseState: DatabaseState = {
     }
   ],
   activeLkpdId: "lkpd_1",
+  lkpdUpdatedAt: 0,
   lkpdSubmissions: [
     {
       id: "sub_1",
@@ -577,7 +578,7 @@ export function mergeUsersList(primary: User[], secondary: User[], deletedIds?: 
     if (!banned.has(u.id)) map.set(u.id, u);
   });
 
-  // 2. Put secondary users (if not deleted)
+  // 2. Put secondary users (e.g. from authoritative cloud)
   (secondary || []).forEach(u => {
     if (u && u.id && !banned.has(u.id)) {
       map.set(u.id, u);
@@ -589,14 +590,22 @@ export function mergeUsersList(primary: User[], secondary: User[], deletedIds?: 
     if (u && u.id && !banned.has(u.id)) {
       const exist = map.get(u.id);
       if (!exist) {
-        map.set(u.id, u);
+        // Only keep local-only account if it is a recent registration or secondary was completely empty.
+        // If secondary (cloud) has accounts, and this user is absent from cloud and not recently created,
+        // it means the user was deleted on another device. DO NOT resurrect it!
+        const rawTs = parseInt(u.id.replace(/^siswa_/, ''), 10);
+        const userTime = u.createdAt || (Number.isFinite(rawTs) && rawTs > 1700000000000 ? rawTs : 0);
+        const isRecentRegistration = u.id.startsWith('siswa_') && (userTime > 0 ? (Date.now() - userTime < 600000) : true);
+        const isCloudEmpty = !secondary || secondary.length === 0;
+        if (isRecentRegistration || isCloudEmpty) {
+          map.set(u.id, u);
+        }
       } else {
         const existTs = getSessionTime(exist);
         const primaryTs = getSessionTime(u);
         const useSecondarySession = existTs > primaryTs;
 
-        // CRITICAL FIX: Once approved in either client or cloud, an account stays approved!
-        // A stale client with isApproved: false can NEVER downgrade an approved account.
+        // CRITICAL: Once approved in either client or cloud, an account stays approved!
         const isApprovedResolved = u.isApproved === true || exist.isApproved === true;
 
         map.set(u.id, {
@@ -617,7 +626,7 @@ export function mergeUsersList(primary: User[], secondary: User[], deletedIds?: 
       }
     }
   });
-  return Array.from(map.values());
+  return Array.from(map.values()).filter(u => !banned.has(u.id));
 }
 
 function mergeArrayById<T extends { id?: string }>(primary: T[], secondary: T[]): T[] {
@@ -1157,10 +1166,25 @@ class StorageService {
     const mergedLatsolSub = mergeArrayById(remoteState.latsolSubmissions || [], this.state.latsolSubmissions || []);
     const mergedEvalSub = mergeEvaluationSubmissionsList(remoteState.evaluationSubmissions || [], this.state.evaluationSubmissions || []);
 
+    const localLkpdTime = this.state.lkpdUpdatedAt || 0;
+    const remoteLkpdTime = remoteState.lkpdUpdatedAt || 0;
+    let resolvedLkpdList = this.state.lkpdList;
+    let resolvedActiveLkpdId = remoteState.activeLkpdId || this.state.activeLkpdId || defaultDatabaseState.activeLkpdId || 'lkpd_1';
+    let resolvedLkpdUpdatedAt = localLkpdTime;
+
+    if (remoteLkpdTime >= localLkpdTime && remoteHasValidLKPD) {
+      resolvedLkpdList = remoteState.lkpdList;
+      resolvedLkpdUpdatedAt = remoteLkpdTime;
+    } else if (remoteHasValidLKPD && (!this.state.lkpdList || this.state.lkpdList.length === 0)) {
+      resolvedLkpdList = remoteState.lkpdList;
+      resolvedLkpdUpdatedAt = remoteLkpdTime;
+    }
+
     this.state = sanitizeBannedSubtitles(this.sanitizeStudentProgress({
       ...defaultDatabaseState,
       ...remoteState,
-      activeLkpdId: remoteState.activeLkpdId || this.state.activeLkpdId || defaultDatabaseState.activeLkpdId || 'lkpd_1',
+      activeLkpdId: resolvedActiveLkpdId,
+      lkpdUpdatedAt: resolvedLkpdUpdatedAt,
       evaluationDurationMinutes: remoteState.evaluationDurationMinutes || this.state.evaluationDurationMinutes || defaultDatabaseState.evaluationDurationMinutes || 30,
       lkpdDurationMinutes: remoteState.lkpdDurationMinutes || this.state.lkpdDurationMinutes || defaultDatabaseState.lkpdDurationMinutes || 45,
       users: mergedUsers,
@@ -1170,7 +1194,7 @@ class StorageService {
       evaluationSubmissions: mergedEvalSub,
       latsolRooms: remoteHasValidNewQuestions ? remoteState.latsolRooms : defaultDatabaseState.latsolRooms,
       evaluationQuestions: remoteHasValidNewQuestions ? remoteState.evaluationQuestions : defaultDatabaseState.evaluationQuestions,
-      lkpdList: remoteHasValidLKPD ? remoteState.lkpdList : defaultDatabaseState.lkpdList,
+      lkpdList: resolvedLkpdList,
       schedules: defaultDatabaseState.schedules,
       reflections: remoteState.reflections || defaultDatabaseState.reflections,
     }));
@@ -1207,14 +1231,16 @@ class StorageService {
     try {
       const { data, error } = await client
         .from('app_state')
-        .select('data->users')
+        .select('data')
         .eq('id', 'main')
         .maybeSingle();
 
-      if (!error && data && Array.isArray((data as any).users)) {
-        const remoteUsers = (data as any).users as User[];
-        const currentDeleted = this.state.deletedUserIds || [];
-        const mergedUsers = mergeUsersList(this.state.users || [], remoteUsers, currentDeleted);
+      if (!error && data?.data) {
+        const remoteUsers = (data.data.users || []) as User[];
+        const remoteDeleted = (data.data.deletedUserIds || []) as string[];
+        const allDeleted = Array.from(new Set([...(this.state.deletedUserIds || []), ...remoteDeleted]));
+        this.state.deletedUserIds = allDeleted;
+        const mergedUsers = mergeUsersList(this.state.users || [], remoteUsers, allDeleted);
         this.state.users = mergedUsers;
         this.safeSaveToLocalStorage(this.state);
         this.notify();
@@ -1435,6 +1461,10 @@ class StorageService {
     this.safeSaveToLocalStorage(this.state);
     this.notify();
 
+    if (!this.isInitialSyncDone) {
+      return;
+    }
+
     // Async save to Supabase cloud with lossless remote merge
     const client = getSupabase();
     if (checkIsSupabaseConfigured() && client) {
@@ -1462,10 +1492,25 @@ class StorageService {
             const mergedLatsol = mergeArrayById(this.state.latsolSubmissions || [], cloudData.data.latsolSubmissions || []);
             const mergedEval = mergeEvaluationSubmissionsList(this.state.evaluationSubmissions || [], cloudData.data.evaluationSubmissions || []);
 
+            const localLkpdTime = this.state.lkpdUpdatedAt || 0;
+            const cloudLkpdTime = cloudData.data.lkpdUpdatedAt || 0;
+            let resolvedLkpdList = this.state.lkpdList;
+            let resolvedLkpdUpdatedAt = localLkpdTime;
+            let resolvedActiveLkpdId = this.state.activeLkpdId || cloudData.data.activeLkpdId || 'lkpd_1';
+
+            if (cloudLkpdTime > localLkpdTime) {
+              resolvedLkpdList = cloudData.data.lkpdList || this.state.lkpdList;
+              resolvedLkpdUpdatedAt = cloudLkpdTime;
+              resolvedActiveLkpdId = cloudData.data.activeLkpdId || resolvedActiveLkpdId;
+            } else {
+              resolvedLkpdList = (this.state.lkpdList && this.state.lkpdList.length > 0) ? this.state.lkpdList : (cloudData.data.lkpdList || defaultDatabaseState.lkpdList);
+            }
+
             stateToSave = {
               ...this.state,
-              activeLkpdId: this.state.activeLkpdId || cloudData.data.activeLkpdId || 'lkpd_1',
-              lkpdList: (this.state.lkpdList && this.state.lkpdList.length > 0) ? this.state.lkpdList : (cloudData.data.lkpdList || defaultDatabaseState.lkpdList),
+              activeLkpdId: resolvedActiveLkpdId,
+              lkpdUpdatedAt: resolvedLkpdUpdatedAt,
+              lkpdList: resolvedLkpdList,
               evaluationDurationMinutes: this.state.evaluationDurationMinutes || cloudData.data.evaluationDurationMinutes || 30,
               lkpdDurationMinutes: this.state.lkpdDurationMinutes || cloudData.data.lkpdDurationMinutes || 45,
               users: mergedUsers,
@@ -1605,6 +1650,11 @@ class StorageService {
           const cloudDeleted = Array.from(new Set([...updatedDeleted, ...(cloudData.data.deletedUserIds || [])]));
           const filteredUsers = (cloudData.data.users || []).filter((u: User) => u.id !== userId && !cloudDeleted.includes(u.id));
 
+          this.state.deletedUserIds = cloudDeleted;
+          this.state.users = filteredUsers;
+          this.safeSaveToLocalStorage(this.state);
+          this.notify();
+
           const stateToSave = pruneHeavyBlobs(sanitizeBannedSubtitles({
             ...cloudData.data,
             ...this.state,
@@ -1638,11 +1688,13 @@ class StorageService {
 
   public setActiveLkpd(lkpdId: string): void {
     this.state.activeLkpdId = lkpdId;
+    this.state.lkpdUpdatedAt = Date.now();
     this.save();
   }
 
   public updateLkpdList(list: LKPDItem[]): void {
     this.state.lkpdList = list;
+    this.state.lkpdUpdatedAt = Date.now();
     this.save();
   }
 
@@ -1672,10 +1724,25 @@ class StorageService {
         const mergedLatsol = mergeArrayById(this.state.latsolSubmissions || [], cloudData.data.latsolSubmissions || []);
         const mergedEval = mergeEvaluationSubmissionsList(this.state.evaluationSubmissions || [], cloudData.data.evaluationSubmissions || []);
 
+        const localLkpdTime = this.state.lkpdUpdatedAt || 0;
+        const cloudLkpdTime = cloudData.data.lkpdUpdatedAt || 0;
+        let resolvedLkpdList = this.state.lkpdList;
+        let resolvedLkpdUpdatedAt = localLkpdTime;
+        let resolvedActiveLkpdId = this.state.activeLkpdId || cloudData.data.activeLkpdId || 'lkpd_1';
+
+        if (cloudLkpdTime > localLkpdTime) {
+          resolvedLkpdList = cloudData.data.lkpdList || this.state.lkpdList;
+          resolvedLkpdUpdatedAt = cloudLkpdTime;
+          resolvedActiveLkpdId = cloudData.data.activeLkpdId || resolvedActiveLkpdId;
+        } else {
+          resolvedLkpdList = (this.state.lkpdList && this.state.lkpdList.length > 0) ? this.state.lkpdList : (cloudData.data.lkpdList || defaultDatabaseState.lkpdList);
+        }
+
         stateToSave = {
           ...this.state,
-          activeLkpdId: this.state.activeLkpdId || cloudData.data.activeLkpdId || 'lkpd_1',
-          lkpdList: (this.state.lkpdList && this.state.lkpdList.length > 0) ? this.state.lkpdList : (cloudData.data.lkpdList || defaultDatabaseState.lkpdList),
+          activeLkpdId: resolvedActiveLkpdId,
+          lkpdUpdatedAt: resolvedLkpdUpdatedAt,
+          lkpdList: resolvedLkpdList,
           evaluationDurationMinutes: this.state.evaluationDurationMinutes || cloudData.data.evaluationDurationMinutes || 30,
           lkpdDurationMinutes: this.state.lkpdDurationMinutes || cloudData.data.lkpdDurationMinutes || 45,
           users: mergedUsers,

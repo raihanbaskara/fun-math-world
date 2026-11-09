@@ -234,6 +234,7 @@ export default function SiswaAuthSwitch({
         sessionToken: null,
         deviceId: null,
         sessionUpdatedAt: 0,
+        createdAt: now,
         isApproved: false, // Menunggu persetujuan (ACC) dari Admin
         progress: { materi: 0, video: 0, lkpd: 0, latsol: 0, evaluasi: 0 },
       };

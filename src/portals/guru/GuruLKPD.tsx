@@ -357,7 +357,10 @@ export const GuruLKPD: React.FC<{
 
     storageService.update(draft => {
       draft.lkpdList.push(newItem);
+      draft.activeLkpdId = newItem.id;
+      draft.lkpdUpdatedAt = Date.now();
     });
+    await storageService.saveImmediately();
 
     setIsAddLKPDOpen(false);
     setNewTitle('');
@@ -370,11 +373,13 @@ export const GuruLKPD: React.FC<{
     showToast('Tugas LKPD Digital baru berhasil diterbitkan!', 'success');
   };
 
-  const handleDeleteLKPD = (id: string) => {
+  const handleDeleteLKPD = async (id: string) => {
     soundService.click();
     storageService.update(draft => {
       draft.lkpdList = draft.lkpdList.filter(l => l.id !== id);
+      draft.lkpdUpdatedAt = Date.now();
     });
+    await storageService.saveImmediately();
     soundService.success();
     showToast('Tugas LKPD berhasil dihapus.', 'info');
   };
@@ -426,12 +431,13 @@ export const GuruLKPD: React.FC<{
     reader.readAsDataURL(file);
   };
 
-  const handleSaveEditLKPD = (e: React.FormEvent) => {
+  const handleSaveEditLKPD = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingLKPD) return;
     soundService.click();
 
     storageService.update(draft => {
+      draft.lkpdUpdatedAt = Date.now();
       const item = draft.lkpdList.find(l => l.id === editingLKPD.id);
       if (item) {
         item.title = editTitle.trim();
@@ -441,12 +447,15 @@ export const GuruLKPD: React.FC<{
         if (editPdfFilename.trim()) item.pdfFilename = editPdfFilename.trim();
         if (editPdfUrl.trim()) item.pdfUrl = editPdfUrl.trim();
         item.questions = editQuestions;
+        item.updatedAt = Date.now();
       }
     });
 
+    await storageService.saveImmediately();
+
     setEditingLKPD(null);
     soundService.success();
-    showToast('Tugas LKPD Digital & butir kegiatan berhasil diperbarui & disinkronkan!', 'success');
+    showToast('Tugas LKPD Digital & butir kegiatan berhasil diperbarui & disinkronkan ke Cloud!', 'success');
   };
 
   const getPdfDisplayUrl = (url?: string): string => {

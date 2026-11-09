@@ -23,6 +23,7 @@ export interface User {
   progress?: UserProgress;
   readAnnouncements?: string[];
   isApproved?: boolean; // false = menunggu persetujuan (ACC) admin, true/undefined = aktif
+  createdAt?: number;
 }
 
 export interface Material {
@@ -68,6 +69,7 @@ export interface LKPDItem {
   pdfUrl?: string;
   objectives: string;
   questions: EssayQuestion[];
+  updatedAt?: number;
 }
 
 export interface AntiCheatLogRecord {
@@ -226,6 +228,7 @@ export interface DatabaseState {
   videos: VideoLesson[];
   lkpdList: LKPDItem[];
   activeLkpdId?: string;
+  lkpdUpdatedAt?: number;
   lkpdSubmissions: LKPDSubmission[];
   latsolRooms: LatsolRoom[];
   latsolSubmissions: LatsolSubmission[];
