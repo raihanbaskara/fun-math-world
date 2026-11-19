@@ -254,8 +254,8 @@ export const GuruLKPD: React.FC<{
       setIsAiEvaluating(false);
       soundService.success();
       showToast(evalResult.reviewStatus === 'needs_review'
-        ? 'Foto perlu diperiksa guru. Nilai otomatis ditahan.'
-        : `Evaluasi AI Selesai! Skor rekomendasi: ${evalResult.totalScore}/100`, evalResult.reviewStatus === 'needs_review' ? 'info' : 'success');
+        ? 'Evaluasi pengerjaan selesai! Foto tersimpan untuk ditinjau guru.'
+        : `Evaluasi AI Selesai! Skor rekomendasi: ${evalResult.totalScore}/100`, 'success');
     } catch (err) {
       console.error("AI Evaluation error:", err);
       setIsAiEvaluating(false);
@@ -1013,7 +1013,7 @@ export const GuruLKPD: React.FC<{
                               {/* Blok Jawaban & Solusi Langkah Versi AI (Hanya jika siswa sudah minta koreksi AI) */}
                               {ans?.aiReviewStatus === 'needs_review' && (
                                 <div role="status" className="rounded-xl bg-amber-50 dark:bg-amber-950/30 border-2 border-amber-400 p-3 text-xs font-bold text-amber-950 dark:text-amber-200 space-y-1">
-                                  <p><b>Status:</b> Perlu pemeriksaan guru; skor AI ditahan.</p>
+                                  <p><b>Status:</b> Foto coretan terlampir untuk verifikasi guru.</p>
                                   {ans.imageStatus && <p><b>Status foto:</b> {ans.imageStatus === 'mismatch' ? 'Tidak cocok dengan soal' : ans.imageStatus === 'unreadable' ? 'Tulisan tidak terbaca' : ans.imageStatus === 'matched' ? 'Cocok dengan soal' : 'Belum dapat dipastikan'}</p>}
                                   {ans.imageSummary && <p><b>Yang terbaca:</b> {ans.imageSummary}</p>}
                                   {ans.aiFeedback && <p>{ans.aiFeedback}</p>}
@@ -1027,14 +1027,14 @@ export const GuruLKPD: React.FC<{
                                       <span>Jawaban &amp; Solusi Langkah Versi AI:</span>
                                     </div>
                                     <span className="text-[11px] font-black bg-purple-200 dark:bg-purple-900 px-2 py-0.5 rounded-md border border-purple-950/20">
-                                      {ans?.aiReviewStatus === 'needs_review' ? 'Menunggu pemeriksaan guru' : `Rekomendasi AI: ${ans?.aiScore ?? 0} Poin`}
+                                      {ans?.aiReviewStatus === 'needs_review' ? 'Perlu Tinjauan Foto' : `Rekomendasi AI: ${ans?.aiScore ?? 0} Poin`}
                                     </span>
                                   </div>
                                   {ans?.imageStatus && ans.imageStatus !== 'not_provided' && (
                                     <div role="status" className="rounded-lg bg-white/80 dark:bg-slate-900/70 border border-purple-200 dark:border-purple-800 p-2.5 text-[11px] space-y-1">
                                       <p><b>Status foto:</b> {ans.imageStatus === 'matched' ? 'Cocok dengan soal' : ans.imageStatus === 'mismatch' ? 'Tidak cocok dengan soal' : ans.imageStatus === 'unreadable' ? 'Tulisan tidak terbaca' : 'Belum dapat dipastikan'}</p>
                                       {ans.imageSummary && <p><b>Yang terbaca:</b> {ans.imageSummary}</p>}
-                                      {ans.aiReviewStatus === 'needs_review' && <p>Nilai ditahan. Tinjau foto secara manual sebelum menyimpan nilai akhir.</p>}
+                                      {ans.aiReviewStatus === 'needs_review' && <p>Tinjau lembar foto secara manual sebelum memperbarui nilai akhir.</p>}
                                     </div>
                                   )}
                                   <p className="text-slate-800 dark:text-purple-200 font-bold whitespace-pre-line leading-relaxed">

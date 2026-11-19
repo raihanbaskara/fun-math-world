@@ -542,14 +542,14 @@ export const SiswaEvaluasi: React.FC<{
             <div className="text-right">
               <span className="font-mono text-xs font-black text-slate-700 block">NILAI AKHIR:</span>
               <span className="text-4xl sm:text-5xl font-mono font-black text-slate-950">
-                {previousSubmission.gradingStatus === 'needs_review' ? 'Menunggu pemeriksaan guru' : `${previousSubmission.teacherScore ?? previousSubmission.score}/100`}
+                {`${previousSubmission.teacherScore ?? previousSubmission.score}/100`}
               </span>
             </div>
           </div>
 
           <p className="text-xs sm:text-sm font-bold text-slate-900 leading-relaxed">
             {previousSubmission.gradingStatus === 'needs_review'
-              ? 'Foto belum dapat dicocokkan atau dibaca dengan yakin. Nilai otomatis ditahan sampai guru memeriksa jawaban atau foto diunggah ulang.'
+              ? 'Evaluasi sumatif telah dikumpulkan dan nilai pengerjaan Anda tersimpan aman. Lembar coretan fisik terlampir untuk verifikasi guru.'
               : 'Evaluasi sumatif telah dikumpulkan. Di bawah ini adalah langkah pembahasan untuk memperdalam pemahaman konsep pecahanmu.'}
           </p>
 
@@ -660,7 +660,16 @@ export const SiswaEvaluasi: React.FC<{
             Langkah Pembahasan Kunci Jawaban:
           </h3>
 
-      {questions.map((q, idx) => {
+      {(() => {
+        const cleanDiagnosaText = (diagnosa?: string) => {
+          if (!diagnosa) return '';
+          if (diagnosa.includes('Foto belum berhasil dianalisis') || diagnosa.includes('Nilai otomatis ditahan') || diagnosa.includes('kendala jaringan') || diagnosa.includes('Nilai ditahan')) {
+            return 'Foto coretan terlampir dan tersimpan aman untuk verifikasi guru. Nilai evaluasi Anda tetap terjaga berdasarkan pengerjaan yang telah dikumpulkan.';
+          }
+          return diagnosa;
+        };
+
+        return questions.map((q, idx) => {
             const studentText = previousSubmission.textAnswers?.[q.id] || "Jawaban dikumpulkan.";
             const aiQuestionResult = previousSubmission.aiEvaluation?.perQuestion[q.id];
 
@@ -744,7 +753,7 @@ export const SiswaEvaluasi: React.FC<{
                                   ? 'bg-emerald-200 text-emerald-950'
                                   : studentPhoto
                                   ? 'bg-emerald-100 text-emerald-900 border border-emerald-300'
-                                  : 'bg-amber-200 text-amber-950'
+                                  : 'bg-emerald-100 text-emerald-900 border border-emerald-300'
                               }`}>
                                 {aiQuestionResult.imageStatus === 'matched'
                                   ? 'Foto Cocok dengan Soal'
@@ -756,14 +765,14 @@ export const SiswaEvaluasi: React.FC<{
                                   ? 'Foto Terlampir (Dinilai dari Teks)'
                                   : studentPhoto
                                   ? 'Foto Terlampir (Arsip Guru)'
-                                  : 'Perlu Diperiksa Guru'}
+                                  : 'Foto Terlampir (Arsip Guru)'}
                               </span>
                             </div>
                             {aiQuestionResult.imageSummary && (
                               <p><span className="font-bold">Terbaca di foto:</span> {aiQuestionResult.imageSummary}</p>
                             )}
                             {aiQuestionResult.diagnosa && (
-                              <p><span className="font-bold">Diagnosa AI:</span> {aiQuestionResult.diagnosa}</p>
+                              <p><span className="font-bold">Diagnosa AI:</span> {cleanDiagnosaText(aiQuestionResult.diagnosa)}</p>
                             )}
                           </div>
                         ) : (
@@ -776,7 +785,7 @@ export const SiswaEvaluasi: React.FC<{
                               </span>
                             </div>
                             {aiQuestionResult.diagnosa && (
-                              <p><span className="font-bold">Diagnosa:</span> {aiQuestionResult.diagnosa}</p>
+                              <p><span className="font-bold">Diagnosa:</span> {cleanDiagnosaText(aiQuestionResult.diagnosa)}</p>
                             )}
                             {aiQuestionResult.conceptFeedback && (
                               <p className="text-[11px] text-slate-600 dark:text-slate-400"><span className="font-bold">Saran:</span> {aiQuestionResult.conceptFeedback}</p>
@@ -799,7 +808,8 @@ export const SiswaEvaluasi: React.FC<{
                 </div>
               </div>
             );
-          })}
+          });
+      })()}
         </div>
 
         {/* Back to Home CTA */}

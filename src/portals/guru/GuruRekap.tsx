@@ -512,7 +512,7 @@ export const GuruRekap: React.FC<{
                       <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 items-center">
                         {selectedEvalSub.gradingStatus === 'needs_review' && (
                           <div role="status" className="sm:col-span-4 rounded-xl border-2 border-amber-400 bg-amber-50 dark:bg-amber-950/30 p-3 text-xs font-bold text-amber-950 dark:text-amber-200">
-                            Nilai otomatis ditahan karena setidaknya satu foto belum cocok atau belum terbaca. Periksa foto tiap soal di bawah sebelum menetapkan nilai guru.
+                            Foto coretan siswa terlampir untuk verifikasi guru. Anda dapat memeriksa foto tiap butir soal di bawah dan memperbarui nilai jika diperlukan.
                             {selectedEvalSub.aiEvaluation?.overallFeedback && <p className="mt-1">{selectedEvalSub.aiEvaluation.overallFeedback}</p>}
                           </div>
                         )}

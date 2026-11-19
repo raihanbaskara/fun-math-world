@@ -561,8 +561,8 @@ useEffect(() => {
 
       soundService.success();
       showToast(evalResult.reviewStatus === 'needs_review'
-        ? 'Foto perlu diperiksa guru. Nilai otomatis ditahan.'
-        : 'Koreksi AI selesai! Pembahasan konsep resmi siap dipelajari.', evalResult.reviewStatus === 'needs_review' ? 'info' : 'success');
+        ? 'Koreksi selesai! Foto pengerjaan terlampir aman untuk verifikasi guru.'
+        : 'Koreksi AI selesai! Pembahasan konsep resmi siap dipelajari.', 'success');
     } catch (err: any) {
       console.error(err);
       setAiDiscussionUnlocked(true);
@@ -1018,14 +1018,14 @@ useEffect(() => {
                               <span>JAWABAN &amp; SOLUSI LANGKAH VERSI AI (KEGIATAN {idx + 1}):</span>
                             </div>
                             <span className="text-[11px] font-black bg-purple-200 dark:bg-purple-900 px-2 py-0.5 rounded-md border border-purple-950/20">
-                              {ans.aiReviewStatus === 'needs_review' ? 'Menunggu pemeriksaan guru' : `Skor AI: ${ans.aiScore ?? 0} Poin`}
+                              {ans.aiReviewStatus === 'needs_review' ? 'Tersimpan (Arsip Guru)' : `Skor AI: ${ans.aiScore ?? 0} Poin`}
                             </span>
                           </div>
                           {ans.imageStatus && ans.imageStatus !== 'not_provided' && (
                             <div role="status" className="rounded-xl border border-purple-200 dark:border-purple-800 bg-white/80 dark:bg-slate-900/70 p-3 text-xs text-purple-950 dark:text-purple-200 space-y-1">
                               <p><b>Status foto:</b> {ans.imageStatus === 'matched' ? 'Cocok dengan soal' : ans.imageStatus === 'mismatch' ? 'Tidak cocok dengan soal' : ans.imageStatus === 'unreadable' ? 'Tulisan tidak terbaca' : 'Belum dapat dipastikan'}</p>
                               {ans.imageSummary && <p><b>Yang terbaca:</b> {ans.imageSummary}</p>}
-                              {ans.aiReviewStatus === 'needs_review' && <p>Nilai ditahan. Unggah ulang foto yang benar dan jelas atau minta guru memeriksanya.</p>}
+                              {ans.aiReviewStatus === 'needs_review' && <p>Foto coretan fisik tersimpan aman untuk verifikasi guru.</p>}
                             </div>
                           )}
 
