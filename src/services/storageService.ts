@@ -229,6 +229,7 @@ export const defaultDatabaseState: DatabaseState = {
   ],
   activeLkpdId: "lkpd_1",
   lkpdUpdatedAt: 0,
+  contentUpdatedAt: 0,
   lkpdSubmissions: [
     {
       id: "sub_1",
@@ -1155,9 +1156,8 @@ class StorageService {
 
   public applyRemoteState(remoteState: DatabaseState): void {
     if (!remoteState) return;
-    const remoteHasValidNewQuestions =
-      (remoteState.evaluationQuestions?.length === 5) &&
-      (remoteState.latsolRooms?.[0]?.questions?.length === 10);
+    const remoteHasValidEvalQuestions = Array.isArray(remoteState.evaluationQuestions) && remoteState.evaluationQuestions.length > 0;
+    const remoteHasValidLatsolRooms = Array.isArray(remoteState.latsolRooms) && remoteState.latsolRooms.length > 0;
     const remoteHasValidLKPD = Boolean(remoteState.lkpdList && Array.isArray(remoteState.lkpdList) && remoteState.lkpdList.length > 0);
 
     const currentDeleted = Array.from(new Set([...(this.state.deletedUserIds || []), ...(remoteState.deletedUserIds || [])]));
@@ -1180,20 +1180,39 @@ class StorageService {
       resolvedLkpdUpdatedAt = remoteLkpdTime;
     }
 
+    const localContentTime = this.state.contentUpdatedAt || 0;
+    const remoteContentTime = remoteState.contentUpdatedAt || 0;
+    const useRemoteContent = remoteContentTime >= localContentTime;
+    const resolvedContentUpdatedAt = Math.max(localContentTime, remoteContentTime);
+
+    const resolvedLatsolRooms = useRemoteContent
+      ? (remoteHasValidLatsolRooms ? remoteState.latsolRooms : (this.state.latsolRooms?.length ? this.state.latsolRooms : defaultDatabaseState.latsolRooms))
+      : (this.state.latsolRooms?.length ? this.state.latsolRooms : (remoteHasValidLatsolRooms ? remoteState.latsolRooms : defaultDatabaseState.latsolRooms));
+
+    const resolvedEvaluationQuestions = useRemoteContent
+      ? (remoteHasValidEvalQuestions ? remoteState.evaluationQuestions : (this.state.evaluationQuestions?.length ? this.state.evaluationQuestions : defaultDatabaseState.evaluationQuestions))
+      : (this.state.evaluationQuestions?.length ? this.state.evaluationQuestions : (remoteHasValidEvalQuestions ? remoteState.evaluationQuestions : defaultDatabaseState.evaluationQuestions));
+
+    const resolvedMaterials = useRemoteContent
+      ? ensureMaterialsHaveUrl(remoteState.materials?.length ? remoteState.materials : (this.state.materials?.length ? this.state.materials : defaultDatabaseState.materials))
+      : ensureMaterialsHaveUrl(this.state.materials?.length ? this.state.materials : (remoteState.materials?.length ? remoteState.materials : defaultDatabaseState.materials));
+
     this.state = sanitizeBannedSubtitles(this.sanitizeStudentProgress({
       ...defaultDatabaseState,
       ...remoteState,
       activeLkpdId: resolvedActiveLkpdId,
       lkpdUpdatedAt: resolvedLkpdUpdatedAt,
-      evaluationDurationMinutes: remoteState.evaluationDurationMinutes || this.state.evaluationDurationMinutes || defaultDatabaseState.evaluationDurationMinutes || 30,
-      lkpdDurationMinutes: remoteState.lkpdDurationMinutes || this.state.lkpdDurationMinutes || defaultDatabaseState.lkpdDurationMinutes || 45,
+      contentUpdatedAt: resolvedContentUpdatedAt,
+      evaluationDurationMinutes: (useRemoteContent ? remoteState.evaluationDurationMinutes : this.state.evaluationDurationMinutes) || remoteState.evaluationDurationMinutes || this.state.evaluationDurationMinutes || defaultDatabaseState.evaluationDurationMinutes || 30,
+      lkpdDurationMinutes: (useRemoteContent ? remoteState.lkpdDurationMinutes : this.state.lkpdDurationMinutes) || remoteState.lkpdDurationMinutes || this.state.lkpdDurationMinutes || defaultDatabaseState.lkpdDurationMinutes || 45,
       users: mergedUsers,
       deletedUserIds: currentDeleted,
       lkpdSubmissions: mergedLkpdSub,
       latsolSubmissions: mergedLatsolSub,
       evaluationSubmissions: mergedEvalSub,
-      latsolRooms: remoteHasValidNewQuestions ? remoteState.latsolRooms : defaultDatabaseState.latsolRooms,
-      evaluationQuestions: remoteHasValidNewQuestions ? remoteState.evaluationQuestions : defaultDatabaseState.evaluationQuestions,
+      latsolRooms: resolvedLatsolRooms,
+      evaluationQuestions: resolvedEvaluationQuestions,
+      materials: resolvedMaterials,
       lkpdList: resolvedLkpdList,
       schedules: defaultDatabaseState.schedules,
       reflections: remoteState.reflections || defaultDatabaseState.reflections,
@@ -1352,19 +1371,22 @@ class StorageService {
     if (!checkIsSupabaseConfigured() || !client) return;
 
     try {
-      // 1. Fetch only 14KB users array (fast ~200ms)
-      const { data: cloudUsersData } = await client
+      // 1. Fetch full cloud state so a login on Device B never overwrites Cloud questions/LKPD/deletedUserIds
+      const { data: cloudRow } = await client
         .from('app_state')
-        .select('data->users')
+        .select('data')
         .eq('id', 'main')
         .maybeSingle();
 
-      const remoteUsers = (cloudUsersData && Array.isArray((cloudUsersData as any).users))
-        ? (cloudUsersData as any).users as User[]
-        : [];
+      const cloudState = (cloudRow && cloudRow.data) ? (cloudRow.data as DatabaseState) : null;
+      const remoteUsers = cloudState && Array.isArray(cloudState.users) ? cloudState.users : [];
+      const currentDeleted = Array.from(new Set([
+        ...(this.state.deletedUserIds || []),
+        ...(cloudState?.deletedUserIds || [])
+      ]));
 
-      // 2. Merge local user state into cloud users array
-      const mergedUsers = mergeUsersList(this.state.users, remoteUsers);
+      // 2. Merge local user state into cloud users array respecting tombstones
+      const mergedUsers = mergeUsersList(this.state.users, remoteUsers, currentDeleted);
       const targetUser = mergedUsers.find(u => u.id === userId);
       if (targetUser) {
         targetUser.sessionToken = sessionToken;
@@ -1372,13 +1394,16 @@ class StorageService {
         targetUser.sessionUpdatedAt = timestamp;
       }
       this.state.users = mergedUsers;
+      this.state.deletedUserIds = currentDeleted;
       this.safeSaveToLocalStorage(this.state);
       this.notify();
 
-      // 3. Upsert state with updated users directly to Supabase
+      // 3. Upsert state preserving cloud content while updating users & deletedUserIds
       const stateToSave = pruneHeavyBlobs(sanitizeBannedSubtitles({
         ...this.state,
-        users: mergedUsers
+        ...(cloudState || {}),
+        users: mergedUsers,
+        deletedUserIds: currentDeleted
       }));
 
       await client
@@ -1426,12 +1451,11 @@ class StorageService {
     }
     try {
       const parsed: DatabaseState = JSON.parse(raw);
-      const hasValidNewQuestions =
-        (parsed.evaluationQuestions?.length === 5) &&
-        (parsed.latsolRooms?.[0]?.questions?.length === 10);
+      const hasValidEvalQuestions = Array.isArray(parsed.evaluationQuestions) && parsed.evaluationQuestions.length > 0;
+      const hasValidLatsolRooms = Array.isArray(parsed.latsolRooms) && parsed.latsolRooms.length > 0;
       const hasValidLKPD = Boolean(parsed.lkpdList && Array.isArray(parsed.lkpdList) && parsed.lkpdList.length > 0);
 
-      // Merge with defaultDatabaseState to ensure all new keys exist and questions are up-to-date
+      // Merge with defaultDatabaseState without resetting teacher-edited questions on refresh
       const merged: DatabaseState = {
         ...defaultDatabaseState,
         ...parsed,
@@ -1440,8 +1464,8 @@ class StorageService {
         lkpdDurationMinutes: parsed.lkpdDurationMinutes || defaultDatabaseState.lkpdDurationMinutes || 45,
         deletedUserIds: parsed.deletedUserIds || [],
         users: mergeUsersList(parsed.users || [], defaultDatabaseState.users, parsed.deletedUserIds || []),
-        latsolRooms: hasValidNewQuestions ? parsed.latsolRooms : defaultDatabaseState.latsolRooms,
-        evaluationQuestions: hasValidNewQuestions ? parsed.evaluationQuestions : defaultDatabaseState.evaluationQuestions,
+        latsolRooms: hasValidLatsolRooms ? parsed.latsolRooms : defaultDatabaseState.latsolRooms,
+        evaluationQuestions: hasValidEvalQuestions ? parsed.evaluationQuestions : defaultDatabaseState.evaluationQuestions,
         lkpdList: hasValidLKPD ? parsed.lkpdList : defaultDatabaseState.lkpdList,
         materials: ensureMaterialsHaveUrl(parsed.materials?.length ? parsed.materials : defaultDatabaseState.materials),
         latsolSubmissions: parsed.latsolSubmissions || defaultDatabaseState.latsolSubmissions,
@@ -1506,13 +1530,31 @@ class StorageService {
               resolvedLkpdList = (this.state.lkpdList && this.state.lkpdList.length > 0) ? this.state.lkpdList : (cloudData.data.lkpdList || defaultDatabaseState.lkpdList);
             }
 
+            const localContentTime = this.state.contentUpdatedAt || 0;
+            const cloudContentTime = cloudData.data.contentUpdatedAt || 0;
+            const preferCloudContent = cloudContentTime > localContentTime;
+            const resolvedContentUpdatedAt = Math.max(localContentTime, cloudContentTime);
+
             stateToSave = {
               ...this.state,
               activeLkpdId: resolvedActiveLkpdId,
               lkpdUpdatedAt: resolvedLkpdUpdatedAt,
+              contentUpdatedAt: resolvedContentUpdatedAt,
               lkpdList: resolvedLkpdList,
-              evaluationDurationMinutes: this.state.evaluationDurationMinutes || cloudData.data.evaluationDurationMinutes || 30,
-              lkpdDurationMinutes: this.state.lkpdDurationMinutes || cloudData.data.lkpdDurationMinutes || 45,
+              latsolRooms: preferCloudContent
+                ? (cloudData.data.latsolRooms?.length ? cloudData.data.latsolRooms : this.state.latsolRooms)
+                : (this.state.latsolRooms?.length ? this.state.latsolRooms : cloudData.data.latsolRooms),
+              evaluationQuestions: preferCloudContent
+                ? (cloudData.data.evaluationQuestions?.length ? cloudData.data.evaluationQuestions : this.state.evaluationQuestions)
+                : (this.state.evaluationQuestions?.length ? this.state.evaluationQuestions : cloudData.data.evaluationQuestions),
+              materials: preferCloudContent
+                ? (cloudData.data.materials?.length ? cloudData.data.materials : this.state.materials)
+                : (this.state.materials?.length ? this.state.materials : cloudData.data.materials),
+              announcements: preferCloudContent
+                ? (cloudData.data.announcements || this.state.announcements)
+                : (this.state.announcements || cloudData.data.announcements),
+              evaluationDurationMinutes: (preferCloudContent ? cloudData.data.evaluationDurationMinutes : this.state.evaluationDurationMinutes) || this.state.evaluationDurationMinutes || cloudData.data.evaluationDurationMinutes || 30,
+              lkpdDurationMinutes: (preferCloudContent ? cloudData.data.lkpdDurationMinutes : this.state.lkpdDurationMinutes) || this.state.lkpdDurationMinutes || cloudData.data.lkpdDurationMinutes || 45,
               users: mergedUsers,
               deletedUserIds: currentDeleted,
               lkpdSubmissions: mergedLkpd,
@@ -1572,7 +1614,7 @@ class StorageService {
       } catch {}
     }
 
-    // 3. Immediately persist approval to Supabase
+    // 3. Immediately persist approval to Supabase without overwriting cloud content
     const client = getSupabase();
     if (checkIsSupabaseConfigured() && client) {
       try {
@@ -1589,8 +1631,8 @@ class StorageService {
           if (t) t.isApproved = true;
 
           const stateToSave = pruneHeavyBlobs(sanitizeBannedSubtitles({
-            ...cloudData.data,
             ...this.state,
+            ...cloudData.data,
             users: mergedUsers,
             deletedUserIds: currentDeleted
           }));
@@ -1636,7 +1678,7 @@ class StorageService {
       } catch {}
     }
 
-    // 3. Immediately persist deletion & tombstone to Supabase
+    // 3. Immediately persist deletion & tombstone to Supabase without overwriting cloud content
     const client = getSupabase();
     if (checkIsSupabaseConfigured() && client) {
       try {
@@ -1656,8 +1698,8 @@ class StorageService {
           this.notify();
 
           const stateToSave = pruneHeavyBlobs(sanitizeBannedSubtitles({
-            ...cloudData.data,
             ...this.state,
+            ...cloudData.data,
             users: filteredUsers,
             deletedUserIds: cloudDeleted
           }));
@@ -1738,13 +1780,31 @@ class StorageService {
           resolvedLkpdList = (this.state.lkpdList && this.state.lkpdList.length > 0) ? this.state.lkpdList : (cloudData.data.lkpdList || defaultDatabaseState.lkpdList);
         }
 
+        const localContentTime = this.state.contentUpdatedAt || 0;
+        const cloudContentTime = cloudData.data.contentUpdatedAt || 0;
+        const preferCloudContent = cloudContentTime > localContentTime;
+        const resolvedContentUpdatedAt = Math.max(localContentTime, cloudContentTime);
+
         stateToSave = {
           ...this.state,
           activeLkpdId: resolvedActiveLkpdId,
           lkpdUpdatedAt: resolvedLkpdUpdatedAt,
+          contentUpdatedAt: resolvedContentUpdatedAt,
           lkpdList: resolvedLkpdList,
-          evaluationDurationMinutes: this.state.evaluationDurationMinutes || cloudData.data.evaluationDurationMinutes || 30,
-          lkpdDurationMinutes: this.state.lkpdDurationMinutes || cloudData.data.lkpdDurationMinutes || 45,
+          latsolRooms: preferCloudContent
+            ? (cloudData.data.latsolRooms?.length ? cloudData.data.latsolRooms : this.state.latsolRooms)
+            : (this.state.latsolRooms?.length ? this.state.latsolRooms : cloudData.data.latsolRooms),
+          evaluationQuestions: preferCloudContent
+            ? (cloudData.data.evaluationQuestions?.length ? cloudData.data.evaluationQuestions : this.state.evaluationQuestions)
+            : (this.state.evaluationQuestions?.length ? this.state.evaluationQuestions : cloudData.data.evaluationQuestions),
+          materials: preferCloudContent
+            ? (cloudData.data.materials?.length ? cloudData.data.materials : this.state.materials)
+            : (this.state.materials?.length ? this.state.materials : cloudData.data.materials),
+          announcements: preferCloudContent
+            ? (cloudData.data.announcements || this.state.announcements)
+            : (this.state.announcements || cloudData.data.announcements),
+          evaluationDurationMinutes: (preferCloudContent ? cloudData.data.evaluationDurationMinutes : this.state.evaluationDurationMinutes) || this.state.evaluationDurationMinutes || cloudData.data.evaluationDurationMinutes || 30,
+          lkpdDurationMinutes: (preferCloudContent ? cloudData.data.lkpdDurationMinutes : this.state.lkpdDurationMinutes) || this.state.lkpdDurationMinutes || cloudData.data.lkpdDurationMinutes || 45,
           users: mergedUsers,
           deletedUserIds: currentDeleted,
           lkpdSubmissions: mergedLkpd,
@@ -1773,11 +1833,40 @@ class StorageService {
   }
 
   public update(updater: (draft: DatabaseState) => void): void {
+    const prevLkpdSnap = JSON.stringify({ list: this.state.lkpdList, active: this.state.activeLkpdId });
+    const prevContentSnap = JSON.stringify({
+      latsol: this.state.latsolRooms,
+      evalQ: this.state.evaluationQuestions,
+      materials: this.state.materials,
+      announcements: this.state.announcements,
+      evalDur: this.state.evaluationDurationMinutes,
+      lkpdDur: this.state.lkpdDurationMinutes
+    });
+
     try {
       updater(this.state);
     } catch (e) {
       console.error('[StorageService] update callback warning:', e);
     }
+
+    const now = Date.now();
+    const nextLkpdSnap = JSON.stringify({ list: this.state.lkpdList, active: this.state.activeLkpdId });
+    if (nextLkpdSnap !== prevLkpdSnap) {
+      this.state.lkpdUpdatedAt = now;
+    }
+
+    const nextContentSnap = JSON.stringify({
+      latsol: this.state.latsolRooms,
+      evalQ: this.state.evaluationQuestions,
+      materials: this.state.materials,
+      announcements: this.state.announcements,
+      evalDur: this.state.evaluationDurationMinutes,
+      lkpdDur: this.state.lkpdDurationMinutes
+    });
+    if (nextContentSnap !== prevContentSnap) {
+      this.state.contentUpdatedAt = now;
+    }
+
     this.save();
   }
 

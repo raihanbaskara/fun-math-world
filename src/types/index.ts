@@ -229,6 +229,7 @@ export interface DatabaseState {
   lkpdList: LKPDItem[];
   activeLkpdId?: string;
   lkpdUpdatedAt?: number;
+  contentUpdatedAt?: number;
   lkpdSubmissions: LKPDSubmission[];
   latsolRooms: LatsolRoom[];
   latsolSubmissions: LatsolSubmission[];
